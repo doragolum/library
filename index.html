@@ -46,7 +46,8 @@ input[type=search]{font-size:16px}
 .thumb{width:40px;height:60px;border-radius:4px;object-fit:cover;flex:none;background:var(--line)}
 .ph{width:40px;height:60px;border-radius:4px;flex:none;color:#fff;font-size:8px;line-height:1.1;padding:4px 3px;overflow:hidden;text-align:center;display:flex;align-items:center;justify-content:center}
 .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
-.chip{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--line);color:var(--ink);white-space:nowrap}
+.chip{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--line);color:var(--ink);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box}
+.item .body{min-width:0}
 .chip.a{background:var(--accent-soft);color:var(--accent)}
 .chip.ok{background:var(--ok-soft);color:var(--ok)}
 .chip.w{background:var(--warn-soft);color:var(--warn)}
