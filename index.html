@@ -443,8 +443,18 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = site(w || {});
     return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(h) ? 'https://' + h : '';
   }
+  // один магазин, хоч би як записаний: «bookchef.ua», «https://bookchef.ua/…», «BookChef» → bookchef
+  function shopKey(w) {
+    var h = site(w);
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(h)) h = h.toLowerCase().replace(/^www\./, '').split('.')[0];
+    return String(h).toLowerCase().replace(/ґ/g, 'г').replace(/[\s\-–—_.,:;'’`"ʼ«»()]/g, '');
+  }
+  // назва для заголовка: адреса сайту, якщо вона є хоч в одного замовлення цього магазину
+  function shopHead(list) { return list.filter(function (w) { return siteUrl(w); })[0] || list[0]; }
   function siteLink(w, text) {
     var u = siteUrl(w);
+    // у цього замовлення адреси немає — беремо з іншого замовлення того самого магазину
+    if (!u && w) { var k = shopKey(w), o = k && D.wish.filter(function (x) { return shopKey(x) === k && siteUrl(x); })[0]; if (o) u = siteUrl(o); }
     return u ? '<a class="link" href="' + esc(u) + '" target="_blank" rel="noopener" title="Відкрити сайт">' + esc(text) + ' ↗</a>' : esc(text);
   }
   function site(w) { var s = String(w.site || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '').trim(); return s || String(w.where || '').trim(); }
@@ -1450,7 +1460,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var stg = byStage(all);
     var rows = (view.dstat !== undefined && view.dstat !== '' ? stg[Number(view.dstat)] : all).filter(dperOk);
     var bySite = {};
-    rows.forEach(function (w) { var k = site(w) || 'Сайт не вказано'; (bySite[k] = bySite[k] || []).push(w); });
+    rows.forEach(function (w) { var k = shopKey(w) || '—'; (bySite[k] = bySite[k] || []).push(w); });
     var sites = Object.keys(bySite).sort(function (a, b) { return bySite[b].length - bySite[a].length; });
     var sum = rows.reduce(function (a, w) { return a + (w.price || 0); }, 0);
     var orders = uniq(rows.map(function (w) { return w.order || w.ttn || 'r' + w.row; })).length;
@@ -1469,7 +1479,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var ordersMap = {};
       g.forEach(function (w) { var k = w.order || w.ttn || ('r' + w.row); (ordersMap[k] = ordersMap[k] || []).push(w); });
       var total = g.reduce(function (a, w) { return a + (w.price || 0); }, 0);
-      return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + siteLink(g[0], s) + '</h3><span class="muted small">' + g.length + ' кн. · ' + money(total) + '</span></div>' +
+      var hw = shopHead(g);
+      return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + (s === '—' ? 'Сайт не вказано' : siteLink(hw, site(hw))) + '</h3><span class="muted small">' + g.length + ' кн. · ' + money(total) + '</span></div>' +
         Object.keys(ordersMap).map(function (k) {
           var og = ordersMap[k], t = og.filter(function (w) { return w.ttn; })[0];
           return '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line)"><div class="chips" style="align-items:center">' + (og[0].order ? '<span class="chip">№ ' + esc(og[0].order) + '</span>' : '') +
@@ -1490,7 +1501,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     rows.forEach(function (w) { var k = w.order || w.ttn || ('r' + w.row); (m[k] = m[k] || []).push(w); });
     return Object.keys(m).map(function (k) {
       var g = m[k], d = g.map(function (w) { return w.ordered || ''; }).filter(Boolean).sort()[0] || '';
-      return { key: k, items: g, date: d, site: site(g[0]) || 'Сайт не вказано', sum: sumPrice(g) };
+      return { key: k, items: g, date: d, site: site(shopHead(g)) || 'Сайт не вказано', sum: sumPrice(g) };
     });
   }
   function orderGroupsHtml(rows, dir) {
