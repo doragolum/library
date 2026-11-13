@@ -2619,3 +2619,109 @@ function lbNpBack() {
   lbLog_('📦 Нова пошта', '', '', 'Відкат: знову працює старий код npUpdate.');
   console.log('Повернула старий код НП (npUpdate щогодини).');
 }
+
+/* ============================================================
+ * v9. Дати наявних замовлень (разово, ЗАВДАННЯ_v8 п. 1.5а)
+ * Дані зі скриншотів 13.11.2026. Рядок у «Бажанках» шукається за номером замовлення,
+ * без номера — за назвою книги. Пише лише в ПОРОЖНІ клітинки: «Дата замовлення»,
+ * а також «Номер замовлення», «Сайт», «Де замовлено» і «ISBN», якщо там нічого немає.
+ * ============================================================ */
+var LB_ORDER_DATES = [
+  { shop: 'Vivat', site: 'https://vivat.com.ua', order: '40381574', date: '2026-09-08', items: [['Одіссея', 'Гомер'], ['Декстер. Темні сни', 'Джефф Ліндсі'], ['Не турбувати', 'Фріда Мак-Фадден'], ['Twisted. Ненависть', 'Ана Хван']] },
+  { shop: 'Vivat', site: 'https://vivat.com.ua', order: '40388503', date: '2026-10-13', items: [['Двір розколотої гармонії', 'Сара Дж. Маас']] },
+  { shop: 'Vivat', site: 'https://vivat.com.ua', order: '40396603', date: '2026-10-20', items: [['Орендарка', 'Фріда Мак-Фадден']] },
+  { shop: 'Vivat', site: 'https://vivat.com.ua', order: '40400119', date: '2026-10-27', items: [['Іліада', 'Гомер']] },
+  { shop: 'Бородатий Тамарин', site: 'https://tamarinbooks.com', order: '44776', date: '2026-11-12', items: [['Зазирни у мої сни', '']] },
+  { shop: 'BookChef', site: 'https://bookchef.ua', order: '707061', date: '2026-11-10', items: [['The Killer Isn\'t Alice. Головоломка із 46 600 підозрюваними у вбивстві', '', '9786175486283'], ['Фантом', '', '9786175486313']] },
+  { shop: 'BookChef', site: 'https://bookchef.ua', order: '700316', date: '2026-10-07', items: [['Трилогія душ. Книга 2: Її душа за помсту', '', '9786175486177'], ['Murdle. Частина 2', '']] },
+  { shop: 'BookChef', site: 'https://bookchef.ua', order: '697880', date: '2026-09-26', items: [['Афера Сатани', ''], ['На межі темряви. Книга 2: Пожадливий', '']] },
+  { shop: 'Nebo Publishing', site: 'https://nebopublishing.com.ua', order: '72474', date: '2026-10-23', items: [['Герой віків', 'Брендон Сандерсон', '9786178383862'], ['З-імли-народжені', 'Брендон Сандерсон', '9786178446161'], ['Джерело Вознесіння', 'Брендон Сандерсон', '9786178446178']] },
+  { shop: 'Nebo Publishing', site: 'https://nebopublishing.com.ua', order: '69355', date: '2026-09-19', items: [['Лицар і нічниця', 'Рейчел Ґілліґ', '9786178446611']] },
+  { shop: 'РМ', site: 'https://ridna-mova.com', order: '145145', date: '2026-10-10', items: [['Жінка з кімнати № 11', '', '9786178691547'], ['Царство Троянди', '', '9786178603243']] },
+  { shop: 'РМ', site: 'https://ridna-mova.com', order: '140555', date: '2026-08-22', items: [] },
+  { shop: 'Glimmer', site: 'https://glimmer.com.ua', order: '12391', date: '2026-10-19', items: [['Шепіт', 'Бекка Фіцпатрік']] },
+  { shop: 'ArtBooks', site: 'https://artbooks.ua', order: 'A840345', date: '2026-10-28', items: [['Щоденники вампіра. Пробудження', '']] }
+];
+function lbOrderDatesPlan_(ss) {
+  var sh = ss.getSheetByName(LB_SHEETS.wish);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
+  var c = { a: lbCol_(head, ['Автор']), t: lbCol_(head, ['Назва']), s: lbCol_(head, ['Статус']), n: lbCol_(head, ['Номер замовлення']),
+    d: lbCol_(head, ['Дата замовлення']), site: lbCol_(head, ['Сайт']), w: lbCol_(head, ['Де замовлено']), i: lbCol_(head, ['ISBN']) };
+  if (c.d < 0) throw new Error('Немає колонки «Дата замовлення». Спершу запустіть lbAddOrderDateColumn.');
+  var vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getDisplayValues() : [];
+  var num = function (v) { return String(v || '').replace(/[\s#№]/g, '').toUpperCase(); };
+  var titleOk = function (mine, theirs) {
+    var a = lbNorm_(mine), b = lbNorm_(theirs);
+    return a && b && (a === b || a.indexOf(b) === 0 || b.indexOf(a) === 0 || lbDice_(mine, theirs) >= 0.85);
+  };
+  var used = {}, plan = [], miss = [], notes = [];
+  LB_ORDER_DATES.forEach(function (o) {
+    var byNum = [];
+    vals.forEach(function (r, i) { if (c.n >= 0 && num(r[c.n]) === num(o.order)) byNum.push(i); });
+    var rows = [];
+    if (o.items.length) o.items.forEach(function (it) {
+      var hit = byNum.filter(function (i) { return !used[i] && titleOk(vals[i][c.t], it[0]); })[0];
+      if (hit == null) {
+        var cand = [];
+        vals.forEach(function (r, i) { if (!used[i] && titleOk(r[c.t], it[0]) && (!it[1] || lbAuthorOk_(it[1], r[c.a])) && (!num(r[c.n]) || num(r[c.n]) === num(o.order))) cand.push(i); });
+        if (cand.length === 1) hit = cand[0];
+        else if (cand.length > 1) { miss.push('№' + o.order + ' «' + it[0] + '»: кілька схожих рядків (' + cand.map(function (i) { return i + 2; }).join(', ') + ') — не чіпаю'); return; }
+      }
+      if (hit == null) { miss.push('№' + o.order + ' (' + o.shop + ') «' + it[0] + '» — не знайшла в «Бажанках»'); return; }
+      rows.push({ i: hit, isbn: it[2] || '' });
+    });
+    else {
+      byNum.forEach(function (i) { rows.push({ i: i, isbn: '' }); });
+      if (!byNum.length) miss.push('№' + o.order + ' (' + o.shop + ') — назв немає, і рядків з цим номером не знайшла');
+    }
+    rows.forEach(function (x) {
+      used[x.i] = 1;
+      var r = vals[x.i], set = {};
+      var curD = lbDate_(r[c.d]);
+      if (!curD) set.d = o.date;
+      else if (curD !== o.date) notes.push('рядок ' + (x.i + 2) + ' «' + r[c.t] + '»: дата вже є (' + lbHuman_(curD) + '), на скриншоті ' + lbHuman_(o.date) + ' — не міняю');
+      if (c.n >= 0 && !num(r[c.n])) set.n = o.order;
+      if (c.site >= 0 && !String(r[c.site]).trim()) set.site = o.site;
+      if (c.w >= 0 && !String(r[c.w]).trim()) set.w = o.shop;
+      if (c.i >= 0 && x.isbn && !String(r[c.i]).replace(/\D/g, '')) set.i = x.isbn;
+      if (Object.keys(set).length) plan.push({ row: x.i + 2, a: r[c.a], t: r[c.t], st: r[c.s], set: set });
+    });
+  });
+  return { sh: sh, c: c, plan: plan, miss: miss, notes: notes };
+}
+function lbOrderDatesText_(p) {
+  var names = { d: 'дата', n: '№', site: 'сайт', w: 'де', i: 'ISBN' };
+  var out = ['Рядків зміниться: ' + p.plan.length];
+  p.plan.forEach(function (x) {
+    out.push('  рядок ' + x.row + ': ' + x.a + ' — ' + x.t + ' [' + x.st + '] → ' + Object.keys(x.set).map(function (k) { return names[k] + ' ' + (k === 'd' ? lbHuman_(x.set[k]) : x.set[k]); }).join(', '));
+  });
+  if (p.notes.length) out.push('', 'Уже мають іншу дату (не чіпаю):', '  ' + p.notes.join('\n  '));
+  if (p.miss.length) out.push('', 'Не знайшла (не чіпаю):', '  ' + p.miss.join('\n  '));
+  return out.join('\n');
+}
+/** Крок 1 (нічого не змінює): які рядки «Бажанок» отримають дату замовлення. */
+function lbBackfillOrderDatesPreview() {
+  var t = lbOrderDatesText_(lbOrderDatesPlan_(lbSs_()));
+  console.log(t);
+  return t;
+}
+/** Крок 2 (після «так»): записує дати (і порожні №/сайт/ISBN). Усе — в «Лог». */
+function lbBackfillOrderDatesApply() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Таблиця зараз оновлюється. Спробуйте за хвилину.');
+  try {
+    var p = lbOrderDatesPlan_(lbSs_());
+    p.plan.forEach(function (x) {
+      Object.keys(x.set).forEach(function (k) {
+        var cell = p.sh.getRange(x.row, p.c[k] + 1), v = x.set[k];
+        if (k === 'd') { var q = v.split('-'); cell.setValue(new Date(Number(q[0]), Number(q[1]) - 1, Number(q[2]), 12)).setNumberFormat('dd.mm.yyyy'); }
+        else { if (k === 'n' || k === 'i') cell.setNumberFormat('@'); cell.setValue(String(v)); }
+      });
+    });
+    SpreadsheetApp.flush();
+    var t = lbOrderDatesText_(p);
+    if (p.plan.length) lbLog_('🗓 Дати замовлень (разово)', '', '', t.slice(0, 45000));
+    console.log('Готово ✓\n' + t);
+    return t;
+  } finally { lock.releaseLock(); }
+}
