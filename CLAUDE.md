@@ -19,6 +19,37 @@
 - **Джерела даних про книги:** MEGOGO Books (перше), Книгарня Є (запасне, серія й дата), обкладинки — Goodreads / Google Books.
 - **Gemini** (лише безкоштовний тариф): скриншоти, жанри, тропи. Порядок моделей у `lbGeminiModels_()` з перемиканням при 404/429/503. Пошук Google через Gemini на безкоштовному тарифі **недоступний** (429), тому «Новини серій» беруться з MEGOGO.
 
+## Структура файлів репозиторію
+Корінь репозиторію — це сайт на GitHub Pages. Папка `apps-script/` — копії коду з Apps Script, щоб Claude їх бачив; сама вона на сайт не впливає, а в Apps Script код вставляється вручну.
+
+**Сайт (корінь):**
+- `index.html` — увесь сайт одним файлом: вигляд, стилі й логіка (вкладки, картки книг, бажанки, «Що почитати?», полиці, статистика). Дані бере через `fetch` на адресу з `config.js` (запит `{fn, args, initData, key}` до `doPost`). Головний файл для змін інтерфейсу.
+- `config.js` — одна змінна `window.LB_API_URL` — адреса розгортання Apps Script (`…/exec`). Міняти лише якщо змінилася адреса розгортання (при «Нова версія» вона та сама).
+- `README.md` — короткий опис для GitHub.
+- `robots.txt` — забороняє пошуковикам індексувати сайт.
+- `.nojekyll` — порожній файл, щоб GitHub Pages віддавав файли як є, без обробки Jekyll.
+- `CLAUDE.md` — цей файл з інструкціями.
+
+**Apps Script (`apps-script/`):**
+- `LibApp.gs` — сервер додатку (префікс `lb` / `LB_`). Основні частини:
+  - сторінка й API: `doGet` (сторінка `LibPage` всередині Apps Script), `doPost` (список дозволених функцій `API` для сайту), перевірка доступу `lbAuth_` (ключ `?k=` або підпис Телеграму);
+  - читання й запис таблиці: `lbReadAll_`, `lbApiUpdate` / `lbApiSave`, `lbApiAddBook`, `lbApiAddWish`, `lbApiDeleteWish`, `lbApiDeleteBook`, `lbOrderSave_` (замовлення → бажанки), журнал `lbLog_`;
+  - Gemini: `lbGemini_`, `lbGeminiModels_`, розпізнавання скриншотів `lbApiOcr` / `lbApiAi`, жанри `lbApiGenre`, тропи `lbApiTropes`;
+  - дані про книги: MEGOGO (`lbFromMegogo_`), Книгарня Є (`lbFromBookYe_`), обкладинки Goodreads / Google Books / Open Library (`lbFillCovers`), автозаповнення порціями `lbAutoFill`;
+  - «Новини серій»: `lbSeriesNews`, `lbApiNews` (лише пропозиції, зберігаються в `LB_NEWS`);
+  - Телеграм: `lbTelegramConnect`, `lbBotPoll`, кнопки й фото в боті;
+  - нагадування: `lbInstallReminders`, `lbDailyReminders` (релізи, «ще не відправили», тиждень/місяць, Київ);
+  - нічні роботи: `lbNightly` (сортування, `lbCleanWish_`, `lbWishOnSale_`, обкладинки);
+  - тести без змін у таблиці: `lbTestNews`, `lbTestGemini`, `lbTestSources`, `lbTestCover`, `lbTestReminders`.
+- `LibPage.html` — та сама сторінка для відкриття прямо з Apps Script (`doGet`). Це **старіша копія** `index.html`: останні зміни інтерфейсу є лише в `index.html`. Головна адреса — сайт на GitHub Pages.
+- `Код.gs` — скрипт меню таблиці (`onOpen`, `addBook`, `updateLibrary`, `sortLibrary`, `sortWishlist`, `renumberBooks`, `updateSeriesInfo`, `syncPublishers`, `sellBooks`, `updateCatalog`, `cleanWishlist`, `findMissingSeriesBooks`, `transferWishlistToLibrary`, `showStatistics` тощо). `LibApp` викликає ці функції, але не змінює їх.
+- `Statistics.html` — вікно статистики в самій таблиці (відкриває `showStatistics` з `Код.gs`).
+- `NovaPoshta.gs` — Нова пошта: `npUpdate` (щогодини перевіряє ТТН з колонки O і пише статус у P–S), `npInstall`, `npSelfTest`. **Не чіпати.**
+- `NpWishlistStatus.gs` — переносить статус НП у колонку E бажанок (Створено ТТН → Відправлено → Доставлено → В бібліотеці); викликається з `npUpdate`. **Не чіпати.**
+- `NpGmailProbe.gs`, `NpIncomingProbe.gs` — разові перевірки (нічого не записують, лише журнал): чи можна знаходити ТТН у листах Gmail і серед вхідних накладних НП. Заготовка для задачі «Імпорт замовлень із Gmail».
+
+Під час релізу сервера до репозиторію додаються `LibApp.gs.txt` і `ОНОВЛЕННЯ_vN.md` (див. нижче).
+
 ## Як випускати зміни
 - **Сайт:** коміт у цей репозиторій → GitHub Pages оновлюється сам.
 - **Сервер:** Claude не може розгорнути Apps Script. Для кожного релізу:
@@ -55,4 +86,3 @@
 - Імпорт замовлень із Gmail (скрипт сам знаходить листи магазинів, пропозиції на підтвердження).
 - Масове заповнення тропів через Gemini з підтвердженням.
 - Приватність: скриншоти замовлень з адресою/телефоном не надсилати в Gemini (безкоштовний тариф може використовувати дані), лише анонси.
-- Уточнити й описати тут структуру файлів репозиторію.
