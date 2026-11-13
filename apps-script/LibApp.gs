@@ -107,7 +107,7 @@ function doGet(e) {
 function doPost(e) {
   var API = { lbApiData: lbApiData, lbApiSetGoals: lbApiSetGoals, lbApiDeleteBook: lbApiDeleteBook, lbApiUpdate: lbApiUpdate,
     lbApiSave: lbApiSave, lbApiAddBook: lbApiAddBook, lbApiDeleteWish: lbApiDeleteWish, lbApiAddWish: lbApiAddWish,
-    lbApiOcr: lbApiOcr, lbApiOrder: lbApiOrder, lbApiLookup: lbApiLookup, lbApiCoverUpload: lbApiCoverUpload, lbApiOfficial: lbApiOfficial, lbApiAutoFill: lbApiAutoFill, lbApiAi: lbApiAi, lbApiGenre: lbApiGenre, lbApiShelfMark: lbApiShelfMark, lbApiNews: lbApiNews, lbApiTropes: lbApiTropes, lbApiSeriesCheck: lbApiSeriesCheck };
+    lbApiOcr: lbApiOcr, lbApiOrder: lbApiOrder, lbApiLookup: lbApiLookup, lbApiCoverUpload: lbApiCoverUpload, lbApiOfficial: lbApiOfficial, lbApiAutoFill: lbApiAutoFill, lbApiAi: lbApiAi, lbApiGenre: lbApiGenre, lbApiShelfMark: lbApiShelfMark, lbApiNews: lbApiNews, lbApiTropes: lbApiTropes, lbApiSeriesCheck: lbApiSeriesCheck, lbApiFromLink: lbApiFromLink };
   var out;
   try {
     var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -901,6 +901,7 @@ function lbAiBooks_(parts) {
     if (!Array.isArray(items)) items = [];
     items = items.filter(function (x) { return x && x.title; }).slice(0, 30);
     items.forEach(function (x) { if (x.pub) x.pub = lbPubCanon_(x.pub); });
+    try { lbEnrichItems_(items, 20000); } catch (e) {}
     return { items: items };
 }
 
@@ -991,6 +992,10 @@ function lbOrderSave_(req) {
             cell.setValue(set[h]);
           });
           if (!isWish && cOD >= 0 && (req.date || !String(vals[idx][cOD]).trim())) sh.getRange(idx + 2, cOD + 1).setValue(odVal).setNumberFormat('dd.mm.yyyy');
+          // v13: порожні ISBN / оригінальна назва / джерело дописуються, заповнені не чіпаються
+          [['ISBN', xk ? "'" + xk : ''], ['Оригінальна назва', String(x.orig || '').trim()], ['Джерело', /^https:\/\//.test(String(x.src || '')) ? String(x.src) : '']].forEach(function (p) {
+            var c = col(p[0]); if (c >= 0 && p[1] && !String(vals[idx][c]).trim()) sh.getRange(idx + 2, c + 1).setValue(p[1]);
+          });
           out.updated++; out.rows.push(idx + 2);
           lbLog_(isWish ? '＋ Бажанка оновлена (з додатку)' : '🧾 Замовлено (з додатку)', x.title, vals[idx][cA], [req.where, req.num ? '№' + req.num : '', set['Ціна'] !== '' ? set['Ціна'] + ' грн' : ''].filter(String).join(' · '));
         } else {
@@ -1004,6 +1009,8 @@ function lbOrderSave_(req) {
           put('Яка частина', x.part === '' || x.part == null ? '' : lbNum_(x.part));
           put('Всього книг', x.total === '' || x.total == null ? '' : lbNum_(x.total));
           if (xk) put('ISBN', "'" + xk); else if (x.isbn) put('ISBN', String(x.isbn));
+          put('Оригінальна назва', String(x.orig || '').trim());
+          put('Джерело', /^https:\/\//.test(String(x.src || '')) ? String(x.src) : '');
           Object.keys(set).forEach(function (h) { put(h, set[h]); });
           if (isWish) put('Статус', 'Хочу купити');
           else put('Дата замовлення', odVal);
@@ -1950,9 +1957,21 @@ function lbBotPoll() {
     if (pm && String(pm.chat.id) === String(chat) && (pm.photo || (pm.document && /^image\//.test(pm.document.mime_type || '')))) {
       try { lbBotPhoto_(pm); } catch (err) { try { lbTgSend_('Не вийшло прочитати скриншот: ' + lbEsc_(err.message || err)); } catch (e) {} }
     }
+    if (pm && String(pm.chat.id) === String(chat) && (pm.voice || pm.audio)) {
+      try { lbBotVoice_(pm); } catch (err) { try { lbTgSend_('Не вийшло прочитати голосове: ' + lbEsc_(err.message || err)); } catch (e) {} }
+    }
   });
   var msgs = res.result.map(function (u) { return u.message; })
-    .filter(function (m) { return m && m.text && String(m.chat.id) === String(chat); });
+    .filter(function (m) { return m && m.text && String(m.chat.id) === String(chat); })
+    .filter(function (m) {
+      // v13: відповідь на уточнення або посилання на книгу — окремо від пошуку
+      try {
+        if (m.reply_to_message && lbBotAnswerAsk_(m)) return false;
+        var url = String(m.text).match(/https?:\/\/[^\s<>"]+/);
+        if (url && !/^\//.test(m.text)) { lbBotLink_(m, url[0]); return false; }
+      } catch (err) { try { lbTgSend_('Не вийшло: ' + lbEsc_(err && err.message ? err.message : err)); } catch (e) {} return false; }
+      return true;
+    });
   if (!msgs.length) return;
   var data = null;
   msgs.forEach(function (m) {
@@ -1965,38 +1984,32 @@ function lbBotPoll() {
   });
 }
 
-/** Скриншот у бот → Gemini → картка з кнопками «У бажанки» / «Замовила». */
+/** Скриншот у бот → Gemini → картка з кнопками «У бажанки» / «Замовила».
+ * v13: спершу звичайне розпізнавання тексту (Google Диск). Якщо це замовлення (адреса, телефон, отримувач),
+ * у Gemini йде лише текст без цих рядків, а не сама картинка. */
 function lbBotPhoto_(m) {
   var fileId = m.photo ? m.photo[m.photo.length - 1].file_id : m.document.file_id;
   var f = lbTgApi_('getFile', { file_id: fileId });
   if (!f.ok) throw new Error('Телеграм не віддав файл.');
   var blob = UrlFetchApp.fetch('https://api.telegram.org/file/bot' + lbTgToken_() + '/' + f.result.file_path).getBlob();
-  var parts = [{ inline_data: { mime_type: 'image/jpeg', data: Utilities.base64Encode(blob.getBytes()) } }];
+  var bytes = blob.getBytes(), parts = [], txt = '';
+  try { txt = lbOcrBytes_(bytes, 'image/jpeg'); } catch (e) { txt = ''; }
+  var priv = txt && lbLooksPrivate_(txt);
+  if (priv) parts.push({ text: 'Текст скриншота замовлення (особисті дані прибрано):\n' + lbRedact_(txt).slice(0, 6000) });
+  else parts.push({ inline_data: { mime_type: 'image/jpeg', data: Utilities.base64Encode(bytes) } });
   if (m.caption) parts.push({ text: 'Підпис користувачки: ' + m.caption });
   var r = lbAiBooks_(parts);
   if (r.nokey) { lbTgSend_('Щоб я читала скриншоти, додайте GEMINI_API_KEY у властивості скрипта.'); return; }
   if (!r.items.length) { lbTgSend_('На скриншоті не знайшла книг. Спробуйте інший або додайте через кнопку «Бібліотека».'); return; }
-  var props = PropertiesService.getScriptProperties();
-  var pend = {}; try { pend = JSON.parse(props.getProperty('LB_BOT_PENDING') || '{}'); } catch (e) {}
-  var keys = Object.keys(pend).sort(); while (keys.length > 15) delete pend[keys.shift()];
-  var id = String(Date.now()).slice(-8);
-  pend[id] = r.items;
-  props.setProperty('LB_BOT_PENDING', JSON.stringify(pend));
-  var lines = r.items.map(function (x) {
-    return '📖 <b>' + lbEsc_(x.title) + '</b>' + (x.author ? ' — ' + lbEsc_(x.author) : '') +
-      (x.series ? '\n   ' + lbEsc_(x.series) + (x.part ? ' #' + lbEsc_(x.part) : '') : '') +
-      [x.pub, x.price ? x.price + ' грн' : '', x.release ? 'реліз ' + x.release : '', x.avail].filter(Boolean).map(function (s) { return '\n   ' + lbEsc_(s); }).join('');
-  });
-  var miss = r.items.some(function (x) { return !x.author; });
-  lbTgApi_('sendMessage', { chat_id: m.chat.id, parse_mode: 'HTML', disable_web_page_preview: true,
-    text: lines.join('\n\n') + (miss ? '\n\n⚠️ Не бачу автора — виправте потім у додатку.' : ''),
-    reply_markup: { inline_keyboard: [[{ text: '✓ У бажанки', callback_data: 'w:' + id }, { text: '🧾 Замовила', callback_data: 'o:' + id }, { text: '✕', callback_data: 'x:' + id }]] } });
+  lbBotCard_(m.chat.id, r.items, priv ? '🔒 Це схоже на замовлення: у Gemini пішов лише текст без адреси й телефону.' : '');
 }
 function lbBotButton_(q) {
   var p = String(q.data || '').split(':'), act = p[0], id = p[1];
+  if (act === 'a') return lbBotAskButton_(q, id, p[2]);
   var props = PropertiesService.getScriptProperties();
   var pend = {}; try { pend = JSON.parse(props.getProperty('LB_BOT_PENDING') || '{}'); } catch (e) {}
   var items = pend[id];
+  if (items && !Array.isArray(items)) items = items.items;
   var done = function (txt) {
     lbTgApi_('answerCallbackQuery', { callback_query_id: q.id, text: txt });
     lbTgApi_('editMessageReplyMarkup', { chat_id: q.message.chat.id, message_id: q.message.message_id, reply_markup: { inline_keyboard: [] } });
@@ -2009,7 +2022,7 @@ function lbBotButton_(q) {
   if (!ok.length) return done('Немає автора — додайте книгу в додатку.');
   var rel = function (s) { s = String(s || ''); return /^\d{4}-\d{2}$/.test(s) ? s + '-01' : s; };
   var out = lbOrderSave_({ mode: act === 'o' ? 'order' : 'wish', items: ok.map(function (x) {
-    return { title: x.title, author: x.author, series: x.series, part: x.part, total: x.total, pub: x.pub, price: x.price, release: rel(x.release), avail: x.avail, isbn: String(x.isbn || '').replace(/\D/g, '') };
+    return { title: x.title, author: x.author, series: x.series, part: x.part, total: x.total, pub: x.pub, price: x.price, release: rel(x.release), avail: x.avail, isbn: String(x.isbn || '').replace(/\D/g, ''), orig: x.orig || '', src: x.src || '' };
   }) });
   done((act === 'o' ? '🧾 Записала як замовлені' : '✓ Додала в бажанки') + ': ' + ok.length + (out.updated ? ' (оновлено ' + out.updated + ')' : '') + '.');
 }
@@ -2029,7 +2042,7 @@ function lbBotAnswer_(text, data) {
 function lbBotHelp_() {
   return '📚 <b>Що я вмію</b>\n' +
     '• Напишіть назву, автора або серію, і я скажу, чи є книга в бібліотеці, де вона стоїть, чи є в бажанках або серед проданих.\n' +
-    '• Надішліть скриншот анонсу чи замовлення — я прочитаю книги і запропоную додати їх у бажанки або як замовлені.\n' +
+    '• Надішліть скриншот анонсу чи замовлення, посилання на сторінку книги або голосове («хочу нову книгу Маас, вийде в березні») — я складу картку і запропоную додати в бажанки або як замовлену. Чого бракує — перепитаю.\n' +
     '• /week — підсумок тижня, /month — підсумок місяця, /kyiv — книги в Києві за пріоритетом.\n' +
     '• Сама нагадую про релізи, позичені книги і замовлення, які вийшли, але ще не відправлені.\n' +
     'Кнопка <b>Бібліотека</b> внизу відкриває весь додаток.';
@@ -3142,4 +3155,317 @@ function lbTestVolumes() {
   console.log(v ? 'Серія «' + v.name + '»: ' + Object.keys(v.books).map(function (k) { return k + '. ' + v.books[k].title; }).join('; ') : 'Не знайшла');
   var mg = lbMgSeriesVolume_('Бункер', '3', 'Гʼю Гоуї');
   console.log('MEGOGO: ' + (mg ? mg.title + ' ' + (mg.url || '') : 'немає'));
+}
+
+/* ============================================================
+ * v13 (етап 5): бажанка з посилання, голосового, скриншота — з уточненнями
+ * ============================================================ */
+
+/** Розпізнавання тексту на картинці через Google Диск (тимчасовий документ одразу видаляється). */
+function lbOcrBytes_(bytes, mime) {
+  var token = ScriptApp.getOAuthToken();
+  var boundary = 'lbocr' + Date.now();
+  var meta = JSON.stringify({ name: 'lb-ocr-' + Date.now(), mimeType: 'application/vnd.google-apps.document' });
+  var head = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + meta + '\r\n--' + boundary + '\r\nContent-Type: ' + (mime || 'image/jpeg') + '\r\n\r\n';
+  var payload = Utilities.newBlob(head).getBytes().concat(bytes).concat(Utilities.newBlob('\r\n--' + boundary + '--').getBytes());
+  var up = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&ocrLanguage=uk&fields=id', {
+    method: 'post', contentType: 'multipart/related; boundary=' + boundary, payload: payload, headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
+  if (up.getResponseCode() !== 200) return '';
+  var id = JSON.parse(up.getContentText()).id;
+  try {
+    var ex = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id + '/export?mimeType=text/plain', { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
+    return ex.getResponseCode() === 200 ? ex.getContentText('UTF-8').replace(/^﻿/, '') : '';
+  } finally {
+    UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id, { method: 'delete', headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
+  }
+}
+var LB_PRIV_RE_ = /\+\s*3\s*8|\b380\d{9}\b|(?:^|\D)\(?0\d{2}\)?[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}(?:\D|$)|[\w.+-]+@[\w-]+\.[\w.]+|отримувач|одержувач|адрес|відділен|поштомат|телефон|прізвище|піб\b|п\.і\.б|вулиц|вул\.|буд\.|кв\.|індекс|доставк|оплат|способ/i;
+/** Чи схоже на замовлення з особистими даними (адреса, телефон, отримувач). */
+function lbLooksPrivate_(txt) {
+  var t = String(txt || '');
+  var hits = t.split(/\n/).filter(function (l) { return LB_PRIV_RE_.test(l); }).length;
+  return hits >= 2 || /отримувач|одержувач|номер телефону|\+380/i.test(t);
+}
+/** Прибирає рядки з телефоном, поштою, адресою, отримувачем. */
+function lbRedact_(txt) {
+  return String(txt || '').split(/\n/).filter(function (l) { return !LB_PRIV_RE_.test(l); }).join('\n');
+}
+
+/** Дані книги зі сторінки за посиланням: MEGOGO і Goodreads — напряму, інші сайти — опис сторінки (+ Gemini, якщо є ключ). */
+function lbBookFromUrl_(url) {
+  url = String(url || '').trim().replace(/[)\].,;»]+$/, '');
+  if (!/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(?:[\/?#]|$)/i.test(url) || /\/\/(localhost|[\d.]+)(?:[:\/]|$)/i.test(url)) throw new Error('Це не схоже на посилання на сторінку книги.');
+  url = url.replace(/^http:/i, 'https:').replace(/([?&])(utm_[^=&]+|fbclid|gclid)=[^&#]*/gi, '$1').replace(/[?&]+(#|$)/, '$1');
+  var mg = url.match(/mbooks\.com\.ua\/book\/([^\/?#]+)/i);
+  if (mg) {
+    var y = lbMgBook_(mg[1]);
+    if (!y) throw new Error('MEGOGO не віддав сторінку книги. Спробуйте ще раз.');
+    return [{ title: y.title, author: y.author, series: y.series, part: y.part, pub: y.pub, price: y.price, release: y.release, avail: y.avail, isbn: y.isbn,
+      orig: (y.attrs || {})['Оригінальна назва'] || '', src: y.url, cover: y.cover, from: 'MEGOGO' }];
+  }
+  if (/goodreads\.com\/book\/show\//i.test(url)) {
+    var gh = lbFetch_(url);
+    if (!gh) throw new Error('Goodreads зараз не відповідає. Спробуйте за хвилину.');
+    var g = lbParseGoodreads_(gh);
+    return g.title ? [{ title: g.title, author: g.author || '', series: g.seriesName || '', part: g.seriesNum || '', isbn: String(g.isbn || '').replace(/\D/g, ''),
+      orig: g.orig || '', src: url.replace(/[?#].*$/, ''), cover: g.cover || '', from: 'Goodreads' }] : [];
+  }
+  var res = lbGetHtml_(url);
+  if (res.code !== 200) throw new Error('Сайт не віддав сторінку (код ' + res.code + '). Надішліть скриншот замість посилання.');
+  var html = res.html, ld = {};
+  var re = /<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi, m;
+  var pick = function (o) {
+    if (!o || typeof o !== 'object') return;
+    if (Array.isArray(o)) return o.forEach(pick);
+    if (o['@graph']) pick(o['@graph']);
+    var t = [].concat(o['@type'] || []).join(' ');
+    if (!/Book|Product/i.test(t) || ld.title) return;
+    var au = [].concat(o.author || o.brand || []).map(function (a) { return typeof a === 'string' ? a : a && a.name; }).filter(Boolean);
+    var of = [].concat(o.offers || [])[0] || {};
+    ld = { title: lbHtmlText_(o.name || ''), author: /Book/i.test(t) ? au.join(', ') : '', isbn: String(o.isbn || o.gtin13 || o.gtin || '').replace(/\D/g, ''),
+      price: of.price ? Number(String(of.price).replace(',', '.')) : null, cover: [].concat(o.image || [])[0] || '',
+      avail: /PreOrder/i.test(of.availability || '') ? 'Передзамовлення' : /InStock/i.test(of.availability || '') ? 'Є у продажу' : /OutOfStock|Discontinued/i.test(of.availability || '') ? 'Немає у продажу' : '',
+      pub: o.publisher ? lbPubCanon_(typeof o.publisher === 'string' ? o.publisher : o.publisher.name || '') : '' };
+    if (typeof ld.cover === 'object') ld.cover = ld.cover.url || '';
+  };
+  while ((m = re.exec(html))) { try { pick(JSON.parse(m[1])); } catch (e) {} }
+  var meta = function (p) { var x = html.match(new RegExp('<meta[^>]+(?:property|name)="' + p + '"[^>]+content="([^"]*)"', 'i')) || html.match(new RegExp('<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="' + p + '"', 'i')); return x ? lbHtmlText_(x[1]) : ''; };
+  var ogt = meta('og:title') || lbHtmlText_((html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '');
+  var body = lbHtmlText_(html.replace(/<(script|style|noscript|svg|header|footer|nav)[\s\S]*?<\/\1>/gi, ' ')).replace(/\s+/g, ' ');
+  var out = null;
+  try {
+    var ai = lbGemini_([{ text: 'Сторінка книги з сайту ' + url.split('/')[2] + '.\nЗаголовок: ' + ogt + '\nОпис: ' + meta('og:description') +
+      (ld.title ? '\nДані сторінки: ' + JSON.stringify(ld) : '') + '\nТекст сторінки:\n' + body.slice(0, 7000) }],
+      LB_AI_PROMPT_() + ' Це ОДНА книга — поверни лише її (головну книгу сторінки, не рекомендації).');
+    var it = ai && (ai.items || ai);
+    if (Array.isArray(it) && it[0] && it[0].title) out = it[0];
+  } catch (e) {}
+  if (!out && !ld.title) {
+    if (!ogt) return [];
+    out = { title: ogt.split(/\s+[|–—-]\s+/)[0] };
+  }
+  out = out || {};
+  ['title', 'author', 'isbn', 'pub', 'cover', 'avail'].forEach(function (k) { if (ld[k] && (!out[k] || k === 'isbn')) out[k] = ld[k]; });
+  if (ld.price != null && !isNaN(ld.price)) out.price = ld.price;
+  if (out.pub) out.pub = lbPubCanon_(out.pub);
+  out.src = url; out.from = url.split('/')[2].replace(/^www\./, '');
+  return [out];
+}
+
+/**
+ * Доповнює картки: MEGOGO (серія, том, ISBN, дата), прив'язка до вашої серії (схожа назва, той самий автор),
+ * статус «Анонс / Передзамовлення / Є у продажу» за датою, перевірка дублів (ISBN, потім назва + автор),
+ * список того, чого бракує (need) — бот і сайт перепитують.
+ */
+function lbEnrichItems_(items, budget) {
+  var t0 = Date.now(); budget = budget || 20000;
+  var data = null; try { data = lbReadAll_(); } catch (e) {}
+  var today = lbToday_();
+  var lib = data ? data.books : [], wish = data ? data.wish : [];
+  items.forEach(function (x) {
+    ['title', 'author', 'series', 'pub', 'avail', 'release', 'orig'].forEach(function (k) { x[k] = String(x[k] == null ? '' : x[k]).trim(); });
+    x.isbn = String(x.isbn || '').replace(/\D/g, '');
+    x.part = x.part == null ? '' : String(x.part).trim(); x.total = x.total == null ? '' : String(x.total).trim();
+    if (/^\d{4}-\d{2}$/.test(x.release)) x.release += '-01';
+    if (x.release && !/^\d{4}-\d{2}-\d{2}$/.test(x.release)) x.release = '';
+    // 1. MEGOGO — якщо бракує даних
+    if (x.title && x.from !== 'MEGOGO' && (!x.author || !x.isbn || !x.release || (x.series && !x.part) || !x.series) && items.length <= 6 && Date.now() - t0 < budget) {
+      try {
+        var y = lbFromMegogo_(x.isbn, x.title, x.author, x.pub);
+        if (y && (!x.author || lbAuthorOk_(x.author, y.author))) {
+          var fill = { author: y.author, series: y.series, part: y.part, isbn: y.isbn, pub: y.pub, release: y.release, avail: y.avail, orig: (y.attrs || {})['Оригінальна назва'] || '', cover: y.cover };
+          Object.keys(fill).forEach(function (k) { if (!x[k] && fill[k]) x[k] = String(fill[k]); });
+          if (!x.src) x.src = y.url;
+          x.from = x.from ? x.from + ' + MEGOGO' : 'MEGOGO';
+        }
+      } catch (e) {}
+    }
+    // 2. номер тому з назви
+    if (!x.part) { var pm = x.title.match(/(?:книга|том|частина|book)\s*(\d+)\b/i); if (pm && x.series) x.part = pm[1]; }
+    // 3. ваша серія: той самий автор + схожа назва
+    if (x.series && x.author) {
+      var best = null, sc = 0;
+      lib.concat(wish).forEach(function (b) {
+        if (!b.series || b.series === '-' || !lbAuthorOk_(x.author, b.author)) return;
+        var d = lbDice_(b.series, x.series);
+        if (d > sc) { sc = d; best = b; }
+      });
+      if (best && sc >= 0.6) {
+        if (best.series !== x.series) x.serWas = x.series;
+        x.series = best.series; x.serKnown = true;
+        if (!x.total && best.total) x.total = String(best.total);
+      }
+    }
+    // 4. статус за датою
+    if (!x.avail && x.release) x.avail = x.release > today ? (x.price ? 'Передзамовлення' : 'Анонс') : (x.price ? 'Є у продажу' : '');
+    // 5. дублі
+    var k = lbIsbnKey_(x.isbn), dup = null;
+    var same = function (b) { return lbNorm_(b.title) === lbNorm_(x.title) && (!x.author || lbAuthorOk_(x.author, b.author)); };
+    if (k) {
+      lib.some(function (b) { if (lbIsbnKey_(b.isbn) === k) { dup = { kind: 'library', row: b.row, title: b.title, status: b.avail || '', by: 'ISBN' }; return true; } });
+      if (!dup) wish.some(function (w) { if (lbIsbnKey_(w.isbn) === k) { dup = { kind: 'wish', row: w.row, title: w.title, status: w.status, by: 'ISBN' }; return true; } });
+    }
+    if (!dup && x.title) {
+      lib.some(function (b) { if (same(b)) { dup = { kind: 'library', row: b.row, title: b.title, status: b.avail || '', by: 'назва' }; return true; } });
+      if (!dup) wish.some(function (w) { if (same(w)) { dup = { kind: 'wish', row: w.row, title: w.title, status: w.status, by: 'назва' }; return true; } });
+    }
+    if (dup) x.dup = dup; else delete x.dup;
+    // 6. чого бракує
+    x.need = [];
+    if (!x.author) x.need.push('author');
+    if (x.series && !x.part) x.need.push('part');
+    if (!x.release && (x.avail === 'Анонс' || x.avail === 'Передзамовлення' || x.avail === '')) x.need.push('release');
+  });
+  return items;
+}
+
+/** Сайт: бажанка з посилання. req = {url} */
+function lbApiFromLink(initData, key, req) {
+  return lbRun_(initData, key, function () {
+    var items = lbBookFromUrl_((req || {}).url);
+    lbEnrichItems_(items, 20000);
+    return { items: items };
+  });
+}
+
+/* --- Бот: картка з уточненнями --- */
+function lbBotPend_() { try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('LB_BOT_PENDING') || '{}'); } catch (e) { return {}; } }
+function lbBotPendSave_(pend) {
+  var keys = Object.keys(pend).sort(); while (keys.length > 10) delete pend[keys.shift()];
+  var s = JSON.stringify(pend);
+  while (s.length > 8500 && Object.keys(pend).length > 1) { delete pend[Object.keys(pend).sort()[0]]; s = JSON.stringify(pend); }
+  PropertiesService.getScriptProperties().setProperty('LB_BOT_PENDING', s);
+}
+var LB_ASK_ = {
+  author: function (x) { return '✍️ Хто автор «' + lbEsc_(x.title) + '»?'; },
+  part: function (x) { return '🔢 Який номер тому «' + lbEsc_(x.title) + '» у серії «' + lbEsc_(x.series) + '»?'; },
+  release: function (x) { return '📅 Коли виходить «' + lbEsc_(x.title) + '»? Напишіть, наприклад, <b>03.2027</b> або <b>березень</b>.'; }
+};
+/** Нова картка: коротко зберігає книги і, якщо чогось бракує, спершу питає (до 4 запитань). */
+function lbBotCard_(chatId, items, note) {
+  var lean = items.slice(0, 12).map(function (x) {
+    var o = {}; ['title', 'author', 'series', 'part', 'total', 'pub', 'price', 'release', 'avail', 'isbn', 'orig', 'src', 'dup', 'need', 'serWas'].forEach(function (k) { if (x[k] != null && x[k] !== '' && !(Array.isArray(x[k]) && !x[k].length)) o[k] = x[k]; });
+    return o;
+  });
+  var pend = lbBotPend_();
+  var id = String(Date.now()).slice(-8);
+  pend[id] = { items: lean, asked: {}, n: 0, note: note || '', chat: chatId };
+  lbBotPendSave_(pend);
+  lbBotNext_(id);
+}
+function lbBotNext_(id) {
+  var pend = lbBotPend_(), p = pend[id];
+  if (!p) return;
+  if (p.n < 4) {
+    for (var i = 0; i < p.items.length; i++) {
+      var x = p.items[i], need = x.need || [];
+      if (x.dup && x.dup.kind === 'library') continue; // уже є — не мучимо запитаннями
+      for (var j = 0; j < need.length; j++) {
+        var f = need[j];
+        if (p.asked[i + ':' + f] || (f === 'author' ? x.author : f === 'part' ? x.part : x.release)) continue;
+        p.asked[i + ':' + f] = 1; p.n++; p.ask = { i: i, f: f };
+        var kb = [[{ text: f === 'release' ? 'Не знаю' : 'Пропустити', callback_data: 'a:' + id + ':skip' }]];
+        if (f === 'release') kb[0].unshift({ text: 'Вже у продажу', callback_data: 'a:' + id + ':sale' });
+        var r = lbTgApi_('sendMessage', { chat_id: p.chat, parse_mode: 'HTML', text: LB_ASK_[f](x) + '\n<i>Відповідайте на це повідомлення (свайп вліво або «Відповісти»).</i>',
+          reply_markup: { inline_keyboard: kb } });
+        p.q = r && r.result ? r.result.message_id : 0;
+        pend[id] = p; lbBotPendSave_(pend);
+        return;
+      }
+    }
+  }
+  delete p.ask; delete p.q; pend[id] = p; lbBotPendSave_(pend);
+  lbBotShowCard_(id, p);
+}
+function lbBotShowCard_(id, p) {
+  var lines = p.items.map(function (x) {
+    var dup = x.dup ? '\n   ⚠️ ' + (x.dup.kind === 'library' ? 'уже є в бібліотеці' : 'уже в бажанках · ' + lbEsc_(x.dup.status || '')) + ' (за ' + lbEsc_(x.dup.by) + ')' : '';
+    return '📖 <b>' + lbEsc_(x.title) + '</b>' + (x.author ? ' — ' + lbEsc_(x.author) : ' — <i>автор невідомий</i>') +
+      (x.series ? '\n   ' + lbEsc_(x.series) + (x.part ? ' #' + lbEsc_(x.part) : '') + (x.total ? ' з ' + lbEsc_(x.total) : '') + (x.serWas ? ' (як у вашій таблиці)' : '') : '') +
+      [x.pub, x.price ? x.price + ' грн' : '', x.release ? 'реліз ' + lbHuman_(x.release) : '', x.avail].filter(Boolean).map(function (s) { return '\n   ' + lbEsc_(s); }).join('') +
+      (x.src ? '\n   <a href="' + lbEsc_(x.src) + '">джерело</a>' : '') + dup;
+  });
+  var miss = p.items.some(function (x) { return !x.author; });
+  lbTgApi_('sendMessage', { chat_id: p.chat, parse_mode: 'HTML', disable_web_page_preview: true,
+    text: lines.join('\n\n') + (miss ? '\n\n⚠️ Без автора книгу не збережу — допишіть потім у додатку.' : '') + (p.note ? '\n\n' + p.note : ''),
+    reply_markup: { inline_keyboard: [[{ text: '✓ У бажанки', callback_data: 'w:' + id }, { text: '🧾 Замовила', callback_data: 'o:' + id }, { text: '✕', callback_data: 'x:' + id }]] } });
+}
+var LB_MONTHS_ = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'];
+/** «03.2027», «15.03.2027», «2027-03», «березень», «у березні 2027» → YYYY-MM-DD (перше число, якщо дня немає). */
+function lbParseRelease_(t, today) {
+  t = String(t || '').toLowerCase().trim(); today = today || lbToday_();
+  var m;
+  if ((m = t.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/))) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + (m[3] || 1)).slice(-2);
+  if ((m = t.match(/^(?:(\d{1,2})[.\/])?(\d{1,2})[.\/](\d{2,4})$/))) { var y = m[3].length === 2 ? '20' + m[3] : m[3]; return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + (m[1] || 1)).slice(-2); }
+  for (var i = 0; i < 12; i++) {
+    if (t.indexOf(LB_MONTHS_[i]) !== -1) {
+      var ym = t.match(/(20\d{2})/), mm = ('0' + (i + 1)).slice(-2), yr = ym ? ym[1] : today.slice(0, 4);
+      if (!ym && yr + '-' + mm < today.slice(0, 7)) yr = String(Number(yr) + 1);
+      var dm = t.match(/^(\d{1,2})\s/);
+      return yr + '-' + mm + '-' + ('0' + (dm ? dm[1] : 1)).slice(-2);
+    }
+  }
+  return '';
+}
+/** Текстова відповідь на уточнення. true — повідомлення оброблено. */
+function lbBotAnswerAsk_(m) {
+  var pend = lbBotPend_(), qid = m.reply_to_message.message_id, id = null;
+  Object.keys(pend).forEach(function (k) { if (pend[k] && pend[k].q === qid && pend[k].ask) id = k; });
+  if (!id) return false;
+  var p = pend[id], x = p.items[p.ask.i], f = p.ask.f, t = String(m.text).trim();
+  if (/^(не знаю|-|пропустити|нема|немає)$/i.test(t)) return lbBotNext_(id), true;
+  if (f === 'author') x.author = t.slice(0, 120);
+  if (f === 'part') {
+    var ORD = ['перш', 'друг', 'трет', 'четв', 'пʼят', 'шост', 'сьом', 'восьм', 'девʼят', 'десят'], tw = t.toLowerCase().replace(/['’]/g, 'ʼ');
+    ORD.forEach(function (w, i) { if (!/\d/.test(t) && tw.indexOf(w) !== -1) t = String(i + 1); });
+    var n = t.match(/\d+(?:[.,]\d+)?/); if (!n) { lbTgSend_('Напишіть номер тому цифрою, наприклад <b>2</b>.'); delete p.asked[p.ask.i + ':part']; p.n--; pend[id] = p; lbBotPendSave_(pend); return lbBotNext_(id), true; } x.part = n[0].replace(',', '.'); }
+  if (f === 'release') {
+    var r = lbParseRelease_(t);
+    if (!r) { lbTgSend_('Не зрозуміла дату. Напишіть, наприклад, <b>03.2027</b>.'); delete p.asked[p.ask.i + ':release']; p.n--; pend[id] = p; lbBotPendSave_(pend); return lbBotNext_(id), true; }
+    x.release = r; if (!x.avail || x.avail === 'Анонс') x.avail = r > lbToday_() ? (x.avail || 'Анонс') : 'Є у продажу';
+  }
+  pend[id] = p; lbBotPendSave_(pend);
+  lbBotNext_(id);
+  return true;
+}
+/** Кнопки «Не знаю / Пропустити / Вже у продажу» під уточненням. */
+function lbBotAskButton_(q, id, what) {
+  var pend = lbBotPend_(), p = pend[id];
+  lbTgApi_('editMessageReplyMarkup', { chat_id: q.message.chat.id, message_id: q.message.message_id, reply_markup: { inline_keyboard: [] } });
+  if (!p || !p.ask) return lbTgApi_('answerCallbackQuery', { callback_query_id: q.id, text: 'Це запитання вже неактуальне.' });
+  if (what === 'sale') { var x = p.items[p.ask.i]; x.avail = 'Є у продажу'; pend[id] = p; lbBotPendSave_(pend); }
+  lbTgApi_('answerCallbackQuery', { callback_query_id: q.id, text: what === 'sale' ? 'Добре: вже у продажу' : 'Пропускаю' });
+  lbBotNext_(id);
+}
+/** Посилання на сторінку книги в бот. */
+function lbBotLink_(m, url) {
+  var items = lbBookFromUrl_(url);
+  if (!items.length) { lbTgSend_('На сторінці не знайшла книги. Надішліть скриншот або назву.'); return; }
+  lbEnrichItems_(items, 20000);
+  lbBotCard_(m.chat.id, items, '');
+}
+/** Голосове в бот → Gemini (безкоштовний тариф) → картка. */
+function lbBotVoice_(m) {
+  var v = m.voice || m.audio;
+  if (v.file_size && v.file_size > 10 * 1024 * 1024) { lbTgSend_('Голосове задовге — до хвилини-двох вистачить.'); return; }
+  var f = lbTgApi_('getFile', { file_id: v.file_id });
+  if (!f.ok) throw new Error('Телеграм не віддав файл.');
+  var blob = UrlFetchApp.fetch('https://api.telegram.org/file/bot' + lbTgToken_() + '/' + f.result.file_path).getBlob();
+  var mime = String(v.mime_type || 'audio/ogg').replace(/;.*$/, '');
+  var r = lbAiBooks_([{ text: 'Це голосове повідомлення користувачки українською: вона називає книгу(и), які хоче купити або вже замовила. Імена й назви пиши так, як вони звучать українською.' },
+    { inline_data: { mime_type: mime, data: Utilities.base64Encode(blob.getBytes()) } }]);
+  if (r.nokey) { lbTgSend_('Щоб я розуміла голосові, додайте GEMINI_API_KEY у властивості скрипта.'); return; }
+  if (!r.items.length) { lbTgSend_('Не розчула назви книги. Спробуйте ще раз або напишіть текстом.'); return; }
+  lbBotCard_(m.chat.id, r.items, '');
+}
+
+/** Тест (нічого не записує): посилання → картка в журнал. Змініть посилання на своє. */
+function lbTestLink() {
+  var url = 'https://mbooks.com.ua/book/728989-vidmak-lement-vidmy/';
+  try {
+    var items = lbBookFromUrl_(url);
+    lbEnrichItems_(items, 20000);
+    console.log(JSON.stringify(items, null, 1));
+  } catch (e) { console.log('Помилка: ' + e.message); }
+  console.log('Дата «березень» → ' + lbParseRelease_('березень') + ', «03.2027» → ' + lbParseRelease_('03.2027'));
 }
