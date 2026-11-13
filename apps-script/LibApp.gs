@@ -2798,20 +2798,32 @@ function lbSplitAvailApply() {
       p.c.pl = col - 1;
     }
     var rowsN = Math.max(1, sh.getMaxRows() - 1);
-    // спершу випадаючі списки, щоб таблиця не відхилила нові значення
-    var avRange = sh.getRange(2, p.c.av + 1, rowsN, 1), old = null;
-    try { old = sh.getRange(2, p.c.av + 1).getDataValidation(); } catch (e) {}
+    // спершу випадаючі списки, щоб таблиця не відхилила нові значення.
+    // Якщо лист оформлено як «таблицю» з типами стовпців, скрипту не можна міняти список — тоді це робиться вручну.
+    var manual = [];
     var extra = Object.keys(p.unknown);
-    var avRule = (old ? old.copy() : SpreadsheetApp.newDataValidation().setAllowInvalid(true)).requireValueInList(LB_AVAIL_NEW.concat(extra), true).build();
-    avRange.setDataValidation(avRule);
-    sh.getRange(2, p.c.pl + 1, rowsN, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(LB_PLACES, true).setAllowInvalid(true).build());
+    try {
+      var old = null;
+      try { old = sh.getRange(2, p.c.av + 1).getDataValidation(); } catch (e) {}
+      var avRule = (old ? old.copy() : SpreadsheetApp.newDataValidation().setAllowInvalid(true)).requireValueInList(LB_AVAIL_NEW.concat(extra), true).build();
+      sh.getRange(2, p.c.av + 1, rowsN, 1).setDataValidation(avRule);
+    } catch (e) { manual.push('«Наявність»: ' + LB_AVAIL_NEW.join(', ')); }
+    try {
+      sh.getRange(2, p.c.pl + 1, rowsN, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(LB_PLACES, true).setAllowInvalid(true).build());
+    } catch (e) { manual.push('«Де фізично»: ' + LB_PLACES.join(', ')); }
     if (p.n) {
       var curA = sh.getRange(2, p.c.av + 1, p.n, 1).getValues(), curP = sh.getRange(2, p.c.pl + 1, p.n, 1).getValues();
       var nextA = curA.map(function (r, i) { return [p.rows[i] ? p.rows[i].a : r[0]]; });
       var nextP = curP.map(function (r, i) { return [p.rows[i] ? p.rows[i].p : r[0]]; });
-      sh.getRange(2, p.c.av + 1, p.n, 1).setValues(nextA);
-      sh.getRange(2, p.c.pl + 1, p.n, 1).setValues(nextP);
+      try {
+        sh.getRange(2, p.c.pl + 1, p.n, 1).setValues(nextP);
+        sh.getRange(2, p.c.av + 1, p.n, 1).setValues(nextA);
+      } catch (e) {
+        throw new Error('Таблиця не прийняла нові значення (' + (e && e.message ? e.message : e) + '). Спершу вручну додайте варіанти у спадні списки стовпців — ' +
+          (manual.length ? manual.join('; ') : '«Наявність»: ' + LB_AVAIL_NEW.join(', ') + '; «Де фізично»: ' + LB_PLACES.join(', ')) + ' — і запустіть lbSplitAvailApply ще раз.');
+      }
     }
+    if (manual.length) text += '\n\nСпадні списки треба оновити вручну (лист оформлено як таблицю з типами стовпців): ' + manual.join('; ') + '.';
     SpreadsheetApp.flush();
     lbLog_('📦 Етап 2: «Де фізично» окремо від «Наявності»', '', '', text.slice(0, 45000));
     console.log('Готово ✓\n' + text);
