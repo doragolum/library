@@ -306,6 +306,9 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .rvc .ph{display:flex;align-items:center;justify-content:center;text-align:center;color:#fbf6ec;font-weight:600;font-size:12px;padding:8px;box-sizing:border-box}
 .rvc .ph.wait{background:var(--line);color:var(--muted);box-shadow:none}
 .rvc .ob{align-self:flex-start;margin-top:4px}
+.rvown{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.rvown .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.rvown input{min-width:0}
+a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 </style>
 </head>
 <body>
@@ -832,7 +835,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     var sim = similar(b);
     if (sim.length) h += '<div class="card"><h3>Схожі у вас</h3><div class="strip">' + sim.map(function (x) { return covMini(x, bookSub(x)); }).join('') + '</div></div>';
     h += '<table class="kv">' + rows.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>';
-    if (c.cover || c.isbn) h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-action="cover-photo" data-row="' + b.row + '">📷 Сфотографувати обкладинку</button><button class="btn" data-action="find-cover" data-row="' + b.row + '">🔍 ' + (b.cover ? 'Інша обкладинка' : 'Знайти в інтернеті') + '</button>' +
+    if (c.cover || c.isbn) h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-action="find-cover" data-row="' + b.row + '">🔍 ' + (b.cover ? 'Інша обкладинка' : 'Знайти в інтернеті') + '</button>' +
       '<a class="chip" target="_blank" rel="noopener" href="' + googleImg(b) + '">Google Картинки ↗</a><a class="chip" target="_blank" rel="noopener" href="https://www.goodreads.com/search?q=' + encodeURIComponent(b.isbn || b.title + ' ' + b.author) + '">Goodreads ↗</a></div><div id="coverres"></div>';
     openModal(h);
     if (ABOUT[b.row] == null) loadAbouts([b]);
@@ -916,13 +919,13 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
   function coverQueue() {
     var list = S.inLib.filter(function (x) { return !x.cover; }).sort(function (a, b) { return String(a.shelf).localeCompare(String(b.shelf), 'uk', { numeric: true }) || a.author.localeCompare(b.author, 'uk'); });
     modalStack = { fn: coverQueue, args: [] };
-    var h = '<button class="close" data-action="close">×</button><h2>📷 Без обкладинки · ' + list.length + '</h2>' +
-      '<p class="muted small">Найшвидше — сфотографувати свою книгу: покладіть її рівно, щоб обкладинка заповнила кадр. Або «Знайти» — пошук в інтернеті, «Google» — відкрити картинки, скопіювати адресу зображення і вставити в картці книги.</p>';
+    var h = '<button class="close" data-action="close">×</button><h2>🖼 Без обкладинки · ' + list.length + '</h2>' +
+      '<p class="muted small">«Знайти» — відкрити книгу й пошукати в інтернеті, «Google» — відкрити картинки, скопіювати адресу зображення і вставити в картці книги.</p>';
     if (!list.length) h += '<p>Усі книги вже з обкладинками 🎉</p>';
     else h += '<button class="btn p" style="margin-bottom:10px" data-action="rv-start">✨ Спершу спробувати знайти автоматично</button>';
     h += '<div class="list">' + list.slice(0, 150).map(function (x) {
       return '<div class="item cq"><div class="body"><div class="t">' + esc(x.title) + '</div><div class="muted small">' + esc(x.author) + (x.shelf ? ' · ' + esc(x.shelf) : x.avail !== 'бібліотека' ? ' · ' + esc(x.avail) : '') + '</div>' +
-        '<div class="chips" style="margin-top:6px"><button class="chip" data-action="cover-photo" data-row="' + x.row + '">📷 Фото</button><button class="chip" data-book="' + x.row + '">🔍 Знайти</button><a class="chip" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a></div></div></div>';
+        '<div class="chips" style="margin-top:6px"><span class="chip" role="button" style="cursor:pointer" data-book="' + x.row + '">🔍 Відкрити</span><a class="chip" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a></div></div></div>';
     }).join('') + '</div>';
     openModal(h, true);
   }
@@ -930,7 +933,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
   var rv = null;
   function rvRejected() { try { return JSON.parse(localStorage.getItem('lb.rej') || '{}'); } catch (e) { return {}; } }
   function rvList() { var rej = rvRejected(); return S.inLib.filter(function (x) { return (!x.isbn || !x.cover) && !rej[x.author + '|' + x.title]; }); }
-  function rvStart() { rv = { list: rvList(), i: 0, res: {} }; rvFetch(); reviewDialog(); }
+  function rvStart() { nav = []; rv = { list: rvList(), i: 0, res: {} }; rvFetch(); reviewDialog(); }
   function rvFetch() {
     for (var j = rv.i; j < Math.min(rv.list.length, rv.i + 3); j++) (function (x) {
       if (rv.res[x.row]) return;
@@ -946,17 +949,22 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     return wa.filter(function (w) { return nb.indexOf(' ' + w) !== -1; }).length / wa.length >= .6;
   }
   function reviewDialog() {
-    modalStack = { fn: reviewDialog, args: [] };
+    navTo(reviewDialog, [], 'ISBN і обкладинки');
     var x = rv.list[rv.i];
-    var h = '<button class="close" data-action="close">×</button><h2>✨ ISBN і обкладинки</h2>';
-    if (!x) { openModal(h + '<p>Готово! Перевірено всі книги ' + (rv.list.length ? '(' + rv.list.length + ')' : '') + ' 🎉</p><p class="muted small">Тим, для яких нічого не знайшлось, обкладинку можна сфотографувати.</p><button class="btn" data-action="cover-queue">📷 Без обкладинки</button>', true); return; }
+    var h = heads() + '<h2>✨ ISBN і обкладинки</h2>';
+    if (!x) { openModal(h + '<p>Готово! Перевірено всі книги ' + (rv.list.length ? '(' + rv.list.length + ')' : '') + ' 🎉</p><p class="muted small">Для решти обкладинку можна знайти в Google і вставити посиланням.</p><button class="btn" data-action="cover-queue">🖼 Без обкладинки</button>', true); return; }
     var r = rv.res[x.row] || { loading: true };
     h += '<p class="muted small">' + (rv.i + 1) + ' з ' + rv.list.length + '. Порівняйте знахідку зі своєю книгою: та сама назва й автор, українське видання.</p>';
     h += '<div class="rv"><div class="rvc"><div class="lbl">Ваша книга</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
-      '<b>' + esc(x.title) + '</b><span>' + esc(x.author) + '</span><span class="muted">' + esc([x.pub, x.pages ? x.pages + ' стор.' : ''].filter(Boolean).join(' · ')) + '</span></div>';
+      '<b>' + esc(x.title) + '</b><span>' + esc(x.author) + '</span><span class="muted">' + esc([x.pub, x.pages ? x.pages + ' стор.' : ''].filter(Boolean).join(' · ')) + '</span>' +
+      '<span class="chip" role="button" style="align-self:flex-start;margin-top:4px;cursor:pointer" data-book="' + x.row + '">Відкрити книгу ›</span></div>';
+    // своє посилання на обкладинку (і ISBN), якщо знайшли самі
+    var own = '<div class="rvown"><div class="lbl">Знайшли самі?</div><div class="row"><input class="grow" id="rv-url" placeholder="Посилання на картинку https://…" autocomplete="off">' +
+      (!x.isbn && D.cols.isbn ? '<input id="rv-isbn" inputmode="numeric" placeholder="ISBN" style="width:150px">' : '') + '<button class="btn" data-action="rv-url">Зберегти</button></div>' +
+      '<p class="muted small">У Google Картинках відкрийте картинку, натисніть на неї правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і вставте сюди.</p></div>';
     if (r.loading) h += '<div class="rvc"><div class="lbl">Знайдено</div><div class="ph wait">Шукаю…</div></div></div>';
     else if (r.notFound || !(r.isbn || r.cover)) h += '<div class="rvc"><div class="lbl">Знайдено</div><div class="ph wait">Нічого не знайшлось</div></div></div>' +
-      '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-action="cover-photo" data-row="' + x.row + '">📷 Сфотографувати</button><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a><button class="btn p" data-action="rv-skip">Далі ›</button></div>';
+      own + '<div class="row" style="margin-top:12px;flex-wrap:wrap"><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">🔎 Google Картинки ↗</a><button class="btn p" data-action="rv-skip">Далі ›</button></div>';
     else {
       var ok = titleMatch(x.title, r.title || '');
       h += '<div class="rvc"><div class="lbl">Знайдено · ' + esc((r.sources || [])[0] || '') + '</div>' + (r.cover ? '<img referrerpolicy="no-referrer" src="' + esc(r.cover) + '">' : '<div class="ph wait">без обкладинки</div>') +
@@ -967,7 +975,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
       if (!x.cover && r.cover) will.push('обкладинку');
       if (!x.pages && r.pages) will.push('кількість сторінок');
       h += '<p class="muted small" style="margin-top:10px">«Так» збереже: ' + (will.join(', ') || 'нічого нового') + '.</p>';
-      h += '<div class="row" style="flex-wrap:wrap"><button class="btn p" data-action="rv-yes">✓ Так, це вона</button><button class="btn" data-action="rv-no">✗ Ні</button><button class="btn" data-action="rv-skip">Пропустити</button></div>';
+      h += '<div class="row" style="flex-wrap:wrap"><button class="btn p" data-action="rv-yes">✓ Так, це вона</button><button class="btn" data-action="rv-no">✗ Ні</button><button class="btn" data-action="rv-skip">Пропустити</button><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">🔎 Google ↗</a></div>' + own;
     }
     openModal(h, true);
   }
@@ -1016,7 +1024,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     var h = '<div class="pick"><button data-shm="spines" class="' + (fm ? '' : 'on') + '">📚 Корінці</button><button data-shm="covers" class="' + (fm ? 'on' : '') + '">🖼 Обкладинки</button></div>';
     var noCov = S.inLib.filter(function (x) { return !x.cover; }).length;
     var noIsbn = S.inLib.filter(function (x) { return !x.isbn || !x.cover; }).length;
-    if (noIsbn || noCov) h += '<div class="chips" style="margin:0 0 8px">' + (noIsbn ? '<button class="chip a" data-action="rv-start">✨ Знайти ISBN і обкладинки (' + noIsbn + ')</button>' : '') + (noCov ? '<button class="chip" data-action="cover-queue">📷 Без обкладинки: ' + noCov + '</button>' : '') + '</div>';
+    if (noIsbn || noCov) h += '<div class="chips" style="margin:0 0 8px">' + (noIsbn ? '<button class="chip a" data-action="rv-start">✨ Знайти ISBN і обкладинки (' + noIsbn + ')</button>' : '') + (noCov ? '<button class="chip" data-action="cover-queue">🖼 Без обкладинки: ' + noCov + '</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
@@ -2844,6 +2852,17 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     if (a === 'cover-queue') coverQueue();
     if (a === 'rv-start') rvStart();
     if (a === 'rv-skip' && rv) rvNext();
+    if (a === 'rv-url' && rv) {
+      var ux = rv.list[rv.i], uu = (fval('rv-url') || '').trim(), ui = (fval('rv-isbn') || '').replace(/[^0-9Xx]/g, ''), us = {};
+      if (uu) {
+        if (/^data:/i.test(uu)) return toast('Це вбудована мініатюра. Відкрийте картинку на сайті й скопіюйте її адресу (має починатися з https://).', true);
+        if (!/^https?:\/\//i.test(uu)) return toast('Посилання має починатися з https://', true);
+        us.cover = uu;
+      }
+      if (ui) { if (ui.length !== 10 && ui.length !== 13) return toast('ISBN має 10 або 13 цифр', true); us.isbn = ui; }
+      if (!Object.keys(us).length) return toast('Вставте посилання або ISBN', true);
+      rv.i++; rvFetch(); saveSet('library', ux, us);
+    }
     if (a === 'rv-no' && rv) { var rx = rv.list[rv.i], rj = rvRejected(); rj[rx.author + '|' + rx.title] = 1; try { localStorage.setItem('lb.rej', JSON.stringify(rj)); } catch (e) {} rvNext(); }
     if (a === 'rv-yes' && rv) {
       var yx = rv.list[rv.i], yr = rv.res[yx.row] || {}, ys = {};
