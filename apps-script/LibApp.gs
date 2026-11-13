@@ -31,7 +31,8 @@ var LB_TG_MAX_AGE_SEC = 24 * 3600;
 var LB_FIELDS = {
   library: { id: ['Автор', 'Назва книги'], fields: {
     status:  { head: ['Статус'], type: 'list', def: ['прочитано', 'не читала', 'читаю', 'закинула'] },
-    avail:   { head: ['Наявність'], type: 'list', def: ['бібліотека', 'Київ', 'продана', 'подарована', 'позичена', 'на продаж', 'на розподілення'] },
+    avail:   { head: ['Наявність'], type: 'list', def: ['у колекції', 'на продаж', 'на розподілення', 'позичена', 'продана', 'подарована'] },
+    place:   { head: ['Де фізично'], type: 'list', def: ['Роттердам', 'Київ'], optional: true },
     shelf:   { head: ['Де шукати'], type: 'list', def: ['Полиця 1', 'Полиця 2', 'Полиця 3', 'Полиця 4', 'Полиця 5', 'Полиця 6', 'Полиця 7', 'Закрита шафа, полиця 2', 'Закрита шафа, полиця 4'] },
     prio:    { head: ['Пріорітет', 'Пріоритет'], type: 'list', def: ['1', '2', '3', '4'] },
     genre:   { head: ['Жанр'], type: 'list', def: [] },
@@ -334,6 +335,7 @@ function lbReadAll_() {
       finished: g(r, ['Завершена?']),
       translated: g(r, ['Повний переклад укр']),
       avail: g(r, ['Наявність']),
+      place: g(r, F.place.head),
       shelf: g(r, ['Де шукати']),
       prio: g(r, F.prio.head),
       price: lbNum_(g(r, F.price.head)),
@@ -660,7 +662,7 @@ function lbApiAddBook(initData, key, req) {
 
       // поля з перевіркою
       var F = LB_FIELDS.library.fields;
-      ['genre', 'lang', 'genres', 'pages', 'price', 'avail', 'shelf', 'prio', 'isbn', 'cover', 'bought', 'status', 'plan'].forEach(function (f) {
+      ['genre', 'lang', 'genres', 'pages', 'price', 'avail', 'place', 'shelf', 'prio', 'isbn', 'cover', 'bought', 'status', 'plan'].forEach(function (f) {
         if (b[f] === '' || b[f] == null) return;
         var c = lbCol_(head, F[f].head);
         if (c < 0) return; // немає колонки — пропускаємо
@@ -670,7 +672,7 @@ function lbApiAddBook(initData, key, req) {
       lib.appendRow(row);
       var newRow = lib.getLastRow();
       ['bought'].forEach(function (f) { var c = lbCol_(head, F[f].head); if (c >= 0 && row[c]) lib.getRange(newRow, c + 1).setNumberFormat('dd.mm.yyyy'); });
-      lbLog_('➕ Додано з додатку', b.title, b.author, [b.avail, b.shelf, b.prio ? 'пріоритет ' + b.prio : ''].filter(Boolean).join(', '));
+      lbLog_('➕ Додано з додатку', b.title, b.author, [b.avail, b.place, b.shelf, b.prio ? 'пріоритет ' + b.prio : ''].filter(Boolean).join(', '));
 
       // бажанка: прибрати або позначити «В бібліотеці»
       var wishNote = '';
@@ -1998,8 +2000,10 @@ function lbFindText_(q, data) {
   if (!b.length && !w.length && !s.length) return '❌ «' + lbEsc_(q) + '» ніде немає: ні в бібліотеці, ні в бажанках, ні серед проданих.';
   var out = [];
   if (b.length) out.push('✅ <b>У бібліотеці (' + b.length + ')</b>\n' + b.slice(0, 10).map(function (x) {
-    var where = x.avail === 'позичена' ? 'позичена' + (x.lentTo ? ' (' + lbEsc_(x.lentTo) + ')' : '')
-      : x.avail && x.avail !== 'бібліотека' ? lbEsc_(x.avail) + (x.avail === 'Київ' && x.prio ? ', пріоритет ' + lbEsc_(x.prio) : '')
+    var st = lbAvail_(x);
+    var where = st === 'позичена' ? 'позичена' + (x.lentTo ? ' (' + lbEsc_(x.lentTo) + ')' : '')
+      : lbInKyiv_(x) ? 'Київ' + (st !== 'у колекції' ? ', ' + lbEsc_(st) : '') + (x.prio ? ', пріоритет ' + lbEsc_(x.prio) : '')
+      : st !== 'у колекції' ? lbEsc_(st) + (x.shelf ? ', ' + lbEsc_(x.shelf) : '')
       : lbEsc_(x.shelf || 'полицю не вказано');
     return '• <b>' + lbEsc_(x.title) + '</b> — ' + lbEsc_(x.author) + (x.series && x.series !== '-' && x.type === 'Серія' ? ' (' + lbEsc_(x.series) + (x.num ? ' #' + lbEsc_(x.num) : '') + ')' : '') +
       '\n   📍 ' + where + ' · ' + lbEsc_(x.status || '');
@@ -2111,7 +2115,7 @@ function lbWeekText_(data, today, now) {
   var ns = lbNotSent_(data, today);
   var lentLate = data.books.filter(function (b) { return b.avail === 'позичена' && b.lentDue && b.lentDue < today; });
   var onWay = data.wish.filter(function (w) { return w.ttn && ['Відправлено', 'Створено ТТН', 'В дорозі'].indexOf(w.status) !== -1; });
-  var kyivParcel = data.books.filter(function (b) { return b.avail === 'Київ' && b.parcel; });
+  var kyivParcel = data.books.filter(function (b) { return lbInKyiv_(b) && b.parcel; });
 
   var s = '🗓 <b>Тиждень ' + lbHuman_(from).slice(0, 5) + '–' + lbHuman_(to).slice(0, 5) + '</b>\n';
   s += '📖 Прочитано: <b>' + read.length + '</b>' + (read.length ? ' (' + read.reduce(function (a, b) { return a + (b.pages || 0); }, 0) + ' стор.)' : '') + '\n';
@@ -2156,7 +2160,7 @@ function lbMonthText_(data, today, now) {
 }
 
 function lbKyivText_(data) {
-  var k = data.books.filter(function (b) { return b.avail === 'Київ'; });
+  var k = data.books.filter(lbInKyiv_);
   if (!k.length) return 'У Києві книг немає.';
   var groups = {};
   k.forEach(function (b) { var p = b.parcel ? '0' : (b.prio || '9'); (groups[p] = groups[p] || []).push(b); });
@@ -2723,5 +2727,94 @@ function lbBackfillOrderDatesApply() {
     if (p.plan.length) lbLog_('🗓 Дати замовлень (разово)', '', '', t.slice(0, 45000));
     console.log('Готово ✓\n' + t);
     return t;
+  } finally { lock.releaseLock(); }
+}
+
+/* ============================================================
+ * Етап 2. «Де фізично» (Роттердам / Київ) окремо від «Наявності»
+ * Наявність = статус: у колекції · на продаж · на розподілення · позичена · продана · подарована.
+ * Позичена книга лишається там, де була до позичення.
+ * ============================================================ */
+var LB_AVAIL_NEW = ['у колекції', 'на продаж', 'на розподілення', 'позичена', 'продана', 'подарована'];
+var LB_PLACES = ['Роттердам', 'Київ'];
+/** Статус книги: старі «бібліотека» / «Київ» / порожньо → «у колекції». */
+function lbAvail_(b) { var a = lbKey_(b.avail); return !a || a === 'бібліотека' || a === 'київ' ? 'у колекції' : String(b.avail).trim(); }
+/** Де книга фізично: з колонки «Де фізично», а до перенесення — зі старого «Київ». */
+function lbPlace_(b) { return b.place || (lbKey_(b.avail) === 'київ' ? 'Київ' : 'Роттердам'); }
+function lbInKyiv_(b) { var a = lbAvail_(b); return lbPlace_(b) === 'Київ' && a !== 'продана' && a !== 'подарована'; }
+
+function lbSplitPlan_(ss) {
+  var sh = ss.getSheetByName(LB_SHEETS.library);
+  var lastCol = sh.getLastColumn(), n = Math.max(0, sh.getLastRow() - 1);
+  var head = sh.getRange(1, 1, 1, lastCol).getDisplayValues()[0].map(lbKey_);
+  var c = { a: lbCol_(head, ['Автор']), t: lbCol_(head, ['Назва книги']), av: lbCol_(head, ['Наявність']), pl: lbCol_(head, ['Де фізично']) };
+  if (c.av < 0) throw new Error('Не знайшла колонку «Наявність».');
+  var vals = n ? sh.getRange(2, 1, n, lastCol).getDisplayValues() : [];
+  var avF = n ? sh.getRange(2, c.av + 1, n, 1).getFormulas().some(function (r) { return r[0]; }) : false;
+  if (avF) throw new Error('У колонці «Наявність» є формули — перенесення зупинено.');
+  var counts = {}, unknown = {}, rows = [];
+  vals.forEach(function (r, i) {
+    var oldA = String(r[c.av]).trim(), oldP = c.pl >= 0 ? String(r[c.pl]).trim() : '';
+    if (!String(r[c.t]).trim() && !String(r[c.a]).trim()) { rows.push(null); return; }
+    var k = lbKey_(oldA), na, np;
+    if (k === 'київ') { na = 'у колекції'; np = 'Київ'; }
+    else if (!k || k === 'бібліотека') { na = 'у колекції'; np = oldP || 'Роттердам'; }
+    else { na = oldA; np = oldP || 'Роттердам'; if (LB_AVAIL_NEW.indexOf(oldA) === -1) unknown[oldA] = (unknown[oldA] || 0) + 1; }
+    if (oldP && k === 'київ' && oldP !== 'Київ') np = 'Київ';
+    var key = '«' + (oldA || 'порожньо') + '» → ' + na + ' + ' + np;
+    if (na !== oldA || np !== oldP) counts[key] = (counts[key] || 0) + 1;
+    rows.push({ a: na, p: np, changed: na !== oldA || np !== oldP });
+  });
+  return { sh: sh, c: c, n: n, rows: rows, counts: counts, unknown: unknown };
+}
+function lbSplitText_(p) {
+  var keys = Object.keys(p.counts).sort(function (a, b) { return p.counts[b] - p.counts[a]; });
+  var total = keys.reduce(function (s, k) { return s + p.counts[k]; }, 0);
+  var out = [(p.c.pl < 0 ? 'Буде додано колонку «Де фізично» в кінець «Облік бібліотеки». ' : '') + 'Зміниться рядків: ' + total + '.'];
+  keys.forEach(function (k) { out.push('  ' + k + ': ' + p.counts[k]); });
+  out.push('Випадаючі списки: «Наявність» → ' + LB_AVAIL_NEW.join(' · ') + '; «Де фізично» → ' + LB_PLACES.join(' · ') + '.');
+  var u = Object.keys(p.unknown);
+  if (u.length) out.push('', 'Незвичні значення «Наявності» — лишаю як є, перевірте: ' + u.map(function (k) { return '«' + k + '» (' + p.unknown[k] + ')'; }).join(', '));
+  return out.join('\n');
+}
+/** Крок 1 (нічого не змінює): що зміниться при розділенні «Наявності». */
+function lbSplitAvailPreview() {
+  var t = lbSplitText_(lbSplitPlan_(lbSs_()));
+  console.log(t);
+  return t;
+}
+/** Крок 2 (після «так»): додає «Де фізично», переносить «Київ», оновлює випадаючі списки. Усе — в «Лог». */
+function lbSplitAvailApply() {
+  var ss = lbSs_();
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Таблиця зараз оновлюється. Спробуйте за хвилину.');
+  try {
+    var p = lbSplitPlan_(ss), sh = p.sh;
+    var text = lbSplitText_(p);
+    if (p.c.pl < 0) {
+      var col = sh.getLastColumn() + 1;
+      if (sh.getMaxColumns() < col) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
+      sh.getRange(1, col).setValue('Де фізично');
+      p.c.pl = col - 1;
+    }
+    var rowsN = Math.max(1, sh.getMaxRows() - 1);
+    // спершу випадаючі списки, щоб таблиця не відхилила нові значення
+    var avRange = sh.getRange(2, p.c.av + 1, rowsN, 1), old = null;
+    try { old = sh.getRange(2, p.c.av + 1).getDataValidation(); } catch (e) {}
+    var extra = Object.keys(p.unknown);
+    var avRule = (old ? old.copy() : SpreadsheetApp.newDataValidation().setAllowInvalid(true)).requireValueInList(LB_AVAIL_NEW.concat(extra), true).build();
+    avRange.setDataValidation(avRule);
+    sh.getRange(2, p.c.pl + 1, rowsN, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(LB_PLACES, true).setAllowInvalid(true).build());
+    if (p.n) {
+      var curA = sh.getRange(2, p.c.av + 1, p.n, 1).getValues(), curP = sh.getRange(2, p.c.pl + 1, p.n, 1).getValues();
+      var nextA = curA.map(function (r, i) { return [p.rows[i] ? p.rows[i].a : r[0]]; });
+      var nextP = curP.map(function (r, i) { return [p.rows[i] ? p.rows[i].p : r[0]]; });
+      sh.getRange(2, p.c.av + 1, p.n, 1).setValues(nextA);
+      sh.getRange(2, p.c.pl + 1, p.n, 1).setValues(nextP);
+    }
+    SpreadsheetApp.flush();
+    lbLog_('📦 Етап 2: «Де фізично» окремо від «Наявності»', '', '', text.slice(0, 45000));
+    console.log('Готово ✓\n' + text);
+    return text;
   } finally { lock.releaseLock(); }
 }

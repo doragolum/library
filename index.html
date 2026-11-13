@@ -482,7 +482,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (x.cover) return '<img class="' + (cls || 'thumb') + '" loading="lazy" referrerpolicy="no-referrer" src="' + esc(x.cover) + '" alt="">';
     return '<div class="ph' + (cls === 'cover' ? '' : '') + '" style="background:' + genreColor(x.genre) + '">' + esc(x.title).slice(0, 60) + '</div>';
   }
-  function atHome(b) { return !b.avail || low(b.avail) === 'бібліотека'; }
+  // Етап 2: «Де фізично» (Роттердам / Київ) окремо від «Наявності» (у колекції, на продаж, позичена…)
+  var HOME_ST = 'у колекції';
+  function placeOf(b) { return b.place || (b.avail === 'Київ' ? 'Київ' : 'Роттердам'); }
+  function stOf(b) { var a = low(b.avail); return !a || a === 'бібліотека' || a === 'київ' ? HOME_ST : b.avail; }
+  // удома = у Роттердамі й у колекції (не позичена, не на продаж)
+  function atHome(b) { return placeOf(b) === 'Роттердам' && low(stOf(b)) === HOME_ST; }
+  function inKyiv(b) { return placeOf(b) === 'Київ' && GONE.indexOf(low(b.avail)) === -1; }
   function isRead(b) { return low(b.status) === 'прочитано'; }
   function lk(kind, arg, text) { return arg ? '<a class="link" data-go="' + esc(kind + '|' + arg) + '">' + esc(text == null ? arg : text) + '</a>' : esc(text || ''); }
   function numTxt(n) { return String(n).replace('.', ','); }
@@ -636,6 +642,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function derive(d) {
     var s = {};
     s.inLib = d.books.filter(function (b) { return GONE.indexOf(low(b.avail)) === -1; });
+    d.books.forEach(function (b) { b.place = placeOf(b); b.avail = stOf(b); });
     d.books.forEach(function (b) { b._q = norm([b.title, b.author, b.series, b.pub, b.isbn].join(' ')); b._g = uniq([b.genre].concat(String(b.genres).split(/\s*,\s*/))); b._t = tagList(b.tropes); b._m = tagList(b.moods); });
     d.wish.forEach(function (w) { w._q = norm([w.title, w.author, w.series, w.pub, w.order].join(' ')); });
     d.sold.forEach(function (x) { x._q = norm([x.title, x.author, x.series].join(' ')); });
@@ -723,7 +730,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       reading: ['Зараз читаю', lib.filter(function (b) { return low(b.status) === 'читаю'; })],
       dropped: ['Закинула', lib.filter(function (b) { return low(b.status) === 'закинула'; })],
       lent: ['Позичені', lib.filter(function (b) { return low(b.avail) === 'позичена'; })],
-      kyiv: ['У Києві', lib.filter(function (b) { return b.avail === 'Київ'; })],
+      kyiv: ['У Києві', lib.filter(inKyiv)],
       free: ['🎁 Акційні: за 0 або 1 грн', lib.filter(isPromo)],
       noprice: ['Без ціни', lib.filter(function (b) { return b.price == null; })],
       trope: ['Троп: ' + arg, lib.filter(function (b) { return (b._t || []).indexOf(arg) !== -1; })],
@@ -739,6 +746,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       author: ['Автор: ' + arg, lib.filter(function (b) { return b.author === arg; })],
       pub: ['Видавництво: ' + arg, lib.filter(function (b) { return (b.pub || '—') === arg; })],
       place: ['Наявність: ' + arg, lib.filter(function (b) { return (b.avail || '—') === arg; })],
+      where: ['Де фізично: ' + arg, lib.filter(function (b) { return placeOf(b) === arg; })],
       status: ['Статус: ' + arg, lib.filter(function (b) { return low(b.status) === arg; })],
       site: ['Сайт: ' + arg, null, D.wish.filter(function (w) { return site(w) === arg; })],
       year: ['Прочитано у ' + arg + ' році', D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === arg; })],
@@ -787,7 +795,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- Книги ---------- */
   var FILTERS = [
     ['genre', 'Жанр'], ['author', 'Автор'], ['series', 'Серія'], ['pub', 'Видавництво'], ['status', 'Статус читання'],
-    ['avail', 'Наявність'], ['shelf', 'Полиця'], ['lang', 'Мова'], ['size', 'Обсяг'], ['rating', 'Оцінка']
+    ['place', 'Де фізично'], ['avail', 'Наявність'], ['shelf', 'Полиця'], ['lang', 'Мова'], ['size', 'Обсяг'], ['rating', 'Оцінка']
   ];
   function filterOptions(key) {
     if (key === 'genre') return sortUk(uniq([].concat.apply([], D.books.map(function (b) { return b._g; }))));
@@ -843,7 +851,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="row"><input class="grow" type="search" data-input="bq" placeholder="Пошук: назва, автор, серія, видавництво" value="' + esc(view.q) + '">' +
       (WIDE ? '<div class="pick" style="margin:0"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '<button class="tbtn" data-action="bmore-toggle" aria-label="Вигляд">⋯</button>') + '</div>' +
       (!WIDE && view.bookMoreOpen ? '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Вигляд:</span><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '');
-    var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['avail', 'Київ'], ['avail', 'позичена']]
+    var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Київ'], ['avail', 'позичена']]
       .concat(topList(count(S.inLib, function (b) { return b.genre; }), 6).map(function (r) { return ['genre', r[0]]; }));
     var chipKey = {}; chips.forEach(function (c) { chipKey[c[0] + '|' + c[1]] = 1; });
     var names = {}; FILTERS.forEach(function (f) { names[f[0]] = f[1]; });
@@ -872,9 +880,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function whereText(b) {
     var a = low(b.avail);
     if (a === 'позичена') return '🤝 позичена' + (b.lentTo ? ': ' + esc(b.lentTo) : ' · кому?');
-    if (b.avail === 'Київ') return '🏠 Київ' + (b.prio ? ' · пріоритет ' + esc(b.prio) : '') + (b.parcel ? ' · ✈️ ' + esc(b.parcel) : '');
-    if (b.shelf) return '📍 ' + esc(b.shelf);
-    if (b.avail && a !== 'бібліотека') return '📍 ' + esc(b.avail);
+    var stTxt = a && a !== HOME_ST ? ' · ' + esc(b.avail) : '';
+    if (placeOf(b) === 'Київ') return '🏠 Київ' + stTxt + (b.prio ? ' · пріоритет ' + esc(b.prio) : '') + (b.parcel ? ' · ✈️ ' + esc(b.parcel) : '');
+    if (stTxt && GONE.indexOf(a) !== -1) return '📍 ' + esc(b.avail);
+    if (b.shelf) return '📍 ' + esc(b.shelf) + stTxt;
+    if (stTxt) return '📍 ' + esc(b.avail);
     return '📍 полицю не вказано';
   }
   function bookItem(b) {
@@ -923,10 +933,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (i !== -1) h += '<div class="prevnext">' + (neighbour(list[i - 1], -1, si) || '<span class="grow"></span>') + (neighbour(list[i + 1], 1, si) || '<span class="grow"></span>') + '</div>';
     }
     h += '<div class="edits">' + editSelect('library', b, 'status', 'Статус') + editSelect('library', b, 'shelf', 'Полиця') + editSelect('library', b, 'avail', 'Наявність') +
-      (b.avail === 'Київ' ? editSelect('library', b, 'prio', 'Пріоритет передачі') : '') + (c.plan && !isRead(b) ? planSelect(b) : '') + '</div>';
+      (c.place ? editSelect('library', b, 'place', 'Де фізично') : '') +
+      (inKyiv(b) ? editSelect('library', b, 'prio', 'Пріоритет передачі') : '') + (c.plan && !isRead(b) ? planSelect(b) : '') + '</div>';
     var lendBtn = c.lentTo && low(b.avail) !== 'позичена' && atHome(b) ? '<button class="btn" data-action="lend" data-row="' + b.row + '">🤝 Позичити</button>' : '';
     h += '<div class="row" style="margin:-4px 0 12px;flex-wrap:wrap">' + (low(b.status) === 'читаю' && c.page ? '<button class="btn" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка' + (b.page ? ': с. ' + b.page : '') + '</button>' : '') +
-      '<button class="btn" data-action="edit-book" data-row="' + b.row + '">✎ Редагувати</button>' + lendBtn + (b.avail === 'Київ' ? '<button class="btn" data-action="got-kyiv" data-row="' + b.row + '">✈️ Отримала з Києва</button>' : '') + '</div>';
+      '<button class="btn" data-action="edit-book" data-row="' + b.row + '">✎ Редагувати</button>' + lendBtn + (inKyiv(b) ? '<button class="btn" data-action="got-kyiv" data-row="' + b.row + '">✈️ Отримала з Києва</button>' : '') + '</div>';
     if (c.lentTo && low(b.avail) === 'позичена') {
       h += '<div class="note">🤝 Позичена' + (b.lentTo ? ': <b>' + esc(b.lentTo) + '</b>' : '') + (b.lentOn ? ', з ' + dmy(b.lentOn) : '') + (b.lentDue ? ', повернути до <b>' + dmy(b.lentDue) + '</b>' + (b.lentDue < D.today ? ' <span class="chip b">прострочено</span>' : '') : '') +
         '<div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn p" data-action="returned" data-row="' + b.row + '">Повернули</button><button class="btn" data-action="lend-edit" data-row="' + b.row + '">' + (b.lentTo ? '✎ Змінити' : '✎ Вписати, кому') + '</button></div></div>';
@@ -1046,7 +1057,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     shelfDialog('✈️ Отримала з Києва', books, function (shelf) {
       closeModal();
       saveMany(books.map(function (b) {
-        var set = { avail: 'бібліотека', prio: '' };
+        var set = { place: 'Роттердам', prio: '' };
         if (shelf) set.shelf = shelf;
         if (D.cols.parcel) set.parcel = '';
         return { kind: 'library', item: b, set: set };
@@ -1074,7 +1085,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!list.length) h += '<p>Усі книги вже з обкладинками 🎉</p>';
     else h += '<button class="btn p" style="margin-bottom:10px" data-action="vf-start" data-kind="library">🔎 Переглянути по черзі</button>';
     h += '<div class="list">' + list.slice(0, 150).map(function (x) {
-      return '<div class="item cq"><div class="body"><div class="t">' + esc(x.title) + '</div><div class="muted small">' + esc(x.author) + (x.shelf ? ' · ' + esc(x.shelf) : x.avail !== 'бібліотека' ? ' · ' + esc(x.avail) : '') + '</div>' +
+      return '<div class="item cq"><div class="body"><div class="t">' + esc(x.title) + '</div><div class="muted small">' + esc(x.author) + (x.shelf ? ' · ' + esc(x.shelf) : x.avail !== HOME_ST ? ' · ' + esc(x.avail) : '') + '</div>' +
         '<div class="chips" style="margin-top:6px"><span class="chip" role="button" style="cursor:pointer" data-book="' + x.row + '">🔍 Відкрити</span><a class="chip" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a></div></div></div>';
     }).join('') + '</div>';
     openModal(h, true);
@@ -1266,7 +1277,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var home = {}, away = {};
     S.inLib.forEach(function (b) {
       if (atHome(b)) { var k = b.shelf || 'Без полиці'; (home[k] = home[k] || []).push(b); }
-      else { var a = b.avail; (away[a] = away[a] || []).push(b); }
+      else { var a = inKyiv(b) ? 'Київ' : b.avail; (away[a] = away[a] || []).push(b); }
     });
     var srt = function (a, b) { return a.author.localeCompare(b.author, 'uk') || a.series.localeCompare(b.series, 'uk') || (partNum(a.num) || 0) - (partNum(b.num) || 0); };
     var fm = view.shelfMode === 'covers';
@@ -1548,7 +1559,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 
   /* ---------- Київ ---------- */
   VIEWS.kyiv = function () {
-    var k = S.inLib.filter(function (b) { return b.avail === 'Київ'; });
+    var k = S.inLib.filter(inKyiv);
     var c = D.cols;
     var inList = k.filter(function (b) { return b.parcel === 'в списку'; }), onWay = k.filter(function (b) { return b.parcel === 'в дорозі'; });
     var rest = k.filter(function (b) { return !b.parcel; });
@@ -1704,7 +1715,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!list.length) return '';
     var segs = function (u) { var h = ''; for (var i = 0; i < Math.min(u.total, 12); i++) h += '<i style="flex:1;height:6px;border-radius:3px;background:' + (i < u.read ? 'var(--accent)' : 'var(--line)') + '"></i>'; return '<div style="display:flex;gap:3px;margin:4px 0">' + h + '</div>'; };
     return '<div class="card"><h3>' + (homeOnly ? 'Можна продовжити зараз' : 'Недочитані серії') + ' <span class="muted">· ' + list.length + '</span></h3>' + (homeOnly ? '<p class="muted small" style="margin:-4px 0 8px">Серії, де наступний том уже у вас на полиці.</p>' : '') + '<div class="list">' + list.slice(0, limit || 50).map(function (u) {
-      var where = u.b ? (atHome(u.b) ? '<span style="color:var(--ok)">у вас' + (u.b.shelf ? ', ' + esc(u.b.shelf) : '') + '</span>' : u.b.avail === 'Київ' ? '<span style="color:var(--warn)">у Києві</span>' : esc(u.b.avail || ''))
+      var where = u.b ? (atHome(u.b) ? '<span style="color:var(--ok)">у вас' + (u.b.shelf ? ', ' + esc(u.b.shelf) : '') + '</span>' : inKyiv(u.b) ? '<span style="color:var(--warn)">у Києві</span>' : esc(u.b.avail || ''))
         : u.w ? '<span style="color:var(--accent)">у бажанках · ' + esc(u.w.status) + '</span>' : '<span class="muted">немає</span>';
       var nextT = u.b ? u.b.title : u.w ? u.w.title : '#' + u.n;
       return '<div class="item"' + (u.b ? ' data-book="' + u.b.row + '"' : u.w ? ' data-wish="' + u.w.row + '"' : '') + '>' + (u.b ? cover(u.b) : '') + '<div class="body"><b data-go="series|' + esc(u.x.name) + '">' + esc(u.x.name) + '</b>' + segs(u) +
@@ -1949,7 +1960,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     h += '<div class="card"><h3>На які видавництва йде найбільше</h3>' + hbars(Object.keys(pubs).map(function (k) { return pubs[k]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 12), function (v, r) { return money(v) + ' · ' + r[2]; }, 'pub') + '</div>';
     var places = {};
     lib.forEach(function (b) { var k = b.avail || '—'; places[k] = places[k] || [k, 0]; places[k][1] += b.price || 0; });
-    h += '<div class="card"><h3>Вартість за місцем</h3>' + hbars(Object.keys(places).map(function (k) { return places[k]; }).sort(function (a, b) { return b[1] - a[1]; }), money, 'place') + '</div>';
+    var wheres = {};
+    lib.forEach(function (b) { var k = placeOf(b); wheres[k] = wheres[k] || [k, 0]; wheres[k][1] += b.price || 0; });
+    var byVal = function (m) { return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b[1] - a[1]; }); };
+    h += '<div class="card"><h3>Вартість: де фізично</h3>' + hbars(byVal(wheres), money, 'where') + '<h3 style="margin-top:12px">Вартість за статусом</h3>' + hbars(byVal(places), money, 'place') + '</div>';
     var serSpend = seriesSpend();
     if (serSpend.length) h += '<div class="card"><h3>Серії за витратами</h3><p class="muted small">Скільки ви вже витратили на кожну серію. Натисніть — побачите книги й суму.</p>' +
       hbars(serSpend.slice(0, 12).map(function (r) { return [r.name, r.sum, r.n]; }), function (v, r) { return money(v) + ' · ' + r[2] + ' кн.'; }, 'sercost') +
@@ -2073,7 +2087,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       author: fval('f-author'), title: fval('f-title'), type: fval('f-series') && fval('f-series') !== '-' ? 'Серія' : 'Одиночна', series: fval('f-series'), num: fval('f-num'), total: fval('f-total'),
       pub: fval('f-pub'), genre: fval('f-genre'), genres: fval('f-genres'), pages: fval('f-pages'), lang: fval('f-lang'), price: fval('f-price'),
       status: fval('f-status'), isbn: D.cols.isbn ? fval('f-isbn') : '', cover: D.cols.cover ? (fval('f-cover') || addState.cover || '') : '', bought: D.cols.bought ? fval('f-bought') : '',
-      avail: where === 'kyiv' ? 'Київ' : 'бібліотека', shelf: where === 'home' ? fval('f-shelf') : '', prio: where === 'kyiv' ? fval('f-prio') : ''
+      avail: HOME_ST, place: where === 'kyiv' ? 'Київ' : 'Роттердам', shelf: where === 'home' ? fval('f-shelf') : '', prio: where === 'kyiv' ? fval('f-prio') : ''
     };
     if (book.bought) book.bought = dmy(book.bought);
     if (!book.author || !book.title) { err.innerHTML = '<p class="msg small">Заповніть автора і назву.</p>'; return; }
@@ -2763,7 +2777,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (st !== 'прочитано' && D.cols.plan) h += btn('plan-dlg', '📅 ' + (b.plan ? 'У плані на ' + MONTHS_ON[mIdx(b.plan)] + ' — перенести' : 'Запланувати на місяць'));
     if (low(b.avail) === 'позичена') h += btn('returned', '↩️ Повернули');
     else if (atHome(b) && D.cols.lentTo) h += btn('lend', '🤝 Позичити');
-    if (b.avail === 'Київ') h += btn('got-kyiv', '✈️ Отримала з Києва');
+    if (inKyiv(b)) h += btn('got-kyiv', '✈️ Отримала з Києва');
     else if (atHome(b)) h += btn('qm-kyiv', '🏠 Перенести в «Київ»');
     if (b.series && b.series !== '-') h += btn('go:series|' + b.series, '📚 Серія «' + esc(b.series) + '»');
     h += btn('go:author|' + b.author, '👤 ' + esc(b.author));
@@ -3219,7 +3233,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var sh = g.where === 'home' ? (((suggestShelf(b) || {}).shelf) || b.shelf || '') : '';
         var book = { author: b.author, title: b.title, type: b.type, series: b.series, num: b.num, total: b.total, pub: b.pub, genre: b.genre || '', genres: b.genres || '', pages: '', lang: b.lang || 'українська',
           price: b.price == null ? '' : b.price, status: 'не читала', isbn: D.cols.isbn ? (w.isbn || '') : '', cover: D.cols.cover ? (b.cover || '') : '', bought: D.cols.bought ? dmy(b.bought || D.today) : '',
-          avail: g.where === 'kyiv' ? 'Київ' : 'бібліотека', shelf: sh, prio: '' };
+          avail: HOME_ST, place: g.where === 'kyiv' ? 'Київ' : 'Роттердам', shelf: sh, prio: '' };
         return api('lbApiAddBook', { book: book, wish: { row: w.row, author: w.author, title: w.title }, removeWish: true, force: false }).then(function (res) {
           g.done[i] = res.duplicate ? { ok: false, msg: 'Уже є в бібліотеці (рядок ' + res.row + ') — пропустила' } : { ok: true, msg: '✓ ' + [book.genre, sh ? sh : (g.where === 'kyiv' ? 'Київ' : 'без полиці')].filter(Boolean).join(' · ') };
           if (res.duplicate) { g.done[i].ok = true; g.done[i].dup = true; }
@@ -3243,7 +3257,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function gotPicker() {
     nav = []; modalStack = null;
     var list = gotCandidates();
-    var parcel = S.inLib.filter(function (b) { return b.avail === 'Київ' && b.parcel === 'в дорозі'; });
+    var parcel = S.inLib.filter(function (b) { return inKyiv(b) && b.parcel === 'в дорозі'; });
     var h = '<button class="close" data-action="close">×</button><h2>📦 Що отримали?</h2>';
     if (parcel.length) h += '<div class="card"><h3>✈️ Посилка з Києва · ' + parcel.length + ' кн.</h3><button class="btn p" data-action="parcel-got">Отримала посилку</button></div>';
     if (!list.length && !parcel.length) h += '<p class="muted">Немає замовлених книг, які чекають. Щоб додати книгу, якої не було в бажанках, натисніть «＋ Додати книгу» вгорі.</p>';
@@ -3643,7 +3657,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     }
     if (a === 'about-toggle') act.classList.toggle('clip');
     if (a === 'qm-start' && b) { if (t.closest('.qm')) closeModal(); onStatusChange(b, 'читаю'); }
-    if (a === 'qm-kyiv' && b) { closeModal(); saveSet('library', b, { avail: 'Київ', shelf: '' }); }
+    if (a === 'qm-kyiv' && b) { closeModal(); saveSet('library', b, { place: 'Київ', shelf: '' }); }
     if (a === 'wish-add') {
       var wd = act.dataset;
       var wreq = { series: wd.series, part: wd.n, title: wd.title || (wd.series + ' #' + numTxt(wd.n)), author: wd.author, pub: wd.pub, total: wd.total };
@@ -3799,7 +3813,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     }
     if (a === 'returned' && b) {
       if (t.closest('.qm')) closeModal();
-      var rs = { avail: 'бібліотека', lentTo: '' };
+      var rs = { avail: HOME_ST, lentTo: '' };
       if (D.cols.lentOn) rs.lentOn = '';
       if (D.cols.lentDue) rs.lentDue = '';
       saveSet('library', b, rs);
@@ -3826,8 +3840,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       selUpdate();
     }
     if (a === 'parcel-remove' && b) saveSet('library', b, { parcel: '' });
-    if (a === 'parcel-sent') saveMany(S.inLib.filter(function (x) { return x.avail === 'Київ' && x.parcel === 'в списку'; }).map(function (x) { return { kind: 'library', item: x, set: { parcel: 'в дорозі' } }; }));
-    if (a === 'parcel-got') gotFromKyiv(S.inLib.filter(function (x) { return x.avail === 'Київ' && x.parcel === 'в дорозі'; }));
+    if (a === 'parcel-sent') saveMany(S.inLib.filter(function (x) { return inKyiv(x) && x.parcel === 'в списку'; }).map(function (x) { return { kind: 'library', item: x, set: { parcel: 'в дорозі' } }; }));
+    if (a === 'parcel-got') gotFromKyiv(S.inLib.filter(function (x) { return inKyiv(x) && x.parcel === 'в дорозі'; }));
     if (a === 'find-cover' && b) findCover(b);
     if (a === 'cover-photo' && b) coverPhoto(b);
     if (a === 'cover-queue') coverQueue();
@@ -3943,7 +3957,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (p[0] === 'library' && p[1] === 'status') return onStatusChange(item, t.value, t);
       if (p[0] === 'library' && p[1] === 'avail' && low(t.value) === 'позичена' && D.cols.lentTo) { nav = []; return lendDialog(item); }
       var set = {}; set[p[1]] = t.value;
-      if (p[0] === 'library' && p[1] === 'avail' && t.value !== 'Київ' && item.prio) set.prio = '';
+      if (p[0] === 'library' && p[1] === 'place' && t.value !== 'Київ' && item.prio) set.prio = '';
       saveSet(p[0], item, set);
     }
   });
