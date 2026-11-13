@@ -357,6 +357,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function money(n) { return n == null ? '—' : Math.round(n).toLocaleString('uk-UA').replace(/,/g, ' ') + ' грн'; }
   function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
+  function isPromo(b) { return b.price === 0 || b.price === 1; }
   function dmy(iso) { if (!iso) return ''; var p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
   function addDays(iso, n) { var p = iso.split('-'); var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
   function daysBetween(a, b) { var pa = a.split('-'), pb = b.split('-'); return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 864e5); }
@@ -551,7 +552,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     s.gcol = {};
     topList(count(s.inLib, function (b) { return b.genre; }), PALETTE.length).forEach(function (r, i) { s.gcol[r[0]] = PALETTE[i]; });
 
-    var priced = s.inLib.filter(function (b) { return b.price > 0; });
+    var priced = s.inLib.filter(function (b) { return b.price > 1; });
     s.avg = priced.length ? priced.reduce(function (a, b) { return a + b.price; }, 0) / priced.length : 0;
     s.avgPub = {};
     var pubSum = {}, pubCnt = {};
@@ -625,7 +626,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       dropped: ['Закинула', lib.filter(function (b) { return low(b.status) === 'закинула'; })],
       lent: ['Позичені', lib.filter(function (b) { return low(b.avail) === 'позичена'; })],
       kyiv: ['У Києві', lib.filter(function (b) { return b.avail === 'Київ'; })],
-      free: ['Безкоштовні (акції)', lib.filter(function (b) { return b.price === 0; })],
+      free: ['🎁 Акційні: за 0 або 1 грн', lib.filter(isPromo)],
       noprice: ['Без ціни', lib.filter(function (b) { return b.price == null; })],
       sold: ['Продані', null, D.sold],
       ordered: ['Замовлено, ще не в бібліотеці', null, D.wish.filter(function (w) { return ORDERED.indexOf(w.status) !== -1; })],
@@ -799,7 +800,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var rows = [
       ['Автор', lk('author', b.author)], ['Серія', serTxt], ['Видавництво', lk('pub', b.pub)], ['Жанр', b._g.map(function (g) { return lk('genre', g); }).join(', ')],
       ['Сторінок', esc(b.pages || '')], ['Мова', lk('lang', b.lang)], ['Серія завершена', isSer ? esc(b.finished) : ''], ['Повний переклад укр', isSer ? esc(b.translated) : ''],
-      ['Ціна', b.price === 0 ? 'безкоштовно (акція)' : b.price != null ? money(b.price) : ''], ['Дата покупки', dmy(b.bought)], ['ISBN', esc(b.isbn)], ['Рядок у таблиці', b.row]
+      ['Ціна', b.price === 0 ? 'безкоштовно (акція) 🎁' : b.price === 1 ? '1 грн (акція) 🎁' : b.price != null ? money(b.price) : ''], ['Дата покупки', dmy(b.bought)], ['ISBN', esc(b.isbn)], ['Рядок у таблиці', b.row]
     ].filter(function (r) { return r[1] !== '' && r[1] != null && r[1] !== '—'; });
     var h = heads();
     h += '<div class="bhero"><div class="bg" style="' + (b.cover ? 'background-image:url(&quot;' + esc(b.cover) + '&quot;)' : 'background:' + genreColor(b.genre)) + '"></div><div class="bookhead">' +
@@ -1322,7 +1323,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- Фінанси ---------- */
   VIEWS.money = function () {
     var lib = S.inLib, sum = function (arr) { return arr.reduce(function (a, b) { return a + (b.price || 0); }, 0); };
-    var free = lib.filter(function (b) { return b.price === 0; }), noPrice = lib.filter(function (b) { return b.price == null; });
+    var free = lib.filter(isPromo), noPrice = lib.filter(function (b) { return b.price == null; });
     var unread = lib.filter(function (b) { return low(b.status) === 'не читала'; });
     var ordered = D.wish.filter(function (w) { return ORDERED.indexOf(w.status) !== -1; });
     var want = D.wish.filter(function (w) { return w.status === 'Хочу купити'; }), wantPriced = want.filter(function (w) { return w.price != null; });
@@ -2667,8 +2668,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     return rec.length ? recCard('🏅 Ще рекорди', rec) : '';
   }
   function moneyRecords() {
-    // ціни 1–19 грн — схоже на позначки, а не справжню ціну, тож для рекордів їх не беремо
-    var lib = S.inLib, paid = lib.filter(function (b) { return b.price >= 20; }), paged = lib.filter(function (b) { return b.pages > 0; });
+    // 0 і 1 грн — книги з акцій, для них окремий блок «🎁 Майже даром»
+    var lib = S.inLib, paid = lib.filter(function (b) { return b.price > 1; }), paged = lib.filter(function (b) { return b.pages > 0; });
     var pp = paid.filter(function (b) { return b.pages > 0; }).map(function (b) { return { b: b, v: b.price / b.pages }; });
     var by = function (arr, f, dir) { return arr.slice().sort(function (a, b) { return dir * (f(a) - f(b)); })[0]; };
     var rec = [];
@@ -2681,12 +2682,21 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (tn) rec.push(['🪶', 'Найтонша', tn, tn.pages + ' стор.']);
     if (ppMin) rec.push(['🏷️', 'Найвигідніша за сторінку', ppMin.b, (ppMin.v * 100).toFixed(0) + ' грн / 100 стор.']);
     if (ppMax) rec.push(['💸', 'Найдорожча за сторінку', ppMax.b, (ppMax.v * 100).toFixed(0) + ' грн / 100 стор.']);
-    var free = lib.filter(function (b) { return b.price === 0; }).length;
+    var free = 0;
     var ser = topList((function () { var m = {}; paid.forEach(function (b) { if (b.series && b.series !== '-') m[b.series] = (m[b.series] || 0) + b.price; }); return m; })(), 1)[0];
     var h = '<div class="card"><h3>🏆 Рекорди</h3><div class="recs">' + rec.map(function (r) {
       return '<div class="rc" data-book="' + r[2].row + '">' + cover(r[2]) + '<div class="grow"><span class="muted small">' + r[0] + ' ' + r[1] + '</span><b>' + esc(r[2].title) + '</b><span class="muted small">' + esc(r[2].author) + '</span><span class="v">' + r[3] + '</span></div></div>';
     }).join('') + '</div><div class="muted small" style="margin-top:8px">' + (ser ? 'Найдорожча серія: <a class="link" data-go="' + esc('series|' + ser[0]) + '">' + esc(ser[0]) + '</a> — ' + money(ser[1]) + '. ' : '') + (free ? 'Безкоштовних книг: <a class="link" data-list="free">' + free + '</a>.' : '') + '</div></div>';
-    return h;
+    return h + promoCard();
+  }
+  function promoCard() {
+    var list = S.inLib.filter(isPromo);
+    if (!list.length) return '';
+    var avg = Math.round(S.avg || 0);
+    var saved = list.reduce(function (a, b) { return a + avg - b.price; }, 0);
+    return '<div class="card"><h3>🎁 Майже даром</h3><p class="muted small" style="margin-top:-4px">Книги з акцій за 0 або 1 грн: <a class="link" data-list="free">' + list.length + ' ' + bookWord(list.length) + '</a>. ' +
+      (avg ? 'Якби кожна коштувала як ваша середня книга (' + money(avg) + '), це було б приблизно <b>' + money(Math.round(saved / 10) * 10) + '</b> — стільки ви зекономили.' : '') + '</p>' +
+      '<div class="strip">' + list.slice(0, 24).map(function (b) { return covMini(b, b.price ? '1 грн' : '0 грн'); }).join('') + '</div></div>';
   }
 
   /* ---------- вікно ---------- */
