@@ -436,6 +436,17 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function count(arr, fn) { var m = {}; arr.forEach(function (x) { var k = fn(x); if (k) m[k] = (m[k] || 0) + 1; }); return m; }
   function topList(map, n) { return Object.keys(map).map(function (k) { return [k, map[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, n || 10); }
   function low(s) { return String(s == null ? '' : s).toLowerCase(); }
+  // посилання на сайт магазину: з колонки «Сайт» (https://…) або з назви домену (vivat.com.ua)
+  function siteUrl(w) {
+    var u = String((w && w.site) || '').trim();
+    if (/^https?:\/\/[^\s"'<>]+$/.test(u)) return u;
+    var h = site(w || {});
+    return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(h) ? 'https://' + h : '';
+  }
+  function siteLink(w, text) {
+    var u = siteUrl(w);
+    return u ? '<a class="link" href="' + esc(u) + '" target="_blank" rel="noopener" title="Відкрити сайт">' + esc(text) + ' ↗</a>' : esc(text);
+  }
   function site(w) { var s = String(w.site || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '').trim(); return s || String(w.where || '').trim(); }
   function hbars(rows, fmt, clickKey) {
     var max = Math.max.apply(null, rows.map(function (r) { return r[1]; }).concat([1]));
@@ -1458,7 +1469,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var ordersMap = {};
       g.forEach(function (w) { var k = w.order || w.ttn || ('r' + w.row); (ordersMap[k] = ordersMap[k] || []).push(w); });
       var total = g.reduce(function (a, w) { return a + (w.price || 0); }, 0);
-      return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + esc(s) + '</h3><span class="muted small">' + g.length + ' кн. · ' + money(total) + '</span></div>' +
+      return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + siteLink(g[0], s) + '</h3><span class="muted small">' + g.length + ' кн. · ' + money(total) + '</span></div>' +
         Object.keys(ordersMap).map(function (k) {
           var og = ordersMap[k], t = og.filter(function (w) { return w.ttn; })[0];
           return '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line)"><div class="chips" style="align-items:center">' + (og[0].order ? '<span class="chip">№ ' + esc(og[0].order) + '</span>' : '') +
@@ -1487,7 +1498,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!gs.length) return '<p class="muted">Немає замовлень за цим фільтром.</p>';
     return '<div class="cols">' + gs.map(function (g) {
       var t = g.items.filter(function (w) { return w.ttn; })[0];
-      return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + esc(g.site) + '</h3><span class="muted small">' + (g.date ? dmy(g.date) : 'без дати') + '</span></div>' +
+      return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + siteLink(g.items[0], g.site) + '</h3><span class="muted small">' + (g.date ? dmy(g.date) : 'без дати') + '</span></div>' +
         '<div class="chips" style="align-items:center">' + (g.items[0].order ? '<span class="chip">№ ' + esc(g.items[0].order) + '</span>' : '') + (t ? '<span class="chip">ТТН ' + esc(t.ttn) + '</span>' : '') +
         '<span class="chip">' + g.items.length + ' кн. · ' + money(g.sum) + '</span>' +
         (g.items.length > 1 ? '<button class="btn p" style="margin-left:auto;padding:4px 12px" data-action="got-order" data-rows="' + g.items.map(function (w) { return w.row; }).join(',') + '">Отримала все (' + g.items.length + ')</button>' : '') + '</div>' +
@@ -1517,7 +1528,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!D.cols.wishOrdered) h += '<div class="note">Щоб бачити дати замовлень, потрібна колонка «Дата замовлення» в «Бажанках» (функція lbAddOrderDateColumn).</div>';
     var gs = orderGroups(ord).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
     h += '<h3 style="margin-top:12px">🧾 Замовлення · ' + gs.length + '</h3>' + (gs.length ? '<div class="list">' + gs.map(function (g) {
-      return '<div class="card" style="margin:0 0 8px"><div class="row"><b class="grow">' + esc(g.site) + (g.items[0].order ? ' · №' + esc(g.items[0].order) : '') + '</b><span class="muted small">' + dmy(g.date) + ' · ' + money(g.sum) + '</span></div>' +
+      return '<div class="card" style="margin:0 0 8px"><div class="row"><b class="grow">' + siteLink(g.items[0], g.site) + (g.items[0].order ? ' · №' + esc(g.items[0].order) : '') + '</b><span class="muted small">' + dmy(g.date) + ' · ' + money(g.sum) + '</span></div>' +
         '<div class="list" style="margin-top:6px">' + g.items.map(function (w) { return wishItem(w); }).join('') + '</div></div>';
     }).join('') + '</div>' : '<p class="muted small">За цей період замовлень із датою немає.</p>');
     h += '<h3 style="margin-top:12px">📚 Нові книги в бібліотеці · ' + got.length + '</h3>' + (got.length ? '<div class="list">' + got.map(function (b) { return pricedItem(b, (b.price == null ? '—' : money(b.price)) + '<div class="muted small" style="font-weight:400">' + dmy(b.bought) + '</div>'); }).join('') + '</div>' : '<p class="muted small">Немає книг із датою покупки в цьому періоді.</p>');
