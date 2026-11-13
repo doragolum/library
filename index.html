@@ -350,6 +350,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var SAVED_KEY = 'lb.view.v3';
   try { var sv = JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); if (sv.f) view.f = sv.f; if (sv.sort) view.sort = sv.sort; if (sv.bookMode) view.bookMode = sv.bookMode; } catch (e) {}
   try { view.shelfMode = localStorage.getItem('lb.shm') || 'spines'; } catch (e) {}
+  // після оновлення сторінки відкривається та сама вкладка
+  try { var lt = localStorage.getItem('lb.tab'); if (lt && TABS.some(function (t) { return t[0] === lt; })) view.tab = lt; } catch (e) {}
   function saveView() { try { localStorage.setItem(SAVED_KEY, JSON.stringify({ f: view.f, sort: view.sort, bookMode: view.bookMode })); } catch (e) {} }
 
   /* ---------- дрібниці ---------- */
@@ -2802,7 +2804,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var t = ev.target;
     if (Date.now() - suppressClick < 650) { ev.preventDefault(); ev.stopPropagation(); return; }
     var tab = t.closest('[data-tab]');
-    if (tab) { closeModal(); view.tab = tab.getAttribute('data-tab'); view.limit = 60; render(); window.scrollTo(0, 0); return; }
+    if (tab) { closeModal(); view.tab = tab.getAttribute('data-tab'); try { localStorage.setItem('lb.tab', view.tab); } catch (e) {} view.limit = 60; render(); window.scrollTo(0, 0); return; }
     if (t.matches('input[type=checkbox][data-sel]')) { ev.stopPropagation(); var n = document.querySelectorAll('[data-sel]:checked').length; var sc = document.getElementById('selcount'); if (sc) sc.textContent = n ? 'вибрано: ' + n : ''; return; }
     var star = t.closest('[data-star]');
     if (star) {
