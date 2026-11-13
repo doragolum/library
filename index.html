@@ -299,6 +299,13 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .oitem .ox{position:absolute;top:6px;right:8px;border:0;background:none;font-size:20px;color:#999;cursor:pointer}
 .ob{display:inline-block;font-size:12px;border-radius:999px;padding:2px 9px;margin-bottom:6px}
 .ob.ok{background:#e7f6ec;color:#1d7a3e}.ob.new{background:#efe9fb;color:#6a3fc8}.ob.warn{background:#fff1dc;color:#9a5b00}
+.rv{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rvc{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}
+.rvc .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+.rvc img,.rvc .ph{width:110px;height:165px;object-fit:cover;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.18);margin-bottom:6px}
+.rvc .ph{display:flex;align-items:center;justify-content:center;text-align:center;color:#fbf6ec;font-weight:600;font-size:12px;padding:8px;box-sizing:border-box}
+.rvc .ph.wait{background:var(--line);color:var(--muted);box-shadow:none}
+.rvc .ob{align-self:flex-start;margin-top:4px}
 </style>
 </head>
 <body>
@@ -311,6 +318,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 <div id="toast" class="toast"></div>
 <input type="file" id="scanfile" accept="image/*" capture="environment" hidden>
 <input type="file" id="orderfile" accept="image/*" multiple hidden>
+<input type="file" id="coverfile" accept="image/*" capture="environment" hidden>
 
 <script>
 (function () {
@@ -824,8 +832,8 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     var sim = similar(b);
     if (sim.length) h += '<div class="card"><h3>Схожі у вас</h3><div class="strip">' + sim.map(function (x) { return covMini(x, bookSub(x)); }).join('') + '</div></div>';
     h += '<table class="kv">' + rows.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>';
-    if (c.cover || c.isbn) h += '<div class="row" style="margin-top:12px"><button class="btn" data-action="find-cover" data-row="' + b.row + '">🔍 ' + (b.cover ? 'Інша обкладинка' : 'Знайти обкладинку') + '</button>' +
-      '<a class="chip" target="_blank" rel="noopener" href="https://www.goodreads.com/search?q=' + encodeURIComponent(b.isbn || b.title + ' ' + b.author) + '">Goodreads ↗</a></div><div id="coverres"></div>';
+    if (c.cover || c.isbn) h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-action="cover-photo" data-row="' + b.row + '">📷 Сфотографувати обкладинку</button><button class="btn" data-action="find-cover" data-row="' + b.row + '">🔍 ' + (b.cover ? 'Інша обкладинка' : 'Знайти в інтернеті') + '</button>' +
+      '<a class="chip" target="_blank" rel="noopener" href="' + googleImg(b) + '">Google Картинки ↗</a><a class="chip" target="_blank" rel="noopener" href="https://www.goodreads.com/search?q=' + encodeURIComponent(b.isbn || b.title + ' ' + b.author) + '">Goodreads ↗</a></div><div id="coverres"></div>';
     openModal(h);
     if (ABOUT[b.row] == null) loadAbouts([b]);
   }
@@ -893,6 +901,77 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     });
   }
 
+  function googleImg(b) { return 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(b.title + ' ' + b.author + ' книга обкладинка'); }
+  /* ---------- фото обкладинки ---------- */
+  var coverTarget = null;
+  function coverPhoto(b) { coverTarget = b; document.getElementById('coverfile').click(); }
+  document.getElementById('coverfile').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0]; ev.target.value = '';
+    var b = coverTarget; if (!f || !b) return;
+    toast('Завантажую фото…');
+    shrinkImage(f, 900).then(function (b64) { return api('lbApiCoverUpload', { data: b64, title: b.author + ' — ' + b.title }); })
+      .then(function (r) { return saveSet('library', b, { cover: r.url }); })
+      .catch(function (e) { toast(e.message, true); });
+  });
+  function coverQueue() {
+    var list = S.inLib.filter(function (x) { return !x.cover; }).sort(function (a, b) { return String(a.shelf).localeCompare(String(b.shelf), 'uk', { numeric: true }) || a.author.localeCompare(b.author, 'uk'); });
+    modalStack = { fn: coverQueue, args: [] };
+    var h = '<button class="close" data-action="close">×</button><h2>📷 Без обкладинки · ' + list.length + '</h2>' +
+      '<p class="muted small">Найшвидше — сфотографувати свою книгу: покладіть її рівно, щоб обкладинка заповнила кадр. Або «Знайти» — пошук в інтернеті, «Google» — відкрити картинки, скопіювати адресу зображення і вставити в картці книги.</p>';
+    if (!list.length) h += '<p>Усі книги вже з обкладинками 🎉</p>';
+    else h += '<button class="btn p" style="margin-bottom:10px" data-action="rv-start">✨ Спершу спробувати знайти автоматично</button>';
+    h += '<div class="list">' + list.slice(0, 150).map(function (x) {
+      return '<div class="item cq"><div class="body"><div class="t">' + esc(x.title) + '</div><div class="muted small">' + esc(x.author) + (x.shelf ? ' · ' + esc(x.shelf) : x.avail !== 'бібліотека' ? ' · ' + esc(x.avail) : '') + '</div>' +
+        '<div class="chips" style="margin-top:6px"><button class="chip" data-action="cover-photo" data-row="' + x.row + '">📷 Фото</button><button class="chip" data-book="' + x.row + '">🔍 Знайти</button><a class="chip" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a></div></div></div>';
+    }).join('') + '</div>';
+    openModal(h, true);
+  }
+  /* ---------- підказки ISBN і обкладинок з перевіркою ---------- */
+  var rv = null;
+  function rvRejected() { try { return JSON.parse(localStorage.getItem('lb.rej') || '{}'); } catch (e) { return {}; } }
+  function rvList() { var rej = rvRejected(); return S.inLib.filter(function (x) { return (!x.isbn || !x.cover) && !rej[x.author + '|' + x.title]; }); }
+  function rvStart() { rv = { list: rvList(), i: 0, res: {} }; rvFetch(); reviewDialog(); }
+  function rvFetch() {
+    for (var j = rv.i; j < Math.min(rv.list.length, rv.i + 3); j++) (function (x) {
+      if (rv.res[x.row]) return;
+      rv.res[x.row] = { loading: true };
+      api('lbApiLookup', { isbn: x.isbn, title: x.title, author: x.author }).then(function (r) { rv.res[x.row] = r || { notFound: true }; },
+        function (e) { rv.res[x.row] = { notFound: true, err: e.message }; })
+        .then(function () { if (rv && modalStack && modalStack.fn === reviewDialog && rv.list[rv.i] === x) reviewDialog(); });
+    })(rv.list[j]);
+  }
+  function titleMatch(a, b) {
+    var wa = norm(a).split(' ').filter(function (w) { return w.length > 2; }), nb = ' ' + norm(b) + ' ';
+    if (!wa.length) return true;
+    return wa.filter(function (w) { return nb.indexOf(' ' + w) !== -1; }).length / wa.length >= .6;
+  }
+  function reviewDialog() {
+    modalStack = { fn: reviewDialog, args: [] };
+    var x = rv.list[rv.i];
+    var h = '<button class="close" data-action="close">×</button><h2>✨ ISBN і обкладинки</h2>';
+    if (!x) { openModal(h + '<p>Готово! Перевірено всі книги ' + (rv.list.length ? '(' + rv.list.length + ')' : '') + ' 🎉</p><p class="muted small">Тим, для яких нічого не знайшлось, обкладинку можна сфотографувати.</p><button class="btn" data-action="cover-queue">📷 Без обкладинки</button>', true); return; }
+    var r = rv.res[x.row] || { loading: true };
+    h += '<p class="muted small">' + (rv.i + 1) + ' з ' + rv.list.length + '. Порівняйте знахідку зі своєю книгою: та сама назва й автор, українське видання.</p>';
+    h += '<div class="rv"><div class="rvc"><div class="lbl">Ваша книга</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
+      '<b>' + esc(x.title) + '</b><span>' + esc(x.author) + '</span><span class="muted">' + esc([x.pub, x.pages ? x.pages + ' стор.' : ''].filter(Boolean).join(' · ')) + '</span></div>';
+    if (r.loading) h += '<div class="rvc"><div class="lbl">Знайдено</div><div class="ph wait">Шукаю…</div></div></div>';
+    else if (r.notFound || !(r.isbn || r.cover)) h += '<div class="rvc"><div class="lbl">Знайдено</div><div class="ph wait">Нічого не знайшлось</div></div></div>' +
+      '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-action="cover-photo" data-row="' + x.row + '">📷 Сфотографувати</button><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a><button class="btn p" data-action="rv-skip">Далі ›</button></div>';
+    else {
+      var ok = titleMatch(x.title, r.title || '');
+      h += '<div class="rvc"><div class="lbl">Знайдено · ' + esc((r.sources || [])[0] || '') + '</div>' + (r.cover ? '<img referrerpolicy="no-referrer" src="' + esc(r.cover) + '">' : '<div class="ph wait">без обкладинки</div>') +
+        '<b>' + esc(r.title || '') + '</b><span>' + esc(r.author || '') + '</span><span class="muted">' + esc([r.pages ? r.pages + ' стор.' : '', r.language || '', r.isbn ? 'ISBN ' + r.isbn : ''].filter(Boolean).join(' · ')) + '</span>' +
+        '<span class="ob ' + (ok ? 'ok' : 'warn') + '">' + (ok ? 'назва збігається' : '⚠ назва відрізняється') + '</span></div></div>';
+      var will = [];
+      if (!x.isbn && r.isbn) will.push('ISBN');
+      if (!x.cover && r.cover) will.push('обкладинку');
+      if (!x.pages && r.pages) will.push('кількість сторінок');
+      h += '<p class="muted small" style="margin-top:10px">«Так» збереже: ' + (will.join(', ') || 'нічого нового') + '.</p>';
+      h += '<div class="row" style="flex-wrap:wrap"><button class="btn p" data-action="rv-yes">✓ Так, це вона</button><button class="btn" data-action="rv-no">✗ Ні</button><button class="btn" data-action="rv-skip">Пропустити</button></div>';
+    }
+    openModal(h, true);
+  }
+  function rvNext() { rv.i++; rvFetch(); reviewDialog(); }
   function findCover(b) {
     var box = document.getElementById('coverres');
     if (box) box.innerHTML = '<p class="muted small">Шукаю…</p>';
@@ -935,6 +1014,9 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     var srt = function (a, b) { return a.author.localeCompare(b.author, 'uk') || a.series.localeCompare(b.series, 'uk') || (partNum(a.num) || 0) - (partNum(b.num) || 0); };
     var fm = view.shelfMode === 'covers';
     var h = '<div class="pick"><button data-shm="spines" class="' + (fm ? '' : 'on') + '">📚 Корінці</button><button data-shm="covers" class="' + (fm ? 'on' : '') + '">🖼 Обкладинки</button></div>';
+    var noCov = S.inLib.filter(function (x) { return !x.cover; }).length;
+    var noIsbn = S.inLib.filter(function (x) { return !x.isbn || !x.cover; }).length;
+    if (noIsbn || noCov) h += '<div class="chips" style="margin:0 0 8px">' + (noIsbn ? '<button class="chip a" data-action="rv-start">✨ Знайти ISBN і обкладинки (' + noIsbn + ')</button>' : '') + (noCov ? '<button class="chip" data-action="cover-queue">📷 Без обкладинки: ' + noCov + '</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
@@ -1610,11 +1692,11 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
       ordSync(); orderDialog();
     }).catch(function () { x.looking = false; ordSync(); orderDialog(); });
   }
-  function shrinkImage(file) {
+  function shrinkImage(file, max) {
     return new Promise(function (resolve, reject) {
       var url = URL.createObjectURL(file), img = new Image();
       img.onload = function () {
-        var k = Math.min(1, 2000 / Math.max(img.width, img.height));
+        var k = Math.min(1, (max || 2000) / Math.max(img.width, img.height));
         var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
@@ -2758,6 +2840,20 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
     if (a === 'parcel-sent') saveMany(S.inLib.filter(function (x) { return x.avail === 'Київ' && x.parcel === 'в списку'; }).map(function (x) { return { kind: 'library', item: x, set: { parcel: 'в дорозі' } }; }));
     if (a === 'parcel-got') gotFromKyiv(S.inLib.filter(function (x) { return x.avail === 'Київ' && x.parcel === 'в дорозі'; }));
     if (a === 'find-cover' && b) findCover(b);
+    if (a === 'cover-photo' && b) coverPhoto(b);
+    if (a === 'cover-queue') coverQueue();
+    if (a === 'rv-start') rvStart();
+    if (a === 'rv-skip' && rv) rvNext();
+    if (a === 'rv-no' && rv) { var rx = rv.list[rv.i], rj = rvRejected(); rj[rx.author + '|' + rx.title] = 1; try { localStorage.setItem('lb.rej', JSON.stringify(rj)); } catch (e) {} rvNext(); }
+    if (a === 'rv-yes' && rv) {
+      var yx = rv.list[rv.i], yr = rv.res[yx.row] || {}, ys = {};
+      var yi = String(yr.isbn || '').replace(/[^0-9Xx]/g, '');
+      if (D.cols.isbn && !yx.isbn && (yi.length === 13 || yi.length === 10)) ys.isbn = yi;
+      if (D.cols.cover && !yx.cover && yr.cover) ys.cover = yr.cover;
+      if (!yx.pages && yr.pages) ys.pages = String(yr.pages);
+      rv.i++; rvFetch();
+      if (Object.keys(ys).length) saveSet('library', yx, ys); else reviewDialog();
+    }
     if (a === 'cover-save' && b) { var cs = { cover: act.getAttribute('data-url') }; var ci = act.getAttribute('data-isbn').replace(/[^0-9Xx]/g, ''); if (D.cols.isbn && !b.isbn && (ci.length === 10 || ci.length === 13)) cs.isbn = ci; saveSet('library', b, cs); }
     if (a === 'cover-url' && b) { var u = fval('cover-url'); if (u) saveSet('library', b, { cover: u }); }
   });
