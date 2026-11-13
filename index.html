@@ -1112,7 +1112,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (r.loading) { openModal(h + '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">MEGOGO Books / Книгарня Є</div><div class="ph wait">Шукаю…</div></div></div><div class="row" style="margin-top:12px"><button class="btn" data-action="vf-skip">Пропустити ›</button></div>', true); return; }
     if (r.notFound) {
       h += '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">MEGOGO Books / Книгарня Є</div><div class="ph wait">Не знайдено</div><span class="muted small">Можливо, назва записана інакше або книги немає в продажу.</span></div></div>';
-      h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><a class="btn" target="_blank" rel="noopener" href="' + yakabooUrl(x) + '">Yakaboo ↗</a><a class="btn" target="_blank" rel="noopener" href="https://book-ye.com.ua/catalogsearch/result/?q=' + encodeURIComponent(x.title) + '">Книгарня Є ↗</a><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">🔎 Google ↗</a><button class="btn" data-action="vf-skip">Пропустити</button><button class="btn p" data-action="vf-no">Далі ›</button></div>';
+      h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><a class="btn" target="_blank" rel="noopener" href="' + megogoUrl(x) + '">MEGOGO Books ↗</a><button class="btn" data-action="vf-skip">Пропустити</button><button class="btn p" data-action="vf-no">Далі ›</button></div>';
       h += vfOwn(x);
       openModal(h, true); return;
     }
@@ -1129,16 +1129,17 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var th = rw.f === 'cover' ? '<img referrerpolicy="no-referrer" src="' + esc(rw.theirs) + '" style="width:44px;height:66px;object-fit:cover;border-radius:3px">' : esc(rw.theirs);
         return '<tr><td><label><input type="checkbox" data-vf="' + i + '"' + (rw.on ? ' checked' : '') + '> ' + esc(rw.label) + '</label></td><td class="muted">' + (esc(rw.mine) || '—') + '</td><td><b>' + th + '</b></td></tr>';
       }).join('') + '</table>';
-      h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn p" data-action="vf-save">✓ Зберегти позначене</button><button class="btn" data-action="vf-no">✗ Не те видання</button><button class="btn" data-action="vf-skip">Пропустити</button><a class="btn" target="_blank" rel="noopener" href="' + yakabooUrl(x) + '">Yakaboo ↗</a></div>';
+      h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn p" data-action="vf-save">✓ Зберегти позначене</button><button class="btn" data-action="vf-no">✗ Не те видання</button><button class="btn" data-action="vf-skip">Пропустити</button><a class="btn" target="_blank" rel="noopener" href="' + megogoUrl(x) + '">MEGOGO Books ↗</a></div>';
     }
     h += vfOwn(x);
     openModal(h, true);
   }
+  function megogoUrl(x) { return 'https://mbooks.com.ua/search/?query=' + encodeURIComponent(x.title); }
   function yakabooUrl(x) { return 'https://www.yakaboo.ua/ua/search?q=' + encodeURIComponent(x.isbn || (x.title + ' ' + x.author)); }
   function vfOwn(x) {
-    return '<div class="rvown"><div class="lbl">Знайшли самі (наприклад, на Yakaboo)?</div><div class="row"><input class="grow" id="rv-url" placeholder="Посилання на обкладинку https://…" autocomplete="off">' +
+    return '<div class="rvown"><div class="lbl">Знайшли самі (наприклад, на MEGOGO Books)?</div><div class="row"><input class="grow" id="rv-url" placeholder="Посилання на обкладинку https://…" autocomplete="off">' +
       (vf.kind === 'library' && !x.isbn && D.cols.isbn ? '<input id="rv-isbn" inputmode="numeric" placeholder="ISBN" style="width:150px">' : '') + '<button class="btn" data-action="vf-url">Зберегти</button></div>' +
-      '<p class="muted small">Відкрийте книгу на Yakaboo, натисніть на обкладинку правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і вставте сюди.</p></div>';
+      '<p class="muted small">Відкрийте книгу на MEGOGO Books, натисніть на обкладинку правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і вставте сюди.</p></div>';
   }
   function vfNext(mark) { var x = vf.list[vf.i]; if (mark && x) vfMark(vf.kind, x); vf.i++; vfFetch(); vfDialog(); }
   function findCover(b) {
