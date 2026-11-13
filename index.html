@@ -928,7 +928,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<button class="close" data-action="close">×</button><h2>🖼 Без обкладинки · ' + list.length + '</h2>' +
       '<p class="muted small">«Знайти» — відкрити книгу й пошукати в інтернеті, «Google» — відкрити картинки, скопіювати адресу зображення і вставити в картці книги.</p>';
     if (!list.length) h += '<p>Усі книги вже з обкладинками 🎉</p>';
-    else h += '<button class="btn p" style="margin-bottom:10px" data-action="rv-start">✨ Спершу спробувати знайти автоматично</button>';
+    else h += '<button class="btn p" style="margin-bottom:10px" data-action="vf-start" data-kind="library">🔎 Переглянути по черзі</button>';
     h += '<div class="list">' + list.slice(0, 150).map(function (x) {
       return '<div class="item cq"><div class="body"><div class="t">' + esc(x.title) + '</div><div class="muted small">' + esc(x.author) + (x.shelf ? ' · ' + esc(x.shelf) : x.avail !== 'бібліотека' ? ' · ' + esc(x.avail) : '') + '</div>' +
         '<div class="chips" style="margin-top:6px"><span class="chip" role="button" style="cursor:pointer" data-book="' + x.row + '">🔍 Відкрити</span><a class="chip" target="_blank" rel="noopener" href="' + googleImg(x) + '">Google ↗</a></div></div></div>';
@@ -996,9 +996,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var src = kind === 'wish' ? D.wish.filter(function (w) { return w.status !== 'В бібліотеці' && !/не оголошено/i.test(w.title) && !/^(книга|частина|том) \d+$/.test(norm(w.title)); }) : S.inLib.slice();
     // спершу ті, де бракує ISBN або обкладинки
     // лише ті, де ще чогось бракує (решту доповнює автозвірка)
-    return src.filter(function (x) { return !d[vfKey(kind, x)] && (kind === 'wish' ? (D.cols.wishCover && !x.cover) || !x.pub : !x.isbn || !x.cover || !x.pages); });
+    return src.filter(function (x) { return !d[vfKey(kind, x)] && vfNeeds(kind, x); });
   }
-  function vfStart(kind) { nav = []; vf = { kind: kind, list: vfList(kind), i: 0, res: {} }; vfFetch(); vfDialog(); }
+  // вручну переглядаємо лише книги без обкладинки (ISBN і сторінки доповнює автозвірка)
+  function vfNeeds(kind, x) { return kind === 'wish' ? (D.cols.wishCover && !x.cover) : !x.cover; }
+  function vfStart(kind) {
+    // спершу свіжі дані з таблиці — автозвірка могла вже щось доповнити
+    toast('Оновлюю дані…');
+    load().then(function () { nav = []; vf = { kind: kind, list: vfList(kind), i: 0, res: {} }; vfFetch(); vfDialog(); });
+  }
   function vfFetch() {
     for (var j = vf.i; j < Math.min(vf.list.length, vf.i + 3); j++) (function (x) {
       var k = x.row;
@@ -1036,6 +1042,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function vfDialog() {
     navTo(vfDialog, [], 'Звірка');
+    while (vf.list[vf.i] && !vfNeeds(vf.kind, vf.list[vf.i])) vf.i++;
     var x = vf.list[vf.i], lib = vf.kind === 'library';
     var h = heads() + '<h2>🔎 Звірка ' + (lib ? 'бібліотеки' : 'бажанок') + ' з Книгарнею Є</h2>';
     if (!x) { openModal(h + '<p>Готово, усе переглянуто 🎉</p><p class="muted small">Переглянуті книги більше не показуються. Нові з\'являться в звірці автоматично.</p>', true); return; }
@@ -1119,8 +1126,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var fm = view.shelfMode === 'covers';
     var h = '<div class="pick"><button data-shm="spines" class="' + (fm ? '' : 'on') + '">📚 Корінці</button><button data-shm="covers" class="' + (fm ? 'on' : '') + '">🖼 Обкладинки</button></div>';
     var noCov = S.inLib.filter(function (x) { return !x.cover; }).length;
-    var noIsbn = S.inLib.filter(function (x) { return !x.isbn || !x.cover; }).length;
-    h += '<div class="chips" style="margin:0 0 8px">' + '<button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button><button class="chip" data-action="vf-start" data-kind="library">🔎 Переглянути вручну</button>' + (noIsbn ? '<button class="chip" data-action="rv-start">✨ ISBN і обкладинки з Goodreads (' + noIsbn + ')</button>' : '') + (noCov ? '<button class="chip" data-action="cover-queue">🖼 Без обкладинки: ' + noCov + '</button>' : '') + '</div>';
+    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
