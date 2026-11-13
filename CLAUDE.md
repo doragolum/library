@@ -44,6 +44,7 @@
   - нічні роботи: `lbNightly` (сортування, `lbCleanWish_`, `lbWishOnSale_`, обкладинки);
   - видавництва (v8): довідник `LB_PUBLISHERS` («правильна назва» ← варіанти), `lbPubCanon_` — підставляється всюди, де видавництво приходить з інтернету чи записується; `lbPublishersPreview` / `lbPublishersApply` — виправлення в таблиці;
   - дата замовлення (v8): колонка «Дата замовлення» в «Бажанках» (`lbAddOrderDateColumn`), ставиться сама при статусі «Замовлено»;
+  - етап 3 (v12): колонки «Оригінальна назва», «Джерело» (бібліотека й бажанки) та ISBN у бажанках (`lbAddIdColumns`); дублі за ISBN (`lbIsbnKey_`, `lbFindIsbn_`); назви томів замість «Частина N» (`lbVolumeTitlesPreview` / `lbVolumeTitlesApply`, MEGOGO → Goodreads); перевірка серій на MEGOGO `lbApiSeriesCheck` (кнопка «🔗 Перевірити серії й авторів» у Бажанках); тест `lbTestVolumes`;
   - «Де фізично» (v10): `lbPlace_`, `lbAvail_`, `lbInKyiv_`; перенесення `lbSplitAvailPreview` / `lbSplitAvailApply`;
   - Нова пошта (v8): `lbNpUpdate` (щогодини після перемикання), `lbNpTest` (без змін), `lbNpSwitch`, `lbNpBack`;
   - тести без змін у таблиці: `lbTestNews`, `lbTestGemini`, `lbTestSources`, `lbTestCover`, `lbTestReminders`, `lbNpTest`, `lbPublishersPreview`.

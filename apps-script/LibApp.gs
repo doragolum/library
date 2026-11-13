@@ -54,6 +54,8 @@ var LB_FIELDS = {
     page:    { head: ['Поточна сторінка'], type: 'number', optional: true },
     tropes:  { head: ['Тропи'], type: 'text', optional: true },
     moods:   { head: ['Враження'], type: 'text', optional: true },
+    orig:    { head: ['Оригінальна назва'], type: 'text', optional: true },
+    src:     { head: ['Джерело'], type: 'url', optional: true },
     author:  { head: ['Автор'], type: 'text' },
     title:   { head: ['Назва книги'], type: 'text' },
     type:    { head: ['Серія'], type: 'list', def: ['Серія', 'Одиночна'] },
@@ -70,7 +72,14 @@ var LB_FIELDS = {
     title:  { head: ['Назва'], type: 'text' },
     pub:    { head: ['Видавництво'], type: 'text' },
     release: { head: ['Реліз'], type: 'date' },
-    ordered: { head: ['Дата замовлення'], type: 'date', optional: true }
+    ordered: { head: ['Дата замовлення'], type: 'date', optional: true },
+    series: { head: ['Назва серії'], type: 'text' },
+    isSer:  { head: ['Серія'], type: 'list', def: ['Так', 'Ні'] },
+    part:   { head: ['Яка частина'], type: 'number' },
+    total:  { head: ['Всього книг'], type: 'number' },
+    isbn:   { head: ['ISBN'], type: 'isbn', optional: true },
+    orig:   { head: ['Оригінальна назва'], type: 'text', optional: true },
+    src:    { head: ['Джерело'], type: 'url', optional: true }
   } }
 };
 // для сумісності з v1
@@ -98,7 +107,7 @@ function doGet(e) {
 function doPost(e) {
   var API = { lbApiData: lbApiData, lbApiSetGoals: lbApiSetGoals, lbApiDeleteBook: lbApiDeleteBook, lbApiUpdate: lbApiUpdate,
     lbApiSave: lbApiSave, lbApiAddBook: lbApiAddBook, lbApiDeleteWish: lbApiDeleteWish, lbApiAddWish: lbApiAddWish,
-    lbApiOcr: lbApiOcr, lbApiOrder: lbApiOrder, lbApiLookup: lbApiLookup, lbApiCoverUpload: lbApiCoverUpload, lbApiOfficial: lbApiOfficial, lbApiAutoFill: lbApiAutoFill, lbApiAi: lbApiAi, lbApiGenre: lbApiGenre, lbApiShelfMark: lbApiShelfMark, lbApiNews: lbApiNews, lbApiTropes: lbApiTropes };
+    lbApiOcr: lbApiOcr, lbApiOrder: lbApiOrder, lbApiLookup: lbApiLookup, lbApiCoverUpload: lbApiCoverUpload, lbApiOfficial: lbApiOfficial, lbApiAutoFill: lbApiAutoFill, lbApiAi: lbApiAi, lbApiGenre: lbApiGenre, lbApiShelfMark: lbApiShelfMark, lbApiNews: lbApiNews, lbApiTropes: lbApiTropes, lbApiSeriesCheck: lbApiSeriesCheck };
   var out;
   try {
     var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -352,7 +361,9 @@ function lbReadAll_() {
       plan: lbMonth_(g(r, F.plan.head)),
       page: lbNum_(g(r, F.page.head)),
       tropes: g(r, F.tropes.head),
-      moods: g(r, F.moods.head)
+      moods: g(r, F.moods.head),
+      orig: g(r, F.orig.head),
+      src: g(r, F.src.head)
     };
   }).filter(function (b) { return b.title || b.author; });
 
@@ -381,7 +392,10 @@ function lbReadAll_() {
       npCheck: gw(r, ['НП: остання перевірка']),
       npErr: gw(r, ['НП: помилка перевірки']),
       cover: gw(r, ['Обкладинка']),
-      ordered: lbDate_(gw(r, ['Дата замовлення']))
+      ordered: lbDate_(gw(r, ['Дата замовлення'])),
+      isbn: gw(r, ['ISBN']).replace(/[^0-9Xx]/g, ''),
+      orig: gw(r, ['Оригінальна назва']),
+      src: gw(r, ['Джерело'])
     };
   }).filter(function (w) { return w.title || w.author; });
 
@@ -416,6 +430,9 @@ function lbReadAll_() {
   Object.keys(F).forEach(function (f) { if (F[f].optional) cols[f] = lbHas_(L.head, F[f].head); });
   cols.wishCover = lbHas_(W.head, ['Обкладинка']);
   cols.wishOrdered = lbHas_(W.head, ['Дата замовлення']);
+  cols.wishIsbn = lbHas_(W.head, ['ISBN']);
+  cols.wishOrig = lbHas_(W.head, ['Оригінальна назва']);
+  cols.wishSrc = lbHas_(W.head, ['Джерело']);
 
   return {
     today: lbToday_(),
@@ -646,6 +663,10 @@ function lbApiAddBook(initData, key, req) {
             lbNorm_(r[cS]) === lbNorm_(b.series || '') && (!b.pub || lbNorm_(r[cP]) === lbNorm_(b.pub))) dup = i;
       });
       if (dup >= 0 && !req.force) return { duplicate: true, row: dup + 2 };
+      if (b.isbn && !req.force) {
+        var ih = lbFindIsbn_(ss, b.isbn, ['library']);
+        if (ih) return { duplicate: true, row: ih.row, byIsbn: true, title: ih.title };
+      }
 
       var row = [];
       for (var i = 0; i < lastCol; i++) row.push('');
@@ -735,8 +756,14 @@ function lbApiAddWish(initData, key, req) {
             (req.series && cS >= 0 && cN >= 0 && lbNorm_(r[cS]) === lbNorm_(req.series) && String(r[cN]).replace(',', '.') === String(req.part).replace(',', '.')))) dup = i;
       });
       if (dup >= 0) return { duplicate: true, row: dup + 2 };
+      if (req.isbn) {
+        var ih = lbFindIsbn_(ss, req.isbn);
+        if (ih && ih.kind === 'library' && !req.force) return { inLibrary: true, row: ih.row, title: ih.title };
+        if (ih && ih.kind === 'wish') return { duplicate: true, row: ih.row, byIsbn: true, title: ih.title };
+      }
       var row = head.map(function () { return ''; });
       var put = function (h, v) { var c = lbCol_(head, [h]); if (c >= 0 && v !== '' && v != null) row[c] = v; };
+      if (req.isbn && lbIsbnKey_(req.isbn)) put('ISBN', "'" + lbIsbnKey_(req.isbn));
       put('Автор', String(req.author).trim());
       put('Назва серії', String(req.series || '').trim());
       put('Назва', String(req.title).trim());
@@ -931,7 +958,8 @@ function lbOrderSave_(req) {
         var m = String(s || '').match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/);
         return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1)) : '';
       };
-      var out = { updated: 0, added: 0, rows: [] };
+      var out = { updated: 0, added: 0, rows: [], inLib: [] };
+      var cI = col('ISBN');
       var newRows = [];
       // дата замовлення: з форми (req.date) або сьогодні; лише для замовлень, не для бажанок
       var cOD = col('Дата замовлення');
@@ -952,6 +980,9 @@ function lbOrderSave_(req) {
         var hint = Number(x.row) - 2;
         if (hint >= 0 && hint < vals.length && lbNorm_(vals[hint][cT]) === lbNorm_(x.title)) idx = hint;
         if (idx < 0) vals.forEach(function (r, i) { if (idx < 0 && lbNorm_(r[cT]) === lbNorm_(x.title) && (!x.author || lbNorm_(r[cA]) === lbNorm_(x.author))) idx = i; });
+        var xk = lbIsbnKey_(x.isbn);
+        if (idx < 0 && xk && cI >= 0) vals.forEach(function (r, i) { if (idx < 0 && lbIsbnKey_(r[cI]) === xk) idx = i; });
+        if (xk) { try { var lh = lbFindIsbn_(ss, xk, ['library']); if (lh) out.inLib.push(lh.title); } catch (e) {} }
         if (idx >= 0) {
           Object.keys(set).forEach(function (h) {
             var c = col(h); if (c < 0 || set[h] === '' || set[h] == null) return;
@@ -972,7 +1003,7 @@ function lbOrderSave_(req) {
           put('Серія', x.series ? 'Так' : 'Ні');
           put('Яка частина', x.part === '' || x.part == null ? '' : lbNum_(x.part));
           put('Всього книг', x.total === '' || x.total == null ? '' : lbNum_(x.total));
-          if (x.isbn) put('ISBN', String(x.isbn));
+          if (xk) put('ISBN', "'" + xk); else if (x.isbn) put('ISBN', String(x.isbn));
           Object.keys(set).forEach(function (h) { put(h, set[h]); });
           if (isWish) put('Статус', 'Хочу купити');
           else put('Дата замовлення', odVal);
@@ -1192,7 +1223,7 @@ function lbAutoFill() {
   var started = Date.now(), budget = 270000;
   var ss = lbSs_(), props = PropertiesService.getScriptProperties();
   var tried = {};
-  try { tried = JSON.parse(props.getProperty('LB_AV_TRIED') || '{}'); } catch (e) { tried = {}; }
+  try { tried = JSON.parse(props.getProperty('LB_AV_TRIED2') || '{}'); } catch (e) { tried = {}; }
   var today = Math.floor(Date.now() / 86400000);
   var fresh = function (k) { return tried[k] && today - tried[k] < 30; };
   var keyOf = function (a, t) { return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, lbNorm_(a + ' ' + t))).slice(0, 10); };
@@ -1202,14 +1233,15 @@ function lbAutoFill() {
     var sh = ss.getSheetByName(sheets[si][0]); if (!sh) continue;
     var lib = sheets[si][2];
     var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
-    var c = { a: lbCol_(head, ['Автор']), t: lbCol_(head, [sheets[si][1]]), p: lbCol_(head, ['Видавництво']), i: lbCol_(head, ['ISBN']), n: lbCol_(head, ['Кількість сторінок']), o: lbCol_(head, ['Обкладинка']), s: lbCol_(head, ['Статус']) };
+    var c = { g: lbCol_(head, ['Оригінальна назва']), u: lbCol_(head, ['Джерело']), a: lbCol_(head, ['Автор']), t: lbCol_(head, [sheets[si][1]]), p: lbCol_(head, ['Видавництво']), i: lbCol_(head, ['ISBN']), n: lbCol_(head, ['Кількість сторінок']), o: lbCol_(head, ['Обкладинка']), s: lbCol_(head, ['Статус']) };
     if (c.a < 0 || c.t < 0) continue;
     var vals = sh.getRange(2, 1, Math.max(1, sh.getLastRow() - 1), sh.getLastColumn()).getDisplayValues();
     for (var r = 0; r < vals.length; r++) {
       var v = vals[r], title = v[c.t], author = v[c.a];
       if (!title || !author || /не оголошено/i.test(title)) continue;
       if (!lib && c.s >= 0 && v[c.s] === 'В бібліотеці') continue;
-      var need = (c.i >= 0 && !v[c.i]) || (c.n >= 0 && !v[c.n]) || (c.o >= 0 && !v[c.o]);
+      if (lbIsPlaceholder_(title)) continue;
+      var need = (c.i >= 0 && !v[c.i]) || (c.n >= 0 && !v[c.n]) || (c.o >= 0 && !v[c.o]) || (c.u >= 0 && !v[c.u]) || (c.g >= 0 && !v[c.g]);
       if (!need) continue;
       var k = (lib ? 'L' : 'W') + keyOf(author, title);
       if (fresh(k)) continue;
@@ -1224,7 +1256,13 @@ function lbAutoFill() {
         if (sure) {
           if (c.i >= 0 && !isbn && y.isbn) set.i = "'" + y.isbn;
           if (c.n >= 0 && !v[c.n] && y.pages) set.n = y.pages;
-          if (c.o >= 0 && !v[c.o] && y.isbn) {
+          if (c.u >= 0 && !v[c.u] && y.url) set.u = y.url;
+          if (c.g >= 0 && !v[c.g]) {
+            var og2 = (y.attrs && (y.attrs['Оригінальна назва'] || y.attrs['Назва оригіналу'])) || '';
+            if (!og2 && (y.isbn || isbn)) { try { var gq = lbFromGoodreads_(y.isbn || isbn); if (gq) { og2 = gq.orig || ''; if (!cov && c.o >= 0 && !v[c.o] && gq.cover) cov = gq.cover; } } catch (e) {} }
+            if (og2 && lbNorm_(og2) !== lbNorm_(title)) set.g = og2;
+          }
+          if (c.o >= 0 && !v[c.o] && y.isbn && !cov) {
             try { var g = lbFromGoodreads_(y.isbn); if (g && g.cover) cov = g.cover; } catch (e) {}
             if (!cov) { try { var gb = lbFromGoogle_(y.isbn, '', ''); if (gb && gb.cover) cov = gb.cover; } catch (e) {} }
           }
@@ -1242,14 +1280,14 @@ function lbAutoFill() {
         if (String(sh.getRange(row, c.t + 1).getDisplayValue()) === title && String(sh.getRange(row, c.a + 1).getDisplayValue()) === author) {
           keys.forEach(function (f) { sh.getRange(row, c[f] + 1).setValue(set[f]); });
           stats.filled++;
-          lbLog_('🔎 Автозвірка', title, author, 'додано: ' + keys.map(function (f) { return { i: 'ISBN', n: 'сторінки', o: 'обкладинку' }[f]; }).join(', '));
+          lbLog_('🔎 Автозвірка', title, author, 'додано: ' + keys.map(function (f) { return { i: 'ISBN', n: 'сторінки', o: 'обкладинку', u: 'джерело', g: 'оригінальну назву' }[f]; }).join(', '));
         }
       }
       tried[k] = today;
-      if (stats.checked % 5 === 0) { try { props.setProperty('LB_AV_TRIED', JSON.stringify(tried)); } catch (e) {} }
+      if (stats.checked % 5 === 0) { try { props.setProperty('LB_AV_TRIED2', JSON.stringify(tried)); } catch (e) {} }
     }
   }
-  try { props.setProperty('LB_AV_TRIED', JSON.stringify(tried)); } catch (e) {}
+  try { props.setProperty('LB_AV_TRIED2', JSON.stringify(tried)); } catch (e) {}
   // старі одноразові запуски прибираємо; якщо не встигли — наступна порція за 10 хвилин
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'lbAutoFill') ScriptApp.deleteTrigger(t); });
   if (stopped) ScriptApp.newTrigger('lbAutoFill').timeBased().after(10 * 60 * 1000).create();
@@ -1647,7 +1685,10 @@ function lbTestSources() {
 }
 
 function lbFetch_(url) {
-  var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true, headers: { 'User-Agent': 'Mozilla/5.0 (personal library)', 'Accept-Language': 'uk,en;q=0.8' } });
+  var opt = { muteHttpExceptions: true, followRedirects: true, headers: { 'User-Agent': 'Mozilla/5.0 (personal library)', 'Accept-Language': 'uk,en;q=0.8' } };
+  var r = UrlFetchApp.fetch(url, opt);
+  // Goodreads інколи відповідає «зачекайте» (202/429/5xx) — одна повторна спроба
+  if ([202, 429, 500, 502, 503].indexOf(r.getResponseCode()) !== -1) { try { Utilities.sleep(1500); } catch (e) {} r = UrlFetchApp.fetch(url, opt); }
   return r.getResponseCode() === 200 ? r.getContentText() : '';
 }
 
@@ -1674,6 +1715,9 @@ function lbParseGoodreads_(html) {
   }
   if (!out.cover) { var og = html.match(/<meta property="og:image" content="([^"]+)"/); if (og) out.cover = og[1]; }
   if (out.cover && /nophoto/.test(out.cover)) delete out.cover;
+  var om = html.match(/"originalTitle":"((?:[^"\\]|\\.)*)"/);
+  if (om) { try { out.orig = JSON.parse('"' + om[1] + '"').trim(); } catch (e) {} }
+  out.grSeries = lbGrSeriesOf_(html);
   if (out.title) {
     var sm = String(out.title).match(/\(([^()]*?),?\s*#\s*([\d.,]+)\)\s*$/);
     if (sm) { out.seriesName = sm[1].trim(); out.seriesNum = sm[2].replace(',', '.'); }
@@ -2833,4 +2877,269 @@ function lbSplitAvailApply() {
     console.log('Готово ✓\n' + text);
     return text;
   } finally { lock.releaseLock(); }
+}
+
+/* ============================================================
+ * v12 (етап 3). Ідентичність книг і серії
+ * – колонки «Оригінальна назва» і «Джерело» (бібліотека) та «ISBN», «Оригінальна назва», «Джерело» (бажанки);
+ * – дублі за ISBN між бажанками й бібліотекою;
+ * – назви томів замість «Частина N» (MEGOGO Books, а якщо українською немає — оригінальна назва з Goodreads);
+ * – перевірка зв'язку серій — у додатку (Бажанки → ⋯ → «Перевірити серії»).
+ * ============================================================ */
+
+/** Запустіть один раз: додає нові колонки в кінець листів (лише заголовки). Нічого іншого не змінює. */
+function lbAddIdColumns() {
+  var ss = lbSs_(), added = [];
+  [[LB_SHEETS.library, ['Оригінальна назва', 'Джерело']], [LB_SHEETS.wish, ['ISBN', 'Оригінальна назва', 'Джерело']]].forEach(function (x) {
+    var sh = ss.getSheetByName(x[0]);
+    if (!sh) return;
+    var keys = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
+    x[1].forEach(function (h) {
+      if (keys.indexOf(lbKey_(h)) !== -1) return;
+      var col = sh.getLastColumn() + 1;
+      if (sh.getMaxColumns() < col) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
+      sh.getRange(1, col).setValue(h);
+      if (h === 'ISBN') { try { sh.getRange(2, col, Math.max(1, sh.getMaxRows() - 1), 1).setNumberFormat('@'); } catch (e) {} }
+      keys.push(lbKey_(h));
+      added.push(x[0] + ': «' + h + '» (колонка ' + col + ')');
+    });
+  });
+  SpreadsheetApp.flush();
+  if (added.length) lbLog_('➕ Нові колонки (етап 3)', '', '', added.join('; '));
+  console.log(added.length ? 'Додано: ' + added.join('; ') + ' ✓' : 'Усі колонки вже є ✓');
+  return added;
+}
+
+/** ISBN у вигляді 13 цифр (ISBN-10 перетворюється), або ''. */
+function lbIsbnKey_(v) {
+  var d = String(v || '').replace(/[^0-9Xx]/g, '').toUpperCase();
+  if (d.length === 10) {
+    var b = '978' + d.slice(0, 9), sum = 0;
+    for (var i = 0; i < 12; i++) sum += Number(b[i]) * (i % 2 ? 3 : 1);
+    d = b + ((10 - sum % 10) % 10);
+  }
+  return /^\d{13}$/.test(d) ? d : '';
+}
+
+/** Де вже є книга з таким ISBN (спершу бібліотека, потім бажанки): {kind, row, title, author, status} або null. */
+function lbFindIsbn_(ss, isbn, kinds) {
+  var k = lbIsbnKey_(isbn);
+  if (!k) return null;
+  kinds = kinds || ['library', 'wish'];
+  for (var q = 0; q < kinds.length; q++) {
+    var sh = ss.getSheetByName(LB_SHEETS[kinds[q]]);
+    if (!sh || sh.getLastRow() < 2) continue;
+    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
+    var ci = lbCol_(head, ['ISBN']);
+    if (ci < 0) continue;
+    var cT = lbCol_(head, [kinds[q] === 'library' ? 'Назва книги' : 'Назва']), cA = lbCol_(head, ['Автор']), cS = lbCol_(head, ['Статус']);
+    var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getDisplayValues();
+    for (var i = 0; i < vals.length; i++) {
+      if (lbIsbnKey_(vals[i][ci]) === k) return { kind: kinds[q], row: i + 2, title: vals[i][cT], author: vals[i][cA], status: cS >= 0 ? vals[i][cS] : '' };
+    }
+  }
+  return null;
+}
+
+/* --- Великі дані у властивостях скрипту (частинами по ~3500 символів) --- */
+function lbBigGet_(k) {
+  var p = PropertiesService.getScriptProperties(), n = Number(p.getProperty(k + '_N') || 0), s = '';
+  for (var i = 0; i < n; i++) s += p.getProperty(k + '_' + i) || '';
+  try { return s ? JSON.parse(s) : null; } catch (e) { return null; }
+}
+function lbBigPut_(k, obj) {
+  var p = PropertiesService.getScriptProperties(), s = obj ? JSON.stringify(obj) : '';
+  var old = Number(p.getProperty(k + '_N') || 0);
+  for (var i = 0; i < old; i++) p.deleteProperty(k + '_' + i);
+  var n = 0;
+  for (var j = 0; j < s.length; j += 3500) { p.setProperty(k + '_' + n, s.slice(j, j + 3500)); n++; }
+  p.setProperty(k + '_N', String(n));
+}
+
+/* --- Goodreads: серії книги і томи серії --- */
+function lbHtmlAttr_(s) {
+  return String(s || '').replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&#x([0-9a-f]+);/gi, function (m, h) { return String.fromCharCode(parseInt(h, 16)); })
+    .replace(/&#(\d+);/g, function (m, n) { return String.fromCharCode(Number(n)); }).replace(/&amp;/g, '&');
+}
+/** Серії зі сторінки книги Goodreads: [{title, url, pos}] */
+function lbGrSeriesOf_(html) {
+  var out = [], re = /"__typename":"BookSeries","userPosition":"([^"]*)","series":\{"__ref":"([^"]+)"\}/g, m;
+  while ((m = re.exec(html))) {
+    var at = html.indexOf('"' + m[2] + '":{');
+    if (at < 0) continue;
+    var chunk = html.slice(at, at + 600);
+    var t = chunk.match(/"title":"((?:[^"\\]|\\.)*)"/), u = chunk.match(/"webUrl":"([^"]+)"/);
+    if (!t || !u) continue;
+    var title = t[1]; try { title = JSON.parse('"' + t[1] + '"'); } catch (e) {}
+    if (!out.some(function (x) { return x.url === u[1]; })) out.push({ pos: m[1], title: String(title).trim(), url: u[1] });
+  }
+  return out;
+}
+/** Томи серії з Goodreads: {'1': {title, future, url}, '2': …} */
+function lbGrSeriesBooks_(url) {
+  var html = lbFetch_(url);
+  if (!html) return null;
+  var out = {}, re = /data-react-props="([^"]*seriesHeaders[^"]*)"/g, m;
+  while ((m = re.exec(html))) {
+    var d = null;
+    try { d = JSON.parse(lbHtmlAttr_(m[1])); } catch (e) { continue; }
+    (d.seriesHeaders || []).forEach(function (h, i) {
+      var mm = String(h).match(/^Book\s+(\d+(?:\.\d+)?)$/), b = ((d.series || [])[i] || {}).book;
+      if (mm && b && !out[mm[1]]) out[mm[1]] = { title: String(b.bookTitleBare || b.title || '').trim(), future: !!b.toBePublished,
+        url: b.bookUrl ? 'https://www.goodreads.com' + String(b.bookUrl).replace(/\?.*$/, '') : '' };
+    });
+  }
+  return out;
+}
+/** Знаходить серію на Goodreads за томами, які вже є (ISBN з бібліотеки чи бажанок). */
+function lbGrVolumesFor_(L, gl, W, gw, w) {
+  var seeds = [];
+  var same = function (ser, au) { return lbNorm_(ser) === lbNorm_(w.series) && lbAuthorOk_(w.author, au); };
+  L.rows.forEach(function (r) { if (same(gl(r, ['Назва серії']), gl(r, ['Автор']))) seeds.push({ isbn: gl(r, ['ISBN']).replace(/[^0-9Xx]/g, ''), title: gl(r, ['Назва книги']), num: gl(r, ['№ серії']) }); });
+  W.rows.forEach(function (r) { var t = gw(r, ['Назва']); if (!lbIsPlaceholder_(t) && same(gw(r, ['Назва серії']), gw(r, ['Автор']))) seeds.push({ isbn: gw(r, ['ISBN']).replace(/[^0-9Xx]/g, ''), title: t, num: gw(r, ['Яка частина']) }); });
+  seeds.sort(function (a, b) { return (b.isbn ? 1 : 0) - (a.isbn ? 1 : 0) || (lbNum_(a.num) || 99) - (lbNum_(b.num) || 99); });
+  for (var i = 0; i < Math.min(seeds.length, 3); i++) {
+    var sd = seeds[i], g = null;
+    try { g = sd.isbn ? lbFromGoodreads_(sd.isbn) : lbFromGoodreadsSearch_('', sd.title, w.author); } catch (e) { g = null; }
+    if (!g || !g.grSeries || !g.grSeries.length) continue;
+    var num = lbNum_(sd.num);
+    var pick = (num != null ? g.grSeries.filter(function (s) { return lbNum_(s.pos) === num && /^\d+(\.\d+)?$/.test(s.pos); })[0] : null) ||
+      g.grSeries.filter(function (s) { return /^\d+(\.\d+)?$/.test(s.pos); })[0];
+    if (!pick) continue;
+    var books = lbGrSeriesBooks_(pick.url);
+    if (books && Object.keys(books).length) return { name: pick.title, url: pick.url, books: books };
+  }
+  return null;
+}
+
+/**
+ * Крок 1: шукає справжні назви для бажанок «Частина N» / «Книга N (назву не оголошено)». Нічого не змінює.
+ * Спершу MEGOGO Books (українське видання), інакше — Goodreads (оригінальна назва, «Не видана»).
+ * Якщо не встигла за раз — запустіть ще раз, продовжить. Список — у журналі й у «Лог».
+ */
+function lbVolumeTitlesPreview() {
+  var started = Date.now(), budget = 270000;
+  var ss = lbSs_();
+  var plan = lbBigGet_('LB_VT');
+  if (!plan || !plan.partial) plan = { items: [], done: {}, partial: false };
+  var W = lbSheet_(ss, LB_SHEETS.wish), gw = lbGetter_(W.head);
+  var L = lbSheet_(ss, LB_SHEETS.library), gl = lbGetter_(L.head);
+  var todo = [];
+  W.rows.forEach(function (r, i) {
+    var t = gw(r, ['Назва']);
+    if (!lbIsPlaceholder_(t) || gw(r, ['Статус']) === 'В бібліотеці') return;
+    var w = { row: i + 2, author: gw(r, ['Автор']), series: gw(r, ['Назва серії']), title: t, part: gw(r, ['Яка частина']) || (t.match(/\d+/) || [''])[0], avail: gw(r, ['Наявність']) };
+    if (!w.series || w.series === '-' || !w.part) return;
+    w.key = lbKey_(w.author + '|' + w.series + '|' + w.part);
+    if (!plan.done[w.key]) todo.push(w);
+  });
+  var gr = {}, left = 0;
+  todo.forEach(function (w) {
+    if (Date.now() - started > budget) { left++; return; }
+    var prop = null;
+    try {
+      var mg = lbMgSeriesVolume_(w.series, w.part, w.author);
+      if (mg && mg.title && !lbIsPlaceholder_(mg.title) && (!mg.lang || /укр/i.test(mg.lang)))
+        prop = { title: mg.title, isbn: mg.isbn || '', src: mg.url || '', orig: (mg.attrs && mg.attrs['Оригінальна назва']) || '', avail: mg.avail || '', release: mg.release || '', from: 'MEGOGO Books' };
+    } catch (e) {}
+    if (!prop) {
+      var gk = lbKey_(w.author + '|' + w.series);
+      if (!(gk in gr)) { try { gr[gk] = lbGrVolumesFor_(L, gl, W, gw, w); } catch (e) { gr[gk] = null; } }
+      var vols = gr[gk], v = vols && vols.books[String(lbNum_(w.part))];
+      if (v && v.title) prop = { title: v.title, orig: v.title, src: v.url || vols.url, avail: !w.avail ? 'Не видана' : '', from: 'Goodreads, серія «' + vols.name + '»' + (v.future ? ', ще не вийшла' : '') };
+    }
+    plan.done[w.key] = 1;
+    var base = { key: w.key, author: w.author, series: w.series, part: w.part, was: w.title, row: w.row };
+    if (prop) Object.keys(prop).forEach(function (k) { base[k] = prop[k]; }); else base.none = true;
+    plan.items.push(base);
+  });
+  plan.partial = left > 0;
+  lbBigPut_('LB_VT', plan);
+  var ok = plan.items.filter(function (x) { return !x.none; }), none = plan.items.filter(function (x) { return x.none; });
+  var lines = ['Знайдено назв: ' + ok.length + ' з ' + plan.items.length + '.'];
+  ok.forEach(function (x) {
+    lines.push('  ' + x.author + ' — «' + x.series + '» #' + x.part + ': «' + x.was + '» → «' + x.title + '»' +
+      (x.isbn ? ', ISBN ' + x.isbn : '') + (x.avail ? ', ' + x.avail : '') + ' (' + x.from + ')');
+  });
+  if (none.length) { lines.push('', 'Не знайшла (лишаю як є):'); none.forEach(function (x) { lines.push('  ' + x.author + ' — «' + x.series + '» #' + x.part); }); }
+  lines.push('', left ? 'Не встигла перевірити ще ' + left + '. Запустіть lbVolumeTitlesPreview ще раз — продовжу.' : 'Якщо все правильно — запустіть lbVolumeTitlesApply. Записує лише в ці рядки.');
+  var text = lines.join('\n');
+  console.log(text);
+  lbLog_('📚 Назви томів: перевірка', '', '', text.slice(0, 45000));
+  return text;
+}
+
+/** Крок 2 (після «так»): записує знайдені назви, ISBN, оригінальну назву, джерело й наявність. Усе — в «Лог». */
+function lbVolumeTitlesApply() {
+  var plan = lbBigGet_('LB_VT');
+  var items = plan ? plan.items.filter(function (x) { return !x.none; }) : [];
+  if (!items.length) { console.log('Немає що записувати. Спершу запустіть lbVolumeTitlesPreview.'); return; }
+  if (plan.partial) { console.log('Перевірка ще не завершена: запустіть lbVolumeTitlesPreview ще раз.'); return; }
+  var ss = lbSs_();
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Таблиця зараз оновлюється (можливо, Нова пошта). Спробуйте за хвилину.');
+  try {
+    var sh = ss.getSheetByName(LB_SHEETS.wish);
+    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
+    var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getDisplayValues();
+    var c = function (h) { return lbCol_(head, [h]); };
+    var cA = c('Автор'), cT = c('Назва'), cS = c('Назва серії'), cP = c('Яка частина'), cV = c('Наявність'), cI = c('ISBN'), cG = c('Оригінальна назва'), cU = c('Джерело'), cR = c('Реліз');
+    var done = [], miss = [];
+    items.forEach(function (x) {
+      var idx = -1;
+      for (var i = 0; i < vals.length; i++) {
+        var r = vals[i];
+        if (lbNorm_(r[cA]) === lbNorm_(x.author) && lbNorm_(r[cS]) === lbNorm_(x.series) && lbIsPlaceholder_(r[cT]) &&
+            (lbNum_(r[cP]) === lbNum_(x.part) || (!r[cP] && lbNorm_(r[cT]) === lbNorm_(x.was)))) { idx = i; break; }
+      }
+      if (idx < 0) { miss.push(x.author + ' — «' + x.series + '» #' + x.part); return; }
+      var row = idx + 2, ch = [];
+      sh.getRange(row, cT + 1).setValue(x.title); vals[idx][cT] = x.title; ch.push('назва');
+      if (cI >= 0 && x.isbn && !vals[idx][cI]) { sh.getRange(row, cI + 1).setNumberFormat('@').setValue(x.isbn); ch.push('ISBN'); }
+      if (cG >= 0 && x.orig && !vals[idx][cG]) { sh.getRange(row, cG + 1).setValue(x.orig); ch.push('ориг. назва'); }
+      if (cU >= 0 && x.src && !vals[idx][cU]) { sh.getRange(row, cU + 1).setValue(x.src); ch.push('джерело'); }
+      var curAv = cV >= 0 ? vals[idx][cV] : '';
+      if (cV >= 0 && x.avail && (!curAv || (curAv === 'Не видана' && x.avail !== 'Не видана'))) { try { sh.getRange(row, cV + 1).setValue(x.avail); ch.push('наявність'); } catch (e) {} }
+      if (cR >= 0 && x.release && !vals[idx][cR]) {
+        var p = String(x.release).split('-');
+        if (p.length === 3) { sh.getRange(row, cR + 1).setValue(new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12)).setNumberFormat('dd.mm.yyyy'); ch.push('реліз'); }
+      }
+      done.push('рядок ' + row + ': ' + x.author + ' — «' + x.was + '» → «' + x.title + '» (' + ch.join(', ') + ')');
+    });
+    SpreadsheetApp.flush();
+    var text = 'Записано: ' + done.length + '\n' + done.join('\n') + (miss.length ? '\n\nНе знайшла рядка (могли змінити вручну):\n' + miss.join('\n') : '');
+    lbLog_('📚 Назви томів замість «Частина N»', '', '', text.slice(0, 45000));
+    lbBigPut_('LB_VT', null);
+    console.log(text);
+    return text;
+  } finally { lock.releaseLock(); }
+}
+
+/**
+ * Серії для бажанок без серії: для авторів, у яких уже є серії, питає MEGOGO, чи книга належить до серії і який це том.
+ * Лише пропозиції — додаток показує їх із кнопкою «Прив'язати». req = {items:[{row, author, title}]}, ≤ 25 с.
+ */
+function lbApiSeriesCheck(initData, key, req) {
+  return lbRun_(initData, key, function () {
+    var started = Date.now(), out = [];
+    ((req && req.items) || []).slice(0, 30).forEach(function (w) {
+      if (Date.now() - started > 22000) { out.push({ row: w.row, skipped: true }); return; }
+      var m = null;
+      try { m = lbFromMegogo_(w.isbn || '', w.title, w.author, ''); } catch (e) { m = null; }
+      out.push({ row: w.row, series: m && m.series || '', part: m && m.part || '', title: m && m.title || '', url: m && m.url || '', isbn: m && m.isbn || '' });
+    });
+    return out;
+  });
+}
+
+/** Тест без змін у таблиці: як працює пошук томів на Goodreads для однієї серії. */
+function lbTestVolumes() {
+  var ss = lbSs_();
+  var W = lbSheet_(ss, LB_SHEETS.wish), gw = lbGetter_(W.head), L = lbSheet_(ss, LB_SHEETS.library), gl = lbGetter_(L.head);
+  var w = { author: 'Гʼю Гоуї', series: 'Бункер', part: '3' };
+  var v = lbGrVolumesFor_(L, gl, W, gw, w);
+  console.log(v ? 'Серія «' + v.name + '»: ' + Object.keys(v.books).map(function (k) { return k + '. ' + v.books[k].title; }).join('; ') : 'Не знайшла');
+  var mg = lbMgSeriesVolume_('Бункер', '3', 'Гʼю Гоуї');
+  console.log('MEGOGO: ' + (mg ? mg.title + ' ' + (mg.url || '') : 'немає'));
 }
