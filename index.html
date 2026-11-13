@@ -1298,17 +1298,19 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var groups = {};
     rest.forEach(function (b) { var p = b.prio || '—'; (groups[p] = groups[p] || []).push(b); });
     var keys = Object.keys(groups).sort(function (a, b) { return a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b, 'uk', { numeric: true }); });
-    if (c.parcel && rest.length) h += '<div class="row" style="position:sticky;top:96px;z-index:3;background:var(--bg);padding:6px 0"><button class="btn p" data-action="parcel-add">Додати вибрані в посилку</button><span class="muted small" id="selcount"></span></div>';
+    if (rest.length) h += '<div class="row" style="position:sticky;top:96px;z-index:3;background:var(--bg);padding:6px 0;flex-wrap:wrap;gap:8px;align-items:center">' +
+      (c.parcel ? '<button class="btn p" data-action="parcel-add">Додати вибрані в посилку</button>' : '') +
+      '<span style="display:inline-flex;gap:6px;align-items:center">' + '<select id="bulk-prio" style="width:auto"><option value="">новий пріоритет…</option>' + opts('library', 'prio').map(function (o) { return '<option value="' + esc(o) + '">пріоритет ' + esc(o) + '</option>'; }).join('') + '<option value="__none">без пріоритету</option></select>' + '<button class="btn" data-action="prio-bulk">Змінити пріоритет вибраним</button></span>' +
+      '<span class="muted small" id="selcount"></span></div>';
     h += '<div class="cols">' + keys.map(function (p) {
-      return '<div class="card"><h3>' + (p === '—' ? 'Без пріоритету' : 'Пріоритет ' + esc(p)) + ' <span class="muted">· ' + groups[p].length + '</span></h3><div class="list">' + groups[p].sort(function (a, b) { return a.author.localeCompare(b.author, 'uk'); }).map(function (b) { return parcelItem(b, false); }).join('') + '</div></div>';
+      return '<div class="card"><h3>' + (p === '—' ? 'Без пріоритету' : 'Пріоритет ' + esc(p)) + ' <span class="muted">· ' + groups[p].length + '</span> <span class="chip" role="button" data-action="sel-group" data-grp="' + esc(p) + '" style="float:right;font-size:12px;cursor:pointer">✓ вибрати всі</span></h3><div class="list">' + groups[p].sort(function (a, b) { return a.author.localeCompare(b.author, 'uk'); }).map(function (b) { return parcelItem(b, false); }).join('') + '</div></div>';
     }).join('') + '</div>';
     return h;
   };
   function parcelItem(b, inParcel) {
     var it = bookItem(b);
     if (inParcel) return it.replace(/<\/div><\/div>$/, '<div style="margin-top:6px"><button class="chip" data-action="parcel-remove" data-row="' + b.row + '">прибрати з посилки</button></div></div></div>');
-    if (!D.cols.parcel) return it;
-    return it.replace('<div class="item" data-book="' + b.row + '">', '<div class="item" data-book="' + b.row + '"><input type="checkbox" class="chk" data-sel="' + b.row + '">');
+    return it.replace('<div class="item" data-book="' + b.row + '">', '<div class="item" data-book="' + b.row + '"><input type="checkbox" class="chk" data-sel="' + b.row + '" data-grp="' + esc(b.prio || '—') + '">');
   }
 
   /* ---------- Читання: що далі, календар, щоденник ---------- */
@@ -2985,6 +2987,21 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var sel = Array.prototype.map.call(document.querySelectorAll('[data-sel]:checked'), function (e) { return bookByRow(e.getAttribute('data-sel')); }).filter(Boolean);
       if (!sel.length) return toast('Позначте книги галочками', true);
       saveMany(sel.map(function (x) { return { kind: 'library', item: x, set: { parcel: 'в списку' } }; }));
+    }
+    if (a === 'prio-bulk') {
+      var psel = Array.prototype.map.call(document.querySelectorAll('[data-sel]:checked'), function (e) { return bookByRow(e.getAttribute('data-sel')); }).filter(Boolean);
+      if (!psel.length) return toast('Позначте книги галочками', true);
+      var pv = fval('bulk-prio');
+      if (!pv) return toast('Оберіть новий пріоритет у списку поруч', true);
+      if (pv === '__none') pv = '';
+      saveMany(psel.map(function (x) { return { kind: 'library', item: x, set: { prio: pv } }; }));
+    }
+    if (a === 'sel-group') {
+      var gb = Array.prototype.filter.call(document.querySelectorAll('[data-sel]'), function (e) { return e.getAttribute('data-grp') === act.getAttribute('data-grp'); });
+      var allOn = gb.every(function (e) { return e.checked; });
+      gb.forEach(function (e) { e.checked = !allOn; });
+      act.textContent = allOn ? '✓ вибрати всі' : '✕ зняти всі';
+      var gn = document.querySelectorAll('[data-sel]:checked').length, gsc = document.getElementById('selcount'); if (gsc) gsc.textContent = gn ? 'вибрано: ' + gn : '';
     }
     if (a === 'parcel-remove' && b) saveSet('library', b, { parcel: '' });
     if (a === 'parcel-sent') saveMany(S.inLib.filter(function (x) { return x.avail === 'Київ' && x.parcel === 'в списку'; }).map(function (x) { return { kind: 'library', item: x, set: { parcel: 'в дорозі' } }; }));
