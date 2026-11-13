@@ -2612,6 +2612,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       [sumPages(lib).toLocaleString('uk-UA'), 'сторінок разом', '', '📖'], [uniq(lib.map(function (b) { return b.author; })).length, 'авторів', '', '✍️'],
       [S.series.length, 'серій · зібрано ' + S.series.filter(function (x) { return !x.missing.length; }).length, 'data-tab="series"', '📚'], [D.sold.length, 'продано', 'data-list="sold"', '💰']]
       .map(function (k) { return '<div class="k" ' + k[2] + '><span class="e">' + k[3] + '</span><b>' + k[0] + '</b><span>' + esc(k[1]) + '</span></div>'; }).join('') + '</div>';
+    h += moneyRecords() + libRecords();
     h += '<div class="card"><h3>Статус читання</h3><div class="stack">' + parts.map(function (p) { return p[1] ? '<i data-list="status|' + p[0] + '" style="flex:' + p[1] + ';background:' + p[2] + '" title="' + p[0] + '"></i>' : ''; }).join('') + '</div><div class="legend2" style="margin-top:8px">' +
       parts.map(function (p) { return '<span data-list="status|' + p[0] + '" style="cursor:pointer"><em style="background:' + p[2] + '"></em>' + p[0] + ' ' + p[1] + '</span>'; }).join('') + '</div></div>';
     h += '<div class="cols">';
@@ -2636,8 +2637,38 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   };
 
   /* ================= v4: рекорди у фінансах ================= */
+  function recCard(title, rec, foot) {
+    return '<div class="card"><h3>' + title + '</h3><div class="recs">' + rec.map(function (r) {
+      var b = r[2];
+      if (r[4]) return '<div class="rc" data-go="' + esc(r[4]) + '">' + (b ? cover(b) : '<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--accent-soft)">' + r[0] + '</div>') + '<div class="grow"><span class="muted small">' + r[0] + ' ' + r[1] + '</span><b>' + esc(r[5]) + '</b><span class="v">' + r[3] + '</span></div></div>';
+      return '<div class="rc" data-book="' + b.row + '">' + cover(b) + '<div class="grow"><span class="muted small">' + r[0] + ' ' + r[1] + '</span><b>' + esc(b.title) + '</b><span class="muted small">' + esc(b.author) + '</span><span class="v">' + r[3] + '</span></div></div>';
+    }).join('') + '</div>' + (foot || '') + '</div>';
+  }
+  function libRecords() {
+    var lib = S.inLib, rec = [];
+    var first = function (arr, cmp) { return arr.slice().sort(cmp)[0]; };
+    var bought = lib.filter(function (b) { return b.bought; });
+    var nb = first(bought, function (a, b) { return a.bought < b.bought ? 1 : -1; }), ob = first(bought, function (a, b) { return a.bought < b.bought ? -1 : 1; });
+    if (nb) rec.push(['🆕', 'Найновіша покупка', nb, dmy(nb.bought)]);
+    if (ob) rec.push(['📜', 'Найдавніша покупка', ob, dmy(ob.bought)]);
+    var rd = D.books.filter(function (b) { return b.started && b.readOn && b.readOn >= b.started; }).map(function (b) { var d = daysBetween(b.started, b.readOn) + 1; return { b: b, d: d, sp: b.pages ? b.pages / d : 0 }; });
+    var fast = first(rd.filter(function (x) { return x.sp; }), function (a, b) { return b.sp - a.sp; }), slow = first(rd, function (a, b) { return b.d - a.d; });
+    if (fast) rec.push(['⚡', 'Найшвидше прочитана', fast.b, fast.d + ' ' + dayWord(fast.d) + ' · ~' + Math.round(fast.sp) + ' стор./день']);
+    if (slow && (!fast || slow.b !== fast.b)) rec.push(['🐢', 'Найдовше читала', slow.b, slow.d + ' ' + dayWord(slow.d)]);
+    var unread = first(lib.filter(function (b) { return low(b.status) === 'не читала' && b.bought; }), function (a, b) { return a.bought < b.bought ? -1 : 1; });
+    if (unread) rec.push(['⏳', 'Найдовше чекає на полиці', unread, 'куплена ' + dmy(unread.bought)]);
+    var au = topList(count(lib, function (b) { return b.author; }), 1)[0];
+    if (au) rec.push(['✍️', 'Найбільше книг автора', null, au[1] + ' ' + bookWord(au[1]), 'author|' + au[0], au[0]]);
+    var sr = S.series.slice().sort(function (a, b) { return b.ownedCount - a.ownedCount; })[0];
+    if (sr) { var sb = sr.owned[Object.keys(sr.owned).sort(function (a, b) { return a - b; })[0]] || null;
+      rec.push(['📚', 'Найбільша серія у вас', sb, sr.ownedCount + ' ' + bookWord(sr.ownedCount) + (sr.missing.length ? ' · бракує ' + sr.missing.length : ' · зібрана'), 'series|' + sr.name, sr.name]); }
+    var pb = topList(count(lib, function (b) { return b.pub; }), 1)[0];
+    if (pb) rec.push(['🏢', 'Улюблене видавництво', null, pb[1] + ' ' + bookWord(pb[1]), 'pub|' + pb[0], pb[0]]);
+    return rec.length ? recCard('🏅 Ще рекорди', rec) : '';
+  }
   function moneyRecords() {
-    var lib = S.inLib, paid = lib.filter(function (b) { return b.price > 0; }), paged = lib.filter(function (b) { return b.pages > 0; });
+    // ціни 1–19 грн — схоже на позначки, а не справжню ціну, тож для рекордів їх не беремо
+    var lib = S.inLib, paid = lib.filter(function (b) { return b.price >= 20; }), paged = lib.filter(function (b) { return b.pages > 0; });
     var pp = paid.filter(function (b) { return b.pages > 0; }).map(function (b) { return { b: b, v: b.price / b.pages }; });
     var by = function (arr, f, dir) { return arr.slice().sort(function (a, b) { return dir * (f(a) - f(b)); })[0]; };
     var rec = [];
