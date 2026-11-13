@@ -799,6 +799,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   ];
   function filterOptions(key) {
     if (key === 'genre') return sortUk(uniq([].concat.apply([], D.books.map(function (b) { return b._g; }))));
+    if (key === 'place') return ['Роттердам', 'Київ'];
     if (key === 'size') return ['до 300 сторінок', '300–500 сторінок', 'понад 500 сторінок'];
     if (key === 'rating') return ['5', '4 і вище', '3 і нижче', 'без оцінки'];
     if (key === 'series') return sortUk(uniq(D.books.map(function (b) { return b.series && b.series !== '-' ? b.series : ''; })));
@@ -810,6 +811,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var v = f[k];
       if (!v) continue;
       if (k === 'genre') { if (b._g.indexOf(v) === -1) return false; }
+      else if (k === 'place') { if (placeOf(b) !== v) return false; }
       else if (k === 'size') {
         var p = b.pages || 0;
         if (v[0] === 'д' && !(p && p < 300)) return false;
@@ -851,12 +853,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="row"><input class="grow" type="search" data-input="bq" placeholder="Пошук: назва, автор, серія, видавництво" value="' + esc(view.q) + '">' +
       (WIDE ? '<div class="pick" style="margin:0"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '<button class="tbtn" data-action="bmore-toggle" aria-label="Вигляд">⋯</button>') + '</div>' +
       (!WIDE && view.bookMoreOpen ? '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Вигляд:</span><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '');
-    var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Київ'], ['avail', 'позичена']]
+    var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Роттердам'], ['place', 'Київ'], ['avail', 'позичена']]
       .concat(topList(count(S.inLib, function (b) { return b.genre; }), 6).map(function (r) { return ['genre', r[0]]; }));
     var chipKey = {}; chips.forEach(function (c) { chipKey[c[0] + '|' + c[1]] = 1; });
     var names = {}; FILTERS.forEach(function (f) { names[f[0]] = f[1]; });
     h += '<div class="fchips">' + chips.map(function (c, i) {
-      return (i === 3 || i === 5 ? '<span class="sep"></span>' : '') + '<button data-fc="' + esc(c[0] + '|' + c[1]) + '" class="' + (view.f[c[0]] === c[1] ? 'on' : '') + '">' + esc(c[1] === 'Київ' ? '🏠 Київ' : c[1] === 'позичена' ? '🤝 позичені' : c[1]) + '</button>';
+      return (i === 3 || i === 6 ? '<span class="sep"></span>' : '') + '<button data-fc="' + esc(c[0] + '|' + c[1]) + '" class="' + (view.f[c[0]] === c[1] ? 'on' : '') + '">' + esc(c[1] === 'Роттердам' ? '📍 Роттердам' : c[1] === 'Київ' ? '🏠 Київ' : c[1] === 'позичена' ? '🤝 позичені' : c[1]) + '</button>';
     }).join('') + Object.keys(view.f).filter(function (k) { return view.f[k] && !chipKey[k + '|' + view.f[k]]; }).map(function (k) {
       return '<button class="x" data-fc="' + esc(k + '|' + view.f[k]) + '">' + esc(names[k] + ': ' + view.f[k]) + ' ✕</button>';
     }).join('') + '</div>';
