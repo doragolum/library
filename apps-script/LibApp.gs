@@ -2795,6 +2795,7 @@ function lbSplitAvailApply() {
       var col = sh.getLastColumn() + 1;
       if (sh.getMaxColumns() < col) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
       sh.getRange(1, col).setValue('Де фізично');
+      SpreadsheetApp.flush(); // заголовок записуємо одразу, окремо від спадних списків
       p.c.pl = col - 1;
     }
     var rowsN = Math.max(1, sh.getMaxRows() - 1);
@@ -2807,9 +2808,11 @@ function lbSplitAvailApply() {
       try { old = sh.getRange(2, p.c.av + 1).getDataValidation(); } catch (e) {}
       var avRule = (old ? old.copy() : SpreadsheetApp.newDataValidation().setAllowInvalid(true)).requireValueInList(LB_AVAIL_NEW.concat(extra), true).build();
       sh.getRange(2, p.c.av + 1, rowsN, 1).setDataValidation(avRule);
+      SpreadsheetApp.flush(); // Google виконує зміни пізніше — помилка має з'явитися тут, а не на наступному кроці
     } catch (e) { manual.push('«Наявність»: ' + LB_AVAIL_NEW.join(', ')); }
     try {
       sh.getRange(2, p.c.pl + 1, rowsN, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(LB_PLACES, true).setAllowInvalid(true).build());
+      SpreadsheetApp.flush();
     } catch (e) { manual.push('«Де фізично»: ' + LB_PLACES.join(', ')); }
     if (p.n) {
       var curA = sh.getRange(2, p.c.av + 1, p.n, 1).getValues(), curP = sh.getRange(2, p.c.pl + 1, p.n, 1).getValues();
@@ -2818,6 +2821,7 @@ function lbSplitAvailApply() {
       try {
         sh.getRange(2, p.c.pl + 1, p.n, 1).setValues(nextP);
         sh.getRange(2, p.c.av + 1, p.n, 1).setValues(nextA);
+        SpreadsheetApp.flush();
       } catch (e) {
         throw new Error('Таблиця не прийняла нові значення (' + (e && e.message ? e.message : e) + '). Спершу вручну додайте варіанти у спадні списки стовпців — ' +
           (manual.length ? manual.join('; ') : '«Наявність»: ' + LB_AVAIL_NEW.join(', ') + '; «Де фізично»: ' + LB_PLACES.join(', ')) + ' — і запустіть lbSplitAvailApply ще раз.');
