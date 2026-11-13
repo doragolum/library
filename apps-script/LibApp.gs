@@ -328,6 +328,7 @@ function lbReadAll_() {
   var books = L.rows.map(function (r, i) {
     return {
       row: i + 2,
+      bid: g(r, ['ID книги']),
       n: g(r, ['№', 'Столбец 1']),
       author: g(r, ['Автор']),
       type: g(r, ['Серія']),
@@ -395,7 +396,8 @@ function lbReadAll_() {
       ordered: lbDate_(gw(r, ['Дата замовлення'])),
       isbn: gw(r, ['ISBN']).replace(/[^0-9Xx]/g, ''),
       orig: gw(r, ['Оригінальна назва']),
-      src: gw(r, ['Джерело'])
+      src: gw(r, ['Джерело']),
+      bid: gw(r, ['ID книги'])
     };
   }).filter(function (w) { return w.title || w.author; });
 
@@ -667,6 +669,18 @@ function lbApiAddBook(initData, key, req) {
         var ih = lbFindIsbn_(ss, b.isbn, ['library']);
         if (ih) return { duplicate: true, row: ih.row, byIsbn: true, title: ih.title };
       }
+      // v13 (етап 4, варіант Б): ID книги — той самий, що в бажанки; друга книга з тим самим ID не додається
+      var cId = lbCol_(head, ['ID книги']), bid = '';
+      if (cId >= 0) {
+        if (req.wish && req.wish.title) {
+          try { var wc0 = lbSheetCache_(ss, {}, 'wish'), wi0 = lbFindRow_(wc0, LB_FIELDS.wish, req.wish.author, req.wish.title, req.wish.row), wci = lbCol_(wc0.head, ['ID книги']); if (wci >= 0) bid = String(wc0.vals[wi0][wci] || '').trim(); } catch (e) {}
+        }
+        if (bid && !req.force) {
+          var hit = -1; vals.forEach(function (r, i) { if (hit < 0 && String(r[cId]).trim() === bid) hit = i; });
+          if (hit >= 0) return { duplicate: true, row: hit + 2, byId: true, title: vals[hit][cT] };
+        }
+        if (!bid) bid = lbNewIds_(ss, 1)[0];
+      }
 
       var row = [];
       for (var i = 0; i < lastCol; i++) row.push('');
@@ -680,6 +694,7 @@ function lbApiAddBook(initData, key, req) {
       put(['Всього'], isSeries ? lbNum_(b.total) : '');
       put(['Видавництво'], lbPubCanon_(b.pub));
       put(['Статус'], b.status || 'не читала');
+      if (bid) put(['ID книги'], bid);
 
       // поля з перевіркою
       var F = LB_FIELDS.library.fields;
@@ -703,7 +718,10 @@ function lbApiAddBook(initData, key, req) {
         try {
           var wi = lbFindRow_(wc, LB_FIELDS.wish, req.wish.author, req.wish.title, req.wish.row);
           if (req.removeWish) { wc.sh.deleteRow(wi + 2); wishNote = 'removed'; }
-          else { var sc = lbCol_(wc.head, ['Статус']); if (sc >= 0) wc.sh.getRange(wi + 2, sc + 1).setValue('В бібліотеці'); wishNote = 'marked'; }
+          else {
+            var sc = lbCol_(wc.head, ['Статус']); if (sc >= 0) wc.sh.getRange(wi + 2, sc + 1).setValue('В бібліотеці'); wishNote = 'marked';
+            var wid = lbCol_(wc.head, ['ID книги']); if (bid && wid >= 0 && !String(wc.vals[wi][wid] || '').trim()) wc.sh.getRange(wi + 2, wid + 1).setNumberFormat('@').setValue(bid);
+          }
         } catch (err) { wishNote = 'not-found'; }
       }
 
@@ -772,6 +790,7 @@ function lbApiAddWish(initData, key, req) {
       put('Серія', req.series ? 'Так' : 'Ні');
       put('Яка частина', req.part === '' || req.part == null ? '' : lbNum_(req.part));
       put('Всього книг', req.total === '' || req.total == null ? '' : lbNum_(req.total));
+      if (lbCol_(head, ['ID книги']) >= 0) put('ID книги', lbNewIds_(ss, 1)[0]);
       sh.appendRow(row);
       lbLog_('🛒 Додано в бажанки з додатку', req.title, req.author, req.series ? req.series + (req.part ? ' #' + req.part : '') : '');
       if (typeof sortWishlist === 'function') { try { sortWishlist(); } catch (err) {} }
@@ -1010,6 +1029,7 @@ function lbOrderSave_(req) {
           put('Всього книг', x.total === '' || x.total == null ? '' : lbNum_(x.total));
           if (xk) put('ISBN', "'" + xk); else if (x.isbn) put('ISBN', String(x.isbn));
           put('Оригінальна назва', String(x.orig || '').trim());
+          if (col('ID книги') >= 0) put('ID книги', lbNewIds_(ss, 1)[0]);
           put('Джерело', /^https:\/\//.test(String(x.src || '')) ? String(x.src) : '');
           Object.keys(set).forEach(function (h) { put(h, set[h]); });
           if (isWish) put('Статус', 'Хочу купити');
@@ -1025,6 +1045,7 @@ function lbOrderSave_(req) {
         if (cN >= 0) sh.getRange(start, cN + 1, newRows.length, 1).setNumberFormat('@');
         sh.getRange(start, 1, newRows.length, lastCol).setValues(newRows);
         if (cOD >= 0) sh.getRange(start, cOD + 1, newRows.length, 1).setNumberFormat('dd.mm.yyyy');
+        if (col('ID книги') >= 0) sh.getRange(start, col('ID книги') + 1, newRows.length, 1).setNumberFormat('@');
       }
       if (typeof sortWishlist === 'function') { try { sortWishlist(); } catch (err) {} }
       SpreadsheetApp.flush();
@@ -2903,7 +2924,7 @@ function lbSplitAvailApply() {
 /** Запустіть один раз: додає нові колонки в кінець листів (лише заголовки). Нічого іншого не змінює. */
 function lbAddIdColumns() {
   var ss = lbSs_(), added = [];
-  [[LB_SHEETS.library, ['Оригінальна назва', 'Джерело']], [LB_SHEETS.wish, ['ISBN', 'Оригінальна назва', 'Джерело']]].forEach(function (x) {
+  [[LB_SHEETS.library, ['Оригінальна назва', 'Джерело', 'ID книги']], [LB_SHEETS.wish, ['ISBN', 'Оригінальна назва', 'Джерело', 'ID книги']]].forEach(function (x) {
     var sh = ss.getSheetByName(x[0]);
     if (!sh) return;
     var keys = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
@@ -2912,7 +2933,7 @@ function lbAddIdColumns() {
       var col = sh.getLastColumn() + 1;
       if (sh.getMaxColumns() < col) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
       sh.getRange(1, col).setValue(h);
-      if (h === 'ISBN') { try { sh.getRange(2, col, Math.max(1, sh.getMaxRows() - 1), 1).setNumberFormat('@'); } catch (e) {} }
+      if (h === 'ISBN' || h === 'ID книги') { try { sh.getRange(2, col, Math.max(1, sh.getMaxRows() - 1), 1).setNumberFormat('@'); } catch (e) {} }
       keys.push(lbKey_(h));
       added.push(x[0] + ': «' + h + '» (колонка ' + col + ')');
     });
@@ -3468,4 +3489,115 @@ function lbTestLink() {
     console.log(JSON.stringify(items, null, 1));
   } catch (e) { console.log('Помилка: ' + e.message); }
   console.log('Дата «березень» → ' + lbParseRelease_('березень') + ', «03.2027» → ' + lbParseRelease_('03.2027'));
+}
+
+/* ============================================================
+ * v13 (етап 4, варіант Б): «ID книги» зв'язує бажанку і книгу в бібліотеці
+ * ============================================================ */
+
+/** Наступні n номерів «K00001…». Лічильник у LB_ID_SEQ; якщо його немає — найбільший номер у таблиці. */
+function lbNewIds_(ss, n) {
+  var props = PropertiesService.getScriptProperties();
+  var seq = Number(props.getProperty('LB_ID_SEQ') || 0);
+  if (!seq) {
+    [LB_SHEETS.library, LB_SHEETS.wish].forEach(function (name) {
+      var sh = ss.getSheetByName(name); if (!sh || sh.getLastRow() < 2) return;
+      var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_), c = lbCol_(head, ['ID книги']);
+      if (c < 0) return;
+      sh.getRange(2, c + 1, sh.getLastRow() - 1, 1).getDisplayValues().forEach(function (r) { var m = String(r[0]).match(/^K(\d+)$/); if (m) seq = Math.max(seq, Number(m[1])); });
+    });
+  }
+  var out = [];
+  for (var i = 0; i < n; i++) { seq++; out.push('K' + ('0000' + seq).slice(-5)); }
+  props.setProperty('LB_ID_SEQ', String(seq));
+  return out;
+}
+
+/** План: кому який ID. Бажанки «В бібліотеці» / «Доставлено» з відповідною книгою отримують її ID. */
+function lbBookIdsPlan_(ss) {
+  var L = lbSheet_(ss, LB_SHEETS.library), W = lbSheet_(ss, LB_SHEETS.wish);
+  var g = lbGetter_(L.head), gw = lbGetter_(W.head);
+  if (L.head[lbKey_('ID книги')] == null) throw new Error('Спершу запустіть lbAddIdColumns: немає колонки «ID книги».');
+  if (W.head[lbKey_('ID книги')] == null) throw new Error('Спершу запустіть lbAddIdColumns: у «Бажанках» немає колонки «ID книги».');
+  var lib = L.rows.map(function (r, i) { return { row: i + 2, id: g(r, ['ID книги']), author: g(r, ['Автор']), title: g(r, ['Назва книги']), isbn: lbIsbnKey_(g(r, ['ISBN'])), series: g(r, ['Назва серії']), num: g(r, ['№ серії']), avail: g(r, ['Наявність']) }; })
+    .filter(function (b) { return b.title || b.author; });
+  var wish = W.rows.map(function (r, i) { return { row: i + 2, id: gw(r, ['ID книги']), author: gw(r, ['Автор']), title: gw(r, ['Назва']), isbn: lbIsbnKey_(gw(r, ['ISBN'])), series: gw(r, ['Назва серії']), part: gw(r, ['Яка частина']), status: gw(r, ['Статус']) }; })
+    .filter(function (w) { return w.title || w.author; });
+  var plan = { lib: [], wish: [], links: [], dups: [], orphans: [] };
+  var used = {};
+  lib.forEach(function (b) { if (b.id) used[b.id] = b; });
+  var need = lib.filter(function (b) { return !b.id; }).length;
+  var fresh = [], fi = 0, next = function () { return fresh[fi++]; };
+  plan._needLib = need;
+  var match = function (w) {
+    var hit = null;
+    if (w.isbn) lib.some(function (b) { if (b.isbn === w.isbn) { hit = b; return true; } });
+    if (!hit) lib.some(function (b) { if (lbNorm_(b.title) === lbNorm_(w.title) && lbAuthorOk_(w.author, b.author)) { hit = b; return true; } });
+    if (!hit && w.series && w.part) lib.some(function (b) { if (b.series && lbNorm_(b.series) === lbNorm_(w.series) && String(b.num).replace(',', '.') === String(w.part).replace(',', '.') && lbAuthorOk_(w.author, b.author) && !lbIsPlaceholder_(b.title)) { hit = b; return true; } });
+    return hit;
+  };
+  var arrived = ['В бібліотеці', 'Доставлено'];
+  var libIds = {};
+  var wishTodo = [];
+  wish.forEach(function (w) {
+    if (w.id) return;
+    var b = match(w);
+    if (b && arrived.indexOf(w.status) !== -1) wishTodo.push({ w: w, b: b });
+    else if (b && /прод|подар/.test(String(b.avail).toLowerCase())) wishTodo.push({ w: w, b: null }); // продану купує знову — окремий ID
+    else if (b) { plan.dups.push(w.author + ' — «' + w.title + '» (' + w.status + ', рядок ' + w.row + ') ↔ бібліотека: «' + b.title + '» (рядок ' + b.row + ')'); wishTodo.push({ w: w, b: null }); }
+    else { if (arrived.indexOf(w.status) !== -1) plan.orphans.push(w.author + ' — «' + w.title + '» (' + w.status + ', рядок ' + w.row + ')'); wishTodo.push({ w: w, b: null }); }
+  });
+  var total = need + wishTodo.filter(function (x) { return !x.b; }).length;
+  plan._total = total;
+  plan._make = function (ids) {
+    fresh = ids; fi = 0;
+    lib.forEach(function (b) { if (!b.id) { b.id = next(); plan.lib.push({ row: b.row, id: b.id, author: b.author, title: b.title }); } });
+    wishTodo.forEach(function (x) {
+      var id = x.b ? x.b.id : next();
+      plan.wish.push({ row: x.w.row, id: id, author: x.w.author, title: x.w.title });
+      if (x.b) plan.links.push(x.w.author + ' — «' + x.w.title + '» → «' + x.b.title + '» (' + id + ')');
+    });
+  };
+  return plan;
+}
+
+/** Перевірка (нічого не змінює): скільки ID буде роздано, які бажанки зв'яжуться з книгами, де схоже на дубль. */
+function lbBookIdsPreview() {
+  var ss = lbSs_(), plan = lbBookIdsPlan_(ss);
+  var ids = []; for (var i = 0; i < plan._total; i++) ids.push('новий ID');
+  plan._make(ids);
+  var msg = 'Книг у бібліотеці без ID: ' + plan.lib.length + '. Бажанок без ID: ' + plan.wish.length + ', з них зв\'язано з книгою в бібліотеці: ' + plan.links.length + '.';
+  lbLog_('🔗 ID книг: перевірка', '', '', (msg + (plan.links.length ? '\nЗв\'язки: ' + plan.links.join('; ') : '') +
+    (plan.dups.length ? '\n⚠️ Можливі дублі (бажанка вже є в бібліотеці, отримують окремий ID): ' + plan.dups.join('; ') : '') +
+    (plan.orphans.length ? '\n❔ «В бібліотеці», але книгу не знайдено: ' + plan.orphans.join('; ') : '')).slice(0, 45000));
+  console.log(msg);
+  if (plan.links.length) console.log('Зв\'язки:\n' + plan.links.join('\n'));
+  if (plan.dups.length) console.log('⚠️ Можливі дублі:\n' + plan.dups.join('\n'));
+  if (plan.orphans.length) console.log('❔ «В бібліотеці», але книгу не знайдено:\n' + plan.orphans.join('\n'));
+  console.log('Нічого не змінено. Якщо все гаразд — запустіть lbBookIdsApply.');
+  return { lib: plan.lib.length, wish: plan.wish.length, links: plan.links.length, dups: plan.dups.length, orphans: plan.orphans.length };
+}
+
+/** Записує ID (лише в порожні клітинки «ID книги»). Дані книг не змінює. */
+function lbBookIdsApply() {
+  var ss = lbSs_();
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Таблиця зараз оновлюється. Спробуйте за хвилину.');
+  try {
+    var plan = lbBookIdsPlan_(ss);
+    plan._make(lbNewIds_(ss, plan._total));
+    [[LB_SHEETS.library, plan.lib], [LB_SHEETS.wish, plan.wish]].forEach(function (x) {
+      if (!x[1].length) return;
+      var sh = ss.getSheetByName(x[0]);
+      var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_), c = lbCol_(head, ['ID книги']);
+      var rng = sh.getRange(2, c + 1, sh.getLastRow() - 1, 1), v = rng.getValues();
+      x[1].forEach(function (p) { if (!String(v[p.row - 2][0]).trim()) v[p.row - 2][0] = p.id; });
+      rng.setNumberFormat('@'); rng.setValues(v);
+    });
+    SpreadsheetApp.flush();
+    var msg = 'Роздано ID: бібліотека ' + plan.lib.length + ', бажанки ' + plan.wish.length + ' (зв\'язано з книгами: ' + plan.links.length + ').';
+    lbLog_('🔗 ID книг записано', '', '', msg);
+    console.log(msg + ' ✓');
+    return msg;
+  } finally { lock.releaseLock(); }
 }

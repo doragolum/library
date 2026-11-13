@@ -933,7 +933,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var rows = [
       ['Автор', lk('author', b.author)], ['Серія', serTxt], ['Видавництво', lk('pub', b.pub)], ['Жанр', b._g.map(function (g) { return lk('genre', g); }).join(', ')],
       ['Сторінок', esc(b.pages || '')], ['Мова', lk('lang', b.lang)], ['Серія завершена', isSer ? esc(b.finished) : ''], ['Повний переклад укр', isSer ? esc(b.translated) : ''],
-      ['Ціна', b.price === 0 ? 'безкоштовно (акція) 🎁' : b.price === 1 ? '1 грн (акція) 🎁' : b.price != null ? money(b.price) : ''], ['Дата покупки', dmy(b.bought)], ['ISBN', esc(b.isbn)], ['Оригінальна назва', esc(b.orig || '')], ['Джерело', b.src ? srcLink(b.src) : ''], ['Рядок у таблиці', b.row]
+      ['Ціна', b.price === 0 ? 'безкоштовно (акція) 🎁' : b.price === 1 ? '1 грн (акція) 🎁' : b.price != null ? money(b.price) : ''], ['Дата покупки', dmy(b.bought)], ['ISBN', esc(b.isbn)], ['Оригінальна назва', esc(b.orig || '')], ['Джерело', b.src ? srcLink(b.src) : ''], ['ID книги', esc(b.bid || '')], ['Рядок у таблиці', b.row]
     ].filter(function (r) { return r[1] !== '' && r[1] != null && r[1] !== '—'; });
     var h = heads();
     h += '<div class="bhero"><div class="bg" style="' + (b.cover ? 'background-image:url(&quot;' + esc(b.cover) + '&quot;)' : 'background:' + genreColor(b.genre)) + '"></div><div class="bookhead">' +
@@ -1386,7 +1386,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var hasSer = w.series && w.series !== 'нонфік' && w.series !== '-';
     var rows = [['Автор', lk('author', w.author)], ['Серія', hasSer ? lk('series', w.series) + (w.part ? ' · №' + esc(numTxt(w.part)) : '') + (w.total ? ' з ' + esc(w.total) : '') : ''], ['Видавництво', lk('pub', w.pub)],
       ['Реліз', w.release ? dmy(w.release) : w.releaseText], ['Ціна', w.price != null ? money(w.price) : ''], ['Де замовлено', w.where], ['Сайт', w.site], ['Номер замовлення', w.order], ['ТТН', w.ttn],
-      ['Статус НП', w.np], ['НП перевірено', w.npCheck], ['Помилка НП', w.npErr], ['ISBN', w.isbn], ['Оригінальна назва', w.orig], ['Джерело', w.src], ['Рядок у таблиці', w.row]].filter(function (r) { return r[1] !== '' && r[1] != null; });
+      ['Статус НП', w.np], ['НП перевірено', w.npCheck], ['Помилка НП', w.npErr], ['ISBN', w.isbn], ['Оригінальна назва', w.orig], ['Джерело', w.src], ['ID книги', w.bid || ''], ['Рядок у таблиці', w.row]].filter(function (r) { return r[1] !== '' && r[1] != null; });
     var linked = { 'Автор': 1, 'Серія': 1, 'Видавництво': 1 };
     var wsi = hasSer ? seriesInfo(w.series) : null, wv = wsi && wsi.isSeries ? volumes(wsi) : [];
     openModal(heads() + '<div class="bhero"><div class="bg" style="background:' + genreColor(w.genre) + '"></div><div class="bookhead">' + (w.cover ? '<img class="cover" referrerpolicy="no-referrer" src="' + esc(w.cover) + '" alt="">' : '<div class="ph" style="background:' + genreColor(w.genre) + '">' + esc(w.title) + '</div>') +
@@ -2191,7 +2191,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     api('lbApiAddBook', req).then(function (r) {
       if (r.duplicate) {
         if (btn) btn.disabled = false;
-        err.innerHTML = '<div class="msg small">Така книга вже є в бібліотеці (рядок ' + r.row + ').<div class="row" style="margin-top:8px"><button class="btn" data-action="add-force">Все одно додати</button><button class="btn" data-action="open-row" data-row="' + r.row + '">Відкрити наявну</button></div></div>';
+        err.innerHTML = '<div class="msg small">' + (r.byId ? 'Цю бажанку вже отримано: книга «' + esc(r.title || '') + '» уже в бібліотеці' : 'Така книга вже є в бібліотеці') + ' (рядок ' + r.row + ').<div class="row" style="margin-top:8px"><button class="btn" data-action="add-force">Все одно додати</button><button class="btn" data-action="open-row" data-row="' + r.row + '">Відкрити наявну</button></div></div>';
         return;
       }
       closeModal();

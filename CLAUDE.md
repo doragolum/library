@@ -46,6 +46,7 @@
   - дата замовлення (v8): колонка «Дата замовлення» в «Бажанках» (`lbAddOrderDateColumn`), ставиться сама при статусі «Замовлено»;
   - етап 3 (v12): колонки «Оригінальна назва», «Джерело» (бібліотека й бажанки) та ISBN у бажанках (`lbAddIdColumns`); дублі за ISBN (`lbIsbnKey_`, `lbFindIsbn_`); назви томів замість «Частина N» (`lbVolumeTitlesPreview` / `lbVolumeTitlesApply`, MEGOGO → Goodreads); перевірка серій на MEGOGO `lbApiSeriesCheck` (кнопка «🔗 Перевірити серії й авторів» у Бажанках); тест `lbTestVolumes`;
   - етап 5 (v13): бажанка з посилання `lbBookFromUrl_` / `lbApiFromLink`; доповнення карток `lbEnrichItems_` (MEGOGO, своя серія, статус за датою, дублі, `need`); бот: посилання `lbBotLink_`, голосове `lbBotVoice_`, уточнення `lbBotCard_` / `lbBotNext_` / `lbBotAnswerAsk_` (стан у `LB_BOT_PENDING`); приватність скриншотів `lbOcrBytes_` + `lbLooksPrivate_` / `lbRedact_`; тест `lbTestLink`;
+  - етап 4, варіант Б (v13): колонка «ID книги» в кінці обох листів (`lbAddIdColumns`), лічильник `LB_ID_SEQ` (`lbNewIds_`); нові бажанки/замовлення отримують ID, `lbApiAddBook` переносить ID бажанки й не додає другу книгу з тим самим ID; разово `lbBookIdsPreview` / `lbBookIdsApply`. Листи не об'єднуються (вона обрала варіант Б, щоб не зламати меню й НП); «Продані» лишається окремим листом;
   - «Де фізично» (v10): `lbPlace_`, `lbAvail_`, `lbInKyiv_`; перенесення `lbSplitAvailPreview` / `lbSplitAvailApply`;
   - Нова пошта (v8): `lbNpUpdate` (щогодини після перемикання), `lbNpTest` (без змін), `lbNpSwitch`, `lbNpBack`;
   - тести без змін у таблиці: `lbTestNews`, `lbTestGemini`, `lbTestSources`, `lbTestCover`, `lbTestReminders`, `lbNpTest`, `lbPublishersPreview`.
@@ -89,7 +90,7 @@
 - Нічого не записувати в таблицю автоматично там, де можна помилитися (новини серій, жанри, тропи) — лише пропозиції з кнопкою підтвердження.
 
 ## Властивості скрипту
-`LB_TG_TOKEN`, `LB_TG_APP_URL`, `LB_PAGE_URL`, `LB_TG_CHAT_ID`, `LB_TG_USER_ID`, `LB_WEB_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL` (необов'язково), `NP_API_KEY`. Службові стани: `LB_GOALS`, `LB_SHELF_MARKS`, `LB_NEWS`, `LB_AV_TRIED`, `LB_AV_STATE`, `LB_COVER_TRIED3`, `LB_BOT_PENDING`, `LB_TG_OFFSET`.
+`LB_TG_TOKEN`, `LB_TG_APP_URL`, `LB_PAGE_URL`, `LB_TG_CHAT_ID`, `LB_TG_USER_ID`, `LB_WEB_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL` (необов'язково), `NP_API_KEY`. Службові стани: `LB_GOALS`, `LB_SHELF_MARKS`, `LB_NEWS`, `LB_AV_TRIED`, `LB_AV_STATE`, `LB_COVER_TRIED3`, `LB_BOT_PENDING`, `LB_TG_OFFSET`, `LB_ID_SEQ`, `LB_VT`.
 
 ## Тригери
 `lbDailyReminders` (щодня ~9:00), `lbNightly` (~3:00: сортування, прибирання бажанок, «Є у продажу», обкладинки), `lbBotPoll` (щохвилини), `lbSeriesNews` (понеділок ~5:00), `lbAutoFill` (порціями, сам себе продовжує), `npUpdate` (щогодини, Нова пошта; після `lbNpSwitch` замість нього `lbNpUpdate`).
