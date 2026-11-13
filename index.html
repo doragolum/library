@@ -1047,7 +1047,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- 🔎 Звірка з Книгарнею Є ---------- */
   var vf = null;
   function vfDone() { try { return JSON.parse(localStorage.getItem('lb.ver') || '{}'); } catch (e) { return {}; } }
-  function vfKey(kind, x) { return kind + '|' + x.author + '|' + x.title; }
+  function vfKey(kind, x) { return (vf && vf.mode === 'isbn' ? 'isbn|' : '') + kind + '|' + x.author + '|' + x.title; }
   function vfMark(kind, x) { var d = vfDone(); d[vfKey(kind, x)] = 1; try { localStorage.setItem('lb.ver', JSON.stringify(d)); } catch (e) {} }
   function vfList(kind) {
     var d = vfDone();
@@ -1057,11 +1057,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     return src.filter(function (x) { return !d[vfKey(kind, x)] && vfNeeds(kind, x); });
   }
   // вручну переглядаємо лише книги без обкладинки (ISBN і сторінки доповнює автозвірка)
-  function vfNeeds(kind, x) { return kind === 'wish' ? (D.cols.wishCover && !x.cover) : !x.cover; }
-  function vfStart(kind) {
+  function vfNeeds(kind, x) { if (vf && vf.mode === 'isbn') return !x.isbn; return kind === 'wish' ? (D.cols.wishCover && !x.cover) : !x.cover; }
+  function vfStart(kind, mode) {
     // спершу свіжі дані з таблиці — автозвірка могла вже щось доповнити
     toast('Оновлюю дані…');
-    load().then(function () { nav = []; vf = { kind: kind, list: vfList(kind), i: 0, res: {} }; vfFetch(); vfDialog(); });
+    load().then(function () { nav = []; vf = { kind: kind, mode: mode || '', list: [], i: 0, res: {} }; vf.list = vfList(kind); vfFetch(); vfDialog(); });
   }
   function vfFetch() {
     for (var j = vf.i; j < Math.min(vf.list.length, vf.i + 3); j++) (function (x) {
@@ -1102,7 +1102,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     navTo(vfDialog, [], 'Звірка');
     while (vf.list[vf.i] && !vfNeeds(vf.kind, vf.list[vf.i])) vf.i++;
     var x = vf.list[vf.i], lib = vf.kind === 'library';
-    var h = heads() + '<h2>🔎 Звірка ' + (lib ? 'бібліотеки' : 'бажанок') + ' з книгарнями</h2>';
+    var h = heads() + '<h2>🔎 ' + (vf.mode === 'isbn' ? 'Книги без ISBN' : 'Звірка ' + (lib ? 'бібліотеки' : 'бажанок') + ' з книгарнями') + '</h2>';
     if (!x) { openModal(h + '<p>Готово, усе переглянуто 🎉</p><p class="muted small">Переглянуті книги більше не показуються. Нові з\'являться в звірці автоматично.</p>', true); return; }
     var r = vf.res[x.row] || { loading: true };
     h += '<p class="muted small">' + (vf.i + 1) + ' з ' + vf.list.length + '. Позначте, що взяти з офіційних даних. Решта лишиться як у вас.</p>';
@@ -1186,8 +1186,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="pick"><button data-shm="spines" class="' + (fm ? '' : 'on') + '">📚 Корінці</button><button data-shm="covers" class="' + (fm ? 'on' : '') + '">🖼 Обкладинки</button></div>';
     var mv = movePlan().length;
     h += '<button class="btn" style="width:100%;margin:0 0 10px;background:var(--ink);color:var(--bg);justify-content:center" data-action="move-open">⇄ Перестановка' + (mv ? ': ' + mv + ' кн. варто переставити' : '') + '</button>';
-    var noCov = S.inLib.filter(function (x) { return !x.cover; }).length;
-    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + '</div>';
+    var noCov = S.inLib.filter(function (x) { return !x.cover; }).length, noIsbn = S.inLib.filter(function (x) { return !x.isbn; }).length;
+    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
@@ -3519,7 +3519,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'cover-photo' && b) coverPhoto(b);
     if (a === 'cover-queue') coverQueue();
     if (a === 'rv-start') rvStart();
-    if (a === 'vf-start') vfStart(act.getAttribute('data-kind') || 'library');
+    if (a === 'vf-start') vfStart(act.getAttribute('data-kind') || 'library', act.getAttribute('data-mode') || '');
     if (a === 'vf-skip' && vf) vfNext(false);
     if (a === 'auto-fill') {
       act.disabled = true;
