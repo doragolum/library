@@ -1303,7 +1303,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var mv = movePlan().length;
     h += '<button class="btn" style="width:100%;margin:0 0 10px;background:var(--ink);color:var(--bg);justify-content:center" data-action="move-open">⇄ Перестановка' + (mv ? ': ' + mv + ' кн. варто переставити' : '') + '</button>';
     var noCov = S.inLib.filter(function (x) { return !x.cover; }).length, noIsbn = S.inLib.filter(function (x) { return !x.isbn; }).length;
-    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
+    var noTr = S.inLib.filter(function (x) { return !(x._t || []).length; }).length;
+    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noTr ? '<button class="chip" data-action="mt-open">🏷 Без тропів: ' + noTr + ' — підказати</button>' : '') + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
@@ -1428,6 +1429,67 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       }
     });
     return out;
+  }
+  /* ---------- масові тропи: Gemini підказує, ви ставите галочки й зберігаєте ---------- */
+  var mt = null;
+  function mtSkips() { try { return JSON.parse(localStorage.getItem('lb.mtskip') || '{}'); } catch (e) { return {}; } }
+  function mtOpen() {
+    nav = []; var sk = mtSkips();
+    var list = S.inLib.filter(function (b) { return !(b._t || []).length && !sk[norm(b.author) + '|' + norm(b.title)]; });
+    list.sort(function (a, b) { return (isRead(b) ? 1 : 0) - (isRead(a) ? 1 : 0) || a.author.localeCompare(b.author, 'uk'); });
+    mt = { list: list, i: 0, res: {}, pick: {}, busy: false, stop: false, saved: 0 };
+    mtRender();
+  }
+  function mtRender() {
+    if (!mt) return;
+    modalStack = { fn: mtRender, args: [] };
+    var done = mt.list.filter(function (b) { return mt.res[b.row]; });
+    var h = '<button class="close" data-action="close">×</button><h2>🏷 Тропи для книг без тропів</h2>';
+    h += '<p class="muted small">Gemini підказує тропи, і вони одразу позначені ✓. Натисніть на зайві, щоб зняти позначку, а × прибирає книгу зі списку. Нічого не зберігається без кнопки «Зберегти». ' +
+      'Безкоштовний Gemini працює повільно: приблизно одна книга на 6 секунд, тож можна йти порціями й закривати вікно.</p>';
+    h += '<div class="row" style="margin:8px 0">' + (mt.busy ? '<button class="btn" data-action="mt-stop">⏸ Пауза</button><span class="muted small">Думаю над «' + esc((mt.list[mt.i] || {}).title || '') + '» (' + (mt.i + 1) + ' з ' + mt.list.length + ')…</span>' :
+      (mt.i < mt.list.length ? '<button class="btn p" data-action="mt-run">✨ ' + (mt.i ? 'Продовжити' : 'Почати') + ' (' + (mt.list.length - mt.i) + ' книг)</button>' : '<span class="muted small">Усі книги переглянуто.</span>')) + '</div>';
+    var ready = done.filter(function (b) { return !mt.res[b.row].saved && !mt.res[b.row].skip; });
+    if (ready.length) h += '<div class="row" style="margin:8px 0"><button class="btn p" data-action="mt-save-all">Зберегти вибране (' + ready.length + ')</button></div>';
+    h += ready.map(function (b) {
+      var r = mt.res[b.row], pk = mt.pick[b.row] || {};
+      return '<div class="oitem"><b>' + esc(b.title) + '</b> <span class="muted small">' + esc(b.author) + '</span><button class="ox" data-action="mt-skip" data-row="' + b.row + '" aria-label="Пропустити">×</button>' +
+        (r.err ? '<p class="msg small">' + esc(r.err) + '</p>' : !r.tropes.length ? '<p class="muted small">Gemini не знайшов тропів.</p>' :
+          '<div class="chips" style="margin-top:6px">' + r.tropes.map(function (t) { return '<button class="chip' + (pk[t] ? ' a' : '') + '" data-action="mt-t" data-row="' + b.row + '" data-v="' + esc(t) + '">' + (pk[t] ? '✓ ' : '') + esc(t) + '</button>'; }).join('') + '</div>') + '</div>';
+    }).join('');
+    if (mt.saved) h += '<p class="muted small">Збережено: ' + mt.saved + '.</p>';
+    openModal(h, true);
+  }
+  function mtRun() {
+    if (!mt || mt.busy) return;
+    mt.busy = true; mt.stop = false; mtRender();
+    var step = function () {
+      if (!mt || mt.stop || mt.i >= mt.list.length) { if (mt) { mt.busy = false; if (modalStack && modalStack.fn === mtRender) mtRender(); } return; }
+      var b = mt.list[mt.i], t0 = Date.now();
+      api('lbApiTropes', { title: b.title, author: b.author, series: b.series && b.series !== '-' ? b.series : '', isbn: b.isbn || '', pub: b.pub || '', description: ABOUT[b.row] || '', known: allTropes().slice(0, 120) }).then(function (r) {
+        if (r && r.nokey) { mt.stop = true; toast('Gemini не підключено (немає GEMINI_API_KEY)', true); return; }
+        var tr = (r && r.tropes) || [], pk = {}; tr.forEach(function (x) { pk[x] = 1; });
+        mt.res[b.row] = { tropes: tr }; mt.pick[b.row] = pk; mt.i++;
+      }, function (e) {
+        if (/Ліміт/.test(e.message)) { toast(e.message + ' Продовжу за хвилину.', true); return new Promise(function (ok) { setTimeout(ok, 60000); }); }
+        mt.res[b.row] = { tropes: [], err: e.message }; mt.i++;
+      }).then(function () {
+        if (modalStack && modalStack.fn === mtRender) mtRender();
+        setTimeout(step, Math.max(0, 6000 - (Date.now() - t0)));
+      });
+    };
+    step();
+  }
+  function mtSave(rows) {
+    var list = [];
+    rows.forEach(function (row) {
+      var b = bookByRow(row), pk = mt.pick[row] || {}, tl = Object.keys(pk).filter(function (k) { return pk[k]; });
+      mt.res[row].saved = true;
+      if (b && tl.length) list.push({ kind: 'library', item: b, set: { tropes: tl.join(', ') } });
+    });
+    if (!list.length) return Promise.resolve(mtRender());
+    return saveMany(list).then(function () { mt.saved += list.length; }, function () { rows.forEach(function (r) { mt.res[r].saved = false; }); })
+      .then(function () { if (mt && modalStack && modalStack.fn === mtRender) mtRender(); });
   }
   function scSkipKey(k, w) { return k + '|' + norm(w.author) + '|' + norm(w.title); }
   function scSkips() { try { return JSON.parse(localStorage.getItem('lb.scskip') || '{}'); } catch (e) { return {}; } }
@@ -3984,6 +4046,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'bug-menu') { var bm = document.getElementById('bugm'); if (bm) bm.style.display = bm.style.display === 'none' ? '' : 'none'; return; }
     if (a === 'mood-t' && b) { var ml = b._m.slice(), mv = act.getAttribute('data-v'), mi = ml.indexOf(mv); if (mi === -1) ml.push(mv); else ml.splice(mi, 1); b.moods = ml.join(', '); b._m = ml; keepScroll(function () { showBook(b.row); }); saveSet('library', b, { moods: b.moods }).catch(function () {}); return; }
     if (a === 'fin-mood' && finishState) { var fm = finishState.moods, fv = act.getAttribute('data-v'), fi = fm.indexOf(fv); if (fi === -1) fm.push(fv); else fm.splice(fi, 1); document.getElementById('fin-moods').innerHTML = moodChips(fm, 'fin-mood'); return; }
+    if (a === 'mt-open') return mtOpen();
+    if (a === 'mt-run') return mtRun();
+    if (a === 'mt-stop' && mt) { mt.stop = true; return; }
+    if (a === 'mt-t' && mt) { var mr = Number(act.getAttribute('data-row')), mv2 = act.getAttribute('data-v'), mp = mt.pick[mr] = mt.pick[mr] || {}; mp[mv2] = !mp[mv2]; return mtRender(); }
+    if (a === 'mt-skip' && mt) { var ms = Number(act.getAttribute('data-row')), mb = bookByRow(ms); mt.res[ms].skip = true; if (mb) { var mk = mtSkips(); mk[norm(mb.author) + '|' + norm(mb.title)] = 1; try { localStorage.setItem('lb.mtskip', JSON.stringify(mk)); } catch (e) {} } return mtRender(); }
+    if (a === 'mt-save-all' && mt) { act.disabled = true; return mtSave(mt.list.filter(function (x) { var r = mt.res[x.row]; return r && !r.saved && !r.skip; }).map(function (x) { return x.row; })); }
     if (a === 'trope-edit' && b) { tropeEd = { row: b.row, list: b._t.slice() }; keepScroll(function () { showBook(b.row); }); var ti = document.getElementById('trope-in'); if (ti) ti.scrollIntoView({ block: 'center' }); return; }
     if (a === 'trope-x' && tropeEd) { tropeEd.list = tropeEd.list.filter(function (x) { return x !== act.getAttribute('data-v'); }); tropeEdDraw(); return; }
     if (a === 'trope-add' && tropeEd) { var tv = act.getAttribute('data-v'); if (tropeEd.list.indexOf(tv) === -1) tropeEd.list.push(tv); tropeEdDraw(); return; }
