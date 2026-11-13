@@ -533,7 +533,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var t = document.getElementById('toast');
     t.textContent = text; t.className = 'toast show' + (bad ? ' bad' : '');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.className = 'toast'; }, bad ? 6000 : 2200);
+    toastTimer = setTimeout(function () { t.className = 'toast'; }, bad ? 6000 : Math.max(2200, String(text).length * 50));
   }
   function opts(kind, field) { return (D.options && D.options[kind] && D.options[kind][field]) || []; }
   function selectHtml(attrs, list, cur, empty) {
@@ -993,7 +993,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var d = vfDone();
     var src = kind === 'wish' ? D.wish.filter(function (w) { return w.status !== 'В бібліотеці' && !/не оголошено/i.test(w.title) && !/^(книга|частина|том) \d+$/.test(norm(w.title)); }) : S.inLib.slice();
     // спершу ті, де бракує ISBN або обкладинки
-    return src.filter(function (x) { return !d[vfKey(kind, x)]; }).sort(function (a, b) { return ((a.isbn && a.cover) ? 1 : 0) - ((b.isbn && b.cover) ? 1 : 0); });
+    // лише ті, де ще чогось бракує (решту доповнює автозвірка)
+    return src.filter(function (x) { return !d[vfKey(kind, x)] && (kind === 'wish' ? (D.cols.wishCover && !x.cover) || !x.pub : !x.isbn || !x.cover || !x.pages); });
   }
   function vfStart(kind) { nav = []; vf = { kind: kind, list: vfList(kind), i: 0, res: {} }; vfFetch(); vfDialog(); }
   function vfFetch() {
@@ -1117,7 +1118,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="pick"><button data-shm="spines" class="' + (fm ? '' : 'on') + '">📚 Корінці</button><button data-shm="covers" class="' + (fm ? 'on' : '') + '">🖼 Обкладинки</button></div>';
     var noCov = S.inLib.filter(function (x) { return !x.cover; }).length;
     var noIsbn = S.inLib.filter(function (x) { return !x.isbn || !x.cover; }).length;
-    h += '<div class="chips" style="margin:0 0 8px">' + '<button class="chip a" data-action="vf-start" data-kind="library">🔎 Звірити з Книгарнею Є</button>' + (noIsbn ? '<button class="chip" data-action="rv-start">✨ ISBN і обкладинки з Goodreads (' + noIsbn + ')</button>' : '') + (noCov ? '<button class="chip" data-action="cover-queue">🖼 Без обкладинки: ' + noCov + '</button>' : '') + '</div>';
+    h += '<div class="chips" style="margin:0 0 8px">' + '<button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button><button class="chip" data-action="vf-start" data-kind="library">🔎 Переглянути вручну</button>' + (noIsbn ? '<button class="chip" data-action="rv-start">✨ ISBN і обкладинки з Goodreads (' + noIsbn + ')</button>' : '') + (noCov ? '<button class="chip" data-action="cover-queue">🖼 Без обкладинки: ' + noCov + '</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
@@ -2986,6 +2987,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'rv-start') rvStart();
     if (a === 'vf-start') vfStart(act.getAttribute('data-kind') || 'library');
     if (a === 'vf-skip' && vf) vfNext(false);
+    if (a === 'auto-fill') {
+      act.disabled = true;
+      api('lbApiAutoFill').then(function (r) {
+        act.disabled = false;
+        toast(r.started ? 'Автозвірку запущено ✓ Вона йде у фоні порціями (≈ година на всю бібліотеку). Можна закрити додаток.' : 'Автозвірка вже йде у фоні' + (r.last && r.last.filled != null ? ' (останній раз доповнено ' + r.last.filled + ')' : '') + '.');
+      }).catch(function (e) { act.disabled = false; toast(e.message, true); });
+    }
     if (a === 'vf-no' && vf) vfNext(true);
     if (a === 'vf-url' && vf) {
       var vx = vf.list[vf.i], vu = (fval('rv-url') || '').trim(), vi = (fval('rv-isbn') || '').replace(/[^0-9Xx]/g, ''), vs = {};
