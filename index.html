@@ -1014,12 +1014,16 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       rows.push({ f: f, label: label, mine: mine, theirs: theirs, on: on });
     };
     var t = r.titleClean || r.title || '';
-    add('title', 'Назва', x.title, t, titleMatch(x.title, t) || titleMatch(t, x.title));
+    var nm = function (z) { return (String(z).match(/\d+/g) || []).join(','); };
+    add('title', 'Назва', x.title, t, nm(x.title) === nm(t) && (titleMatch(x.title, t) || titleMatch(t, x.title)));
     add('author', 'Автор', x.author, r.author, true);
     add('pub', 'Видавництво', x.pub, r.pub, !x.pub);
     if (lib && D.cols.isbn) add('isbn', 'ISBN', x.isbn, r.isbn, !x.isbn);
     if (lib) add('pages', 'Сторінок', x.pages, r.pages, !x.pages);
-    if (lib ? D.cols.cover : D.cols.wishCover) add('cover', 'Обкладинка', x.cover ? 'є' : '', r.cover, !x.cover);
+    if (lib ? D.cols.cover : D.cols.wishCover) {
+      if (r.cover) add('cover', 'Обкладинка', x.cover ? 'є' : '', r.cover, !x.cover);
+      else if (r.shopCover) add('cover', 'Обкладинка (фото з магазину)', x.cover ? 'є' : '', r.shopCover, false);
+    }
     rows.forEach(function (rw) { if (rw.f === 'cover') rw.mine = x.cover ? 'є своя' : ''; });
     // схоже на інше видання — нічого не позначаємо заздалегідь
     var other = (lib && x.isbn && r.isbn && x.isbn !== r.isbn) || (x.pub && r.pub && !titleMatch(x.pub, r.pub) && !titleMatch(r.pub, x.pub));
@@ -1037,7 +1041,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var mine = '<div class="rvc"><div class="lbl">У вас</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
       '<b>' + esc(x.title) + '</b><span>' + esc(x.author) + '</span><span class="muted">' + esc([x.pub, x.pages ? x.pages + ' стор.' : '', x.isbn ? 'ISBN ' + x.isbn : ''].filter(Boolean).join(' · ')) + '</span>' +
       '<span class="chip" role="button" style="align-self:flex-start;margin-top:4px;cursor:pointer" ' + (lib ? 'data-book="' : 'data-wish="') + x.row + '">Відкрити ›</span></div>';
-    if (r.loading) { openModal(h + '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">Книгарня Є</div><div class="ph wait">Шукаю…</div></div></div>', true); return; }
+    if (r.loading) { openModal(h + '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">Книгарня Є</div><div class="ph wait">Шукаю…</div></div></div><div class="row" style="margin-top:12px"><button class="btn" data-action="vf-skip">Пропустити ›</button></div>', true); return; }
     if (r.notFound) {
       h += '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">Книгарня Є</div><div class="ph wait">Не знайдено</div><span class="muted small">Можливо, назва записана інакше або книги немає в продажу.</span></div></div>';
       h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><a class="btn" target="_blank" rel="noopener" href="https://book-ye.com.ua/catalogsearch/result/?q=' + encodeURIComponent(x.title) + '">Шукати на сайті ↗</a><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">🔎 Google ↗</a><button class="btn" data-action="vf-skip">Пропустити</button><button class="btn p" data-action="vf-no">Далі ›</button></div>';
@@ -1045,7 +1049,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       openModal(h, true); return;
     }
     var rows = vfRows(x, r);
-    h += '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">Книгарня Є' + (r.match === 'isbn' ? ' · за ISBN' : '') + '</div>' + (r.cover ? '<img referrerpolicy="no-referrer" src="' + esc(r.cover) + '">' : '<div class="ph wait">без обкладинки</div>') +
+    h += '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">Книгарня Є' + (r.match === 'isbn' ? ' · за ISBN' : '') + '</div>' + ((r.cover || r.shopCover) ? '<img referrerpolicy="no-referrer" src="' + esc(r.cover || r.shopCover) + '">' : '<div class="ph wait">без обкладинки</div>') +
+      (r.cover && r.coverFrom ? '<span class="muted small">обкладинка: ' + esc(r.coverFrom) + '</span>' : r.shopCover ? '<span class="muted small">рівної обкладинки не знайшлося, це фото з магазину</span>' : '') +
       '<b>' + esc(r.titleClean || r.title) + '</b><span>' + esc(r.author || '') + '</span><span class="muted">' + esc([r.pub, r.pages ? r.pages + ' стор.' : '', r.year, r.binding].filter(Boolean).join(' · ')) + '</span>' +
       (r.url ? '<a class="chip" style="align-self:flex-start;margin-top:4px" target="_blank" rel="noopener" href="' + esc(r.url) + '">На сайті ↗</a>' : '') + '</div></div>';
     if (!rows.length) {
@@ -1053,7 +1058,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     } else {
       if (rows.other) h += '<p class="small" style="margin:10px 0 0;color:var(--warn)">⚠ Схоже, це інше видання (інший ISBN або видавництво). Позначте лише те, у чому впевнені, або натисніть «Не те видання».</p>';
       h += '<table class="vft"><tr><th></th><th>У вас</th><th>Книгарня Є</th></tr>' + rows.map(function (rw, i) {
-        var th = rw.f === 'cover' ? 'нова картинка' : esc(rw.theirs);
+        var th = rw.f === 'cover' ? '<img referrerpolicy="no-referrer" src="' + esc(rw.theirs) + '" style="width:44px;height:66px;object-fit:cover;border-radius:3px">' : esc(rw.theirs);
         return '<tr><td><label><input type="checkbox" data-vf="' + i + '"' + (rw.on ? ' checked' : '') + '> ' + esc(rw.label) + '</label></td><td class="muted">' + (esc(rw.mine) || '—') + '</td><td><b>' + th + '</b></td></tr>';
       }).join('') + '</table>';
       h += '<div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn p" data-action="vf-save">✓ Зберегти позначене</button><button class="btn" data-action="vf-no">✗ Не те видання</button><button class="btn" data-action="vf-skip">Пропустити</button></div>';
@@ -2980,14 +2985,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (vu) { if (!/^https?:\/\//i.test(vu)) return toast('Посилання має починатися з https://', true); vs.cover = vu; }
       if (vi) { if (vi.length !== 10 && vi.length !== 13) return toast('ISBN має 10 або 13 цифр', true); vs.isbn = vi; }
       if (!Object.keys(vs).length) return toast('Вставте посилання або ISBN', true);
-      vfMark(vf.kind, vx); vf.i++; vfFetch(); saveSet('library', vx, vs);
+      vfMark(vf.kind, vx); vf.i++; vfFetch(); vfDialog(); saveSet('library', vx, vs).then(function () { if (vf && modalStack && modalStack.fn === vfDialog) vfDialog(); }, function () {});
     }
     if (a === 'vf-save' && vf) {
       var sx = vf.list[vf.i], sr = vf.res[sx.row] || {}, rows = vfRows(sx, sr), set = {};
       document.querySelectorAll('[data-vf]').forEach(function (cb) { if (cb.checked) { var rw = rows[Number(cb.getAttribute('data-vf'))]; set[rw.f] = rw.theirs; } });
       if (!Object.keys(set).length) return vfNext(true);
-      vfMark(vf.kind, sx); vf.i++; vfFetch();
-      saveSet(vf.kind, sx, set);
+      vfMark(vf.kind, sx); vf.i++; vfFetch(); vfDialog();
+      saveSet(vf.kind, sx, set).then(function () { if (vf && modalStack && modalStack.fn === vfDialog) vfDialog(); }, function () {});
     }
     if (a === 'rv-skip' && rv) rvNext();
     if (a === 'rv-url' && rv) {
