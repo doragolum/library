@@ -68,7 +68,8 @@ var LB_FIELDS = {
     author: { head: ['Автор'], type: 'text' },
     title:  { head: ['Назва'], type: 'text' },
     pub:    { head: ['Видавництво'], type: 'text' },
-    release: { head: ['Реліз'], type: 'date' }
+    release: { head: ['Реліз'], type: 'date' },
+    ordered: { head: ['Дата замовлення'], type: 'date', optional: true }
   } }
 };
 // для сумісності з v1
@@ -377,7 +378,8 @@ function lbReadAll_() {
       np: gw(r, ['Статус НП']),
       npCheck: gw(r, ['НП: остання перевірка']),
       npErr: gw(r, ['НП: помилка перевірки']),
-      cover: gw(r, ['Обкладинка'])
+      cover: gw(r, ['Обкладинка']),
+      ordered: lbDate_(gw(r, ['Дата замовлення']))
     };
   }).filter(function (w) { return w.title || w.author; });
 
@@ -411,6 +413,7 @@ function lbReadAll_() {
   var cols = {};
   Object.keys(F).forEach(function (f) { if (F[f].optional) cols[f] = lbHas_(L.head, F[f].head); });
   cols.wishCover = lbHas_(W.head, ['Обкладинка']);
+  cols.wishOrdered = lbHas_(W.head, ['Дата замовлення']);
 
   return {
     today: lbToday_(),
@@ -421,6 +424,7 @@ function lbReadAll_() {
     goals: lbGoals_(),
     shelfMarks: lbShelfMarks_(),
     news: lbNewsGet_().items,
+    pubCanon: LB_PUBLISHERS,
     books: books, wish: wish, series: series, catalog: catalog, sold: sold, log: log
   };
 }
@@ -536,7 +540,8 @@ function lbClean_(kind, f, fd, value, options) {
   switch (fd.type) {
     case 'list':
       var allowed = (options[kind] && options[kind][f]) || fd.def || [];
-      if (allowed.length && allowed.indexOf(v) === -1) throw new Error('«' + v + '» немає у списку для «' + fd.head[0] + '».');
+      // видавництво — вільне поле: довідник сам приводить назву до правильної
+      if (allowed.length && allowed.indexOf(v) === -1 && f !== 'pub') throw new Error('«' + v + '» немає у списку для «' + fd.head[0] + '».');
       return { cell: v, show: v };
     case 'date':
       var iso = lbDate_(v);
@@ -579,7 +584,7 @@ function lbSaveOne_(ss, options, cache, ch) {
     if (!fd) throw new Error('Поле «' + f + '» не можна змінювати з додатку.');
     var col = lbCol_(c.head, fd.head);
     if (col < 0) throw new Error('У таблиці немає колонки «' + fd.head[0] + '». Її треба додати, щоб це працювало.');
-    var clean = lbClean_(ch.kind, f, fd, ch.set[f], options);
+    var clean = lbClean_(ch.kind, f, fd, f === 'pub' ? lbPubCanon_(ch.set[f]) : ch.set[f], options);
     var old = c.vals[idx][col];
     var range = c.sh.getRange(idx + 2, col + 1);
     range.setValue(clean.cell);
@@ -589,6 +594,16 @@ function lbSaveOne_(ss, options, cache, ch) {
     var shown = clean.date ? lbHuman_(clean.show) : clean.show;
     if (f !== 'cover' && String(old) !== String(shown)) notes.push(fd.head[0] + ': ' + (old || '—') + ' → ' + (shown === '' ? '—' : shown));
   });
+  // статус став «Замовлено» → дата замовлення (якщо колонка є і дата ще порожня)
+  if (ch.kind === 'wish' && values.status === 'Замовлено' && !('ordered' in values)) {
+    var oc = lbCol_(c.head, ['Дата замовлення']);
+    if (oc >= 0 && !String(c.vals[idx][oc]).trim()) {
+      var today = lbToday_(), tp = today.split('-');
+      c.sh.getRange(idx + 2, oc + 1).setValue(new Date(Number(tp[0]), Number(tp[1]) - 1, Number(tp[2]), 12)).setNumberFormat('dd.mm.yyyy');
+      c.vals[idx][oc] = today; values.ordered = today;
+      notes.push('Дата замовлення: ' + lbHuman_(today));
+    }
+  }
   if (notes.length) lbLog_('✏️ Змінено в додатку', ch.title, ch.author, notes.join('; '));
   return { row: idx + 2, values: values };
 }
@@ -640,7 +655,7 @@ function lbApiAddBook(initData, key, req) {
       put(['Назва серії'], String(b.series || (isSeries ? '' : '-')).trim());
       put(['№ серії'], isSeries ? lbNum_(b.num) : '');
       put(['Всього'], isSeries ? lbNum_(b.total) : '');
-      put(['Видавництво'], String(b.pub || '').trim());
+      put(['Видавництво'], lbPubCanon_(b.pub));
       put(['Статус'], b.status || 'не читала');
 
       // поля з перевіркою
@@ -724,7 +739,7 @@ function lbApiAddWish(initData, key, req) {
       put('Назва серії', String(req.series || '').trim());
       put('Назва', String(req.title).trim());
       put('Статус', req.status || (req.series ? 'Докупити серію' : 'Хочу купити'));
-      put('Видавництво', String(req.pub || '').trim());
+      put('Видавництво', lbPubCanon_(req.pub));
       put('Серія', req.series ? 'Так' : 'Ні');
       put('Яка частина', req.part === '' || req.part == null ? '' : lbNum_(req.part));
       put('Всього книг', req.total === '' || req.total == null ? '' : lbNum_(req.total));
@@ -855,7 +870,9 @@ function lbAiBooks_(parts) {
     if (!res) return { nokey: true };
     var items = (res.items || res || []);
     if (!Array.isArray(items)) items = [];
-    return { items: items.filter(function (x) { return x && x.title; }).slice(0, 30) };
+    items = items.filter(function (x) { return x && x.title; }).slice(0, 30);
+    items.forEach(function (x) { if (x.pub) x.pub = lbPubCanon_(x.pub); });
+    return { items: items };
 }
 
 /**
@@ -914,6 +931,10 @@ function lbOrderSave_(req) {
       };
       var out = { updated: 0, added: 0, rows: [] };
       var newRows = [];
+      // дата замовлення: з форми (req.date) або сьогодні; лише для замовлень, не для бажанок
+      var cOD = col('Дата замовлення');
+      var odIso = /^\d{4}-\d{2}-\d{2}$/.test(String(req.date || '')) ? String(req.date) : lbToday_();
+      var odP = odIso.split('-'), odVal = new Date(Number(odP[0]), Number(odP[1]) - 1, Number(odP[2]), 12);
       items.forEach(function (x) {
         var isWish = req.mode === 'wish';
         var set = {
@@ -936,6 +957,7 @@ function lbOrderSave_(req) {
             if (h === 'Номер замовлення') cell.setNumberFormat('@');
             cell.setValue(set[h]);
           });
+          if (!isWish && cOD >= 0 && (req.date || !String(vals[idx][cOD]).trim())) sh.getRange(idx + 2, cOD + 1).setValue(odVal).setNumberFormat('dd.mm.yyyy');
           out.updated++; out.rows.push(idx + 2);
           lbLog_(isWish ? '＋ Бажанка оновлена (з додатку)' : '🧾 Замовлено (з додатку)', x.title, vals[idx][cA], [req.where, req.num ? '№' + req.num : '', set['Ціна'] !== '' ? set['Ціна'] + ' грн' : ''].filter(String).join(' · '));
         } else {
@@ -944,13 +966,14 @@ function lbOrderSave_(req) {
           put('Автор', String(x.author).trim());
           put('Назва серії', String(x.series || '').trim());
           put('Назва', String(x.title).trim());
-          put('Видавництво', String(x.pub || '').trim());
+          put('Видавництво', lbPubCanon_(x.pub));
           put('Серія', x.series ? 'Так' : 'Ні');
           put('Яка частина', x.part === '' || x.part == null ? '' : lbNum_(x.part));
           put('Всього книг', x.total === '' || x.total == null ? '' : lbNum_(x.total));
           if (x.isbn) put('ISBN', String(x.isbn));
           Object.keys(set).forEach(function (h) { put(h, set[h]); });
           if (isWish) put('Статус', 'Хочу купити');
+          else put('Дата замовлення', odVal);
           newRows.push(row);
           out.added++;
           lbLog_(isWish ? '＋ Нова бажанка (з додатку)' : '🧾 Замовлено, додано в бажанки (з додатку)', x.title, x.author, [req.where, req.num ? '№' + req.num : ''].filter(String).join(' · '));
@@ -961,6 +984,7 @@ function lbOrderSave_(req) {
         var cN = col('Номер замовлення');
         if (cN >= 0) sh.getRange(start, cN + 1, newRows.length, 1).setNumberFormat('@');
         sh.getRange(start, 1, newRows.length, lastCol).setValues(newRows);
+        if (cOD >= 0) sh.getRange(start, cOD + 1, newRows.length, 1).setNumberFormat('dd.mm.yyyy');
       }
       if (typeof sortWishlist === 'function') { try { sortWishlist(); } catch (err) {} }
       SpreadsheetApp.flush();
@@ -1276,7 +1300,7 @@ function lbParseBookYe_(h) {
   return {
     title: h1 ? lbHtmlText_(h1) : meta('og:title'),
     author: get(['автор']),
-    pub: get(['видавництво', 'видавець']),
+    pub: lbPubCanon_(get(['видавництво', 'видавець'])),
     series: get(['серія']),
     isbn: isbn.length === 13 || isbn.length === 10 ? isbn : '',
     pages: lbNum_(get(['кількість сторінок', 'сторінок', 'к-сть сторінок'])),
@@ -1341,7 +1365,7 @@ function lbMgBook_(slug) {
   var attrs = { 'Категорії': cats.join(', '), 'Мова': (o.languages || []).join(', '), 'Рік видання': o.year || '', 'Опис': desc.slice(0, 1500) };
   if (o.originalTitle) attrs['Оригінальна назва'] = o.originalTitle;
   return {
-    title: o.title, author: lbMgAuthor_(o), pub: o.publisher ? o.publisher.name : '',
+    title: o.title, author: lbMgAuthor_(o), pub: o.publisher ? lbPubCanon_(o.publisher.name) : '',
     series: ser ? ser.title : '', part: ser && ser.numberInSeries ? String(ser.numberInSeries) : (o.numberInSeries ? String(o.numberInSeries) : ''),
     isbn: isbn.length === 13 || isbn.length === 10 ? isbn : '', pages: o.pages || null, year: o.year ? String(o.year) : '',
     cover: o.cover && o.cover.frontCover || '', price: pu.currentPrice || pu.price || pu.preorderPrice || null, avail: avail,
@@ -1472,7 +1496,7 @@ function lbNewsAsk_(w) {
   var rel = String(j.release || '').trim();
   if (/^\d{4}-\d{2}$/.test(rel)) rel = ''; // місяць без дня не пишемо в «Реліз»
   if (!/^\d{4}-\d{2}-\d{2}$/.test(rel)) rel = '';
-  return { title: String(j.title || '').slice(0, 150), pub: String(j.publisher || '').slice(0, 60), release: rel, relMonth: String(j.release || '').slice(0, 7),
+  return { title: String(j.title || '').slice(0, 150), pub: lbPubCanon_(String(j.publisher || '').slice(0, 60)), release: rel, relMonth: String(j.release || '').slice(0, 7),
     avail: st.indexOf('передзам') === 0 ? 'Передзамовлення' : st.indexOf('у продаж') === 0 ? 'Є у продажу' : st.indexOf('анонс') === 0 ? 'Анонс' : '',
     url: r.url, source: 'Gemini + Google' };
 }
@@ -1694,7 +1718,7 @@ function lbFromGoogle_(isbn, title, author) {
   var v = it.volumeInfo || {};
   var img = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail);
   var ids = (v.industryIdentifiers || []).filter(function (x) { return x.type === 'ISBN_13'; })[0];
-  return { source: 'Google Books', title: v.title, author: (v.authors || []).join(', '), pages: v.pageCount, pub: v.publisher,
+  return { source: 'Google Books', title: v.title, author: (v.authors || []).join(', '), pages: v.pageCount, pub: lbPubCanon_(v.publisher),
     isbn: ids ? ids.identifier : '', cover: img ? String(img).replace(/^http:/, 'https:').replace('&edge=curl', '') : '',
     description: v.description ? lbHtmlText_(v.description).slice(0, 1200) : '',
     genresRaw: (v.categories || []).map(function (c) { return String(c).toLowerCase().replace(/[^a-z0-9]+/g, '-'); }) };
@@ -1705,7 +1729,7 @@ function lbFromOpenLibrary_(isbn, title, author) {
     var txt = lbFetch_('https://openlibrary.org/isbn/' + isbn + '.json');
     if (!txt) return null;
     var d = JSON.parse(txt);
-    return { source: 'Open Library', title: d.title, pages: d.number_of_pages, pub: (d.publishers || [])[0],
+    return { source: 'Open Library', title: d.title, pages: d.number_of_pages, pub: lbPubCanon_((d.publishers || [])[0]),
       cover: d.covers && d.covers[0] > 0 ? 'https://covers.openlibrary.org/b/id/' + d.covers[0] + '-M.jpg' : '' };
   }
   var s = lbFetch_('https://openlibrary.org/search.json?limit=1&title=' + encodeURIComponent(title) + (author ? '&author=' + encodeURIComponent(author) : ''));
@@ -2278,4 +2302,320 @@ function lbAddTagColumns() {
   });
   Logger.log(added.length ? 'Додано колонки: ' + added.join(', ') : 'Колонки вже є.');
   return added;
+}
+
+/* ============================================================
+ * v8. Видавництва — один довідник
+ * «Правильна назва»: [варіанти написання]. Довідник у коді (а не окремим листом): змінюється рідко,
+ * а нові дублі lbPublishersPreview знаходить сама і показує. Регістр, пробіли, дефіси й лапки
+ * не важать: «Book Chef», «BOOKCHEF» і «Bookchef» — одне й те саме.
+ * ============================================================ */
+var LB_PUBLISHERS = {
+  'А-ба-ба-га-ла-ма-га': ['А-ба-ба', 'Абабагаламага', 'Видавництво А-ба-ба-га-ла-ма-га', 'A-BA-BA-HA-LA-MA-HA'],
+  'BookChef': ['Book Chef', 'Bookchef', 'Букшеф'],
+  'Книголав': ['Knigolove'],
+  'Nebo Publishing': ['Nebo BookLab Publishing', 'Nebo BookLab', 'Nebo', 'Небо', 'Небо Publishing']
+};
+var LB_PUB_SHEETS = [['library', 'Облік бібліотеки'], ['wish', 'Бажанки'], ['series', 'Серії'], ['catalog', 'Каталог книг']];
+
+/** Ключ для порівняння: без регістру, пробілів, дефісів, лапок і крапок. */
+function lbPubKey_(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/ґ/g, 'г').replace(/[\s\-–—_.,:;'’`"ʼ«»()]/g, '');
+}
+/** Те саме + латинські літери, що виглядають як кириличні (A/А, C/С, O/О …), вважаються однаковими. */
+function lbPubKey2_(s) {
+  var map = { A: 'А', B: 'В', C: 'С', E: 'Е', H: 'Н', I: 'І', K: 'К', M: 'М', O: 'О', P: 'Р', T: 'Т', X: 'Х', Y: 'У' };
+  return lbPubKey_(String(s == null ? '' : s).toUpperCase().replace(/[ABCEHIKMOPTXY]/g, function (c) { return map[c]; }));
+}
+var LB_PUB_MAP_ = null;
+function lbPubMap_() {
+  if (LB_PUB_MAP_) return LB_PUB_MAP_;
+  var m = {};
+  Object.keys(LB_PUBLISHERS).forEach(function (canon) {
+    m[lbPubKey_(canon)] = canon;
+    LB_PUBLISHERS[canon].forEach(function (v) { m[lbPubKey_(v)] = canon; });
+  });
+  LB_PUB_MAP_ = m;
+  return m;
+}
+/** Правильна назва видавництва з довідника; якщо його там немає — назва як є (без зайвих пробілів). */
+function lbPubCanon_(p) {
+  var s = String(p == null ? '' : p).replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  return lbPubMap_()[lbPubKey_(s)] || s;
+}
+
+/** План змін: які назви на що міняються, у яких клітинках, і що варто перевірити вручну. */
+function lbPubPlan_(ss) {
+  var sheets = [], counts = {};
+  LB_PUB_SHEETS.forEach(function (x) {
+    var sh = ss.getSheetByName(x[1]);
+    if (!sh || sh.getLastRow() < 2) return;
+    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
+    var col = lbCol_(head, ['Видавництво']);
+    if (col < 0) return;
+    var rng = sh.getRange(2, col + 1, sh.getLastRow() - 1, 1);
+    var vals = rng.getValues().map(function (r) { return r[0]; });
+    var formulas = rng.getFormulas().map(function (r) { return r[0]; });
+    sheets.push({ kind: x[0], name: x[1], sh: sh, col: col, rng: rng, vals: vals, formulas: formulas });
+    vals.forEach(function (v, i) { var t = String(v == null ? '' : v); if (t.trim() && !formulas[i]) counts[t] = (counts[t] || 0) + 1; });
+  });
+  // 1) довідник; 2) однакові з точністю до регістру/пробілів/схожих літер — до найчастішого написання
+  var fix = {}, groups = {};
+  Object.keys(counts).forEach(function (raw) {
+    var canon = lbPubCanon_(raw);
+    var k2 = lbPubKey2_(canon);
+    (groups[k2] = groups[k2] || {})[canon] = (groups[k2][canon] || 0) + counts[raw];
+    if (canon !== raw) fix[raw] = canon;
+  });
+  var known = {}; Object.keys(LB_PUBLISHERS).forEach(function (c) { known[c] = 1; });
+  Object.keys(groups).forEach(function (k2) {
+    var names = Object.keys(groups[k2]);
+    if (names.length < 2) return;
+    var best = names.filter(function (n) { return known[n]; })[0] ||
+      names.sort(function (a, b) { return groups[k2][b] - groups[k2][a] || a.localeCompare(b); })[0];
+    Object.keys(counts).forEach(function (raw) { var c = fix[raw] || raw; if (lbPubKey2_(c) === k2 && c !== best) fix[raw] = best; });
+  });
+  // 3) схожі, але не впевнена — лише показати
+  var finals = {}; Object.keys(counts).forEach(function (raw) { var c = fix[raw] || raw; finals[c] = (finals[c] || 0) + counts[raw]; });
+  var fl = Object.keys(finals), suspect = [];
+  for (var i = 0; i < fl.length; i++) for (var j = i + 1; j < fl.length; j++) {
+    var a = lbPubKey2_(fl[i]), b = lbPubKey2_(fl[j]);
+    if (a.length < 4 || b.length < 4) continue;
+    if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1 || lbDice_(fl[i], fl[j]) >= 0.8) suspect.push(fl[i] + ' (' + finals[fl[i]] + ') ↔ ' + fl[j] + ' (' + finals[fl[j]] + ')');
+  }
+  var cells = 0, perSheet = [];
+  sheets.forEach(function (x) {
+    x.next = x.vals.map(function (v, i) { var t = String(v == null ? '' : v); return !x.formulas[i] && fix[t] ? fix[t] : v; });
+    x.changed = x.next.filter(function (v, i) { return v !== x.vals[i]; }).length;
+    cells += x.changed;
+    perSheet.push(x.name + ': ' + x.changed);
+  });
+  // випадаючий список у колонці «Видавництво» (якщо він є)
+  var dv = [];
+  sheets.forEach(function (x) {
+    var rule = null;
+    try { rule = x.sh.getRange(2, x.col + 1).getDataValidation(); } catch (e) {}
+    if (!rule || rule.getCriteriaType() !== SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST) return;
+    var list = rule.getCriteriaValues()[0].map(String);
+    var next = [];
+    list.concat(Object.keys(finals)).forEach(function (v) { var c = fix[v] || lbPubCanon_(v); if (c && next.indexOf(c) === -1) next.push(c); });
+    next.sort(function (a, b) { return a.localeCompare(b, 'uk'); });
+    if (next.join('|') !== list.slice().sort(function (a, b) { return a.localeCompare(b, 'uk'); }).join('|')) dv.push({ x: x, rule: rule, list: list, next: next });
+  });
+  return { fix: fix, counts: counts, sheets: sheets, cells: cells, perSheet: perSheet, suspect: suspect, dv: dv };
+}
+function lbPubPlanText_(p) {
+  var keys = Object.keys(p.fix).sort(function (a, b) { return p.fix[a].localeCompare(p.fix[b], 'uk') || a.localeCompare(b, 'uk'); });
+  var out = [];
+  out.push(keys.length ? 'Зміниться назв: ' + keys.length + ', клітинок: ' + p.cells + ' (' + p.perSheet.join(', ') + ').' : 'Змінювати нічого не треба ✓');
+  keys.forEach(function (k) { out.push('  «' + k + '» (' + p.counts[k] + ') → «' + p.fix[k] + '»'); });
+  p.dv.forEach(function (d) { out.push('Випадаючий список «Видавництво» на листі «' + d.x.name + '» теж оновиться: ' + d.list.length + ' → ' + d.next.length + ' назв.'); });
+  if (p.suspect.length) {
+    out.push('', 'Схожі назви — НЕ змінюю, перевірте самі (якщо це одне видавництво, напишіть Claude, він додасть у довідник):');
+    p.suspect.slice(0, 40).forEach(function (t) { out.push('  ' + t); });
+  }
+  return out.join('\n');
+}
+/** Крок 1 (нічого не змінює): показує в журналі, які назви видавництв зміняться і де. */
+function lbPublishersPreview() {
+  var p = lbPubPlan_(lbSs_());
+  var t = lbPubPlanText_(p);
+  console.log(t);
+  return t;
+}
+/** Крок 2 (після «так»): виправляє назви видавництв на всіх листах. Усе записується в «Лог». */
+function lbPublishersApply() {
+  var ss = lbSs_();
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Таблиця зараз оновлюється. Спробуйте за хвилину.');
+  try {
+    var p = lbPubPlan_(ss);
+    // спершу випадаючий список (щоб таблиця не відхилила нові назви), потім самі назви
+    p.dv.forEach(function (d) {
+      var nr = d.rule.copy().requireValueInList(d.next, true).build();
+      d.x.sh.getRange(2, d.x.col + 1, Math.max(1, d.x.sh.getMaxRows() - 1), 1).setDataValidation(nr);
+    });
+    p.sheets.forEach(function (x) {
+      if (!x.changed) return;
+      if (x.formulas.some(Boolean)) x.next.forEach(function (v, i) { if (v !== x.vals[i]) x.sh.getRange(i + 2, x.col + 1).setValue(v); });
+      else x.rng.setValues(x.next.map(function (v) { return [v]; }));
+    });
+    SpreadsheetApp.flush();
+    var keys = Object.keys(p.fix);
+    if (keys.length || p.dv.length) lbLog_('🏢 Видавництва: один довідник', '', '', ('Клітинок: ' + p.cells + ' (' + p.perSheet.join(', ') + '). ' +
+      keys.map(function (k) { return k + ' → ' + p.fix[k] + ' (' + p.counts[k] + ')'; }).join('; ')).slice(0, 45000));
+    var t = keys.length ? 'Готово ✓ Виправлено клітинок: ' + p.cells + '. Подробиці — у листі «Лог».' : 'Змінювати нічого не треба ✓';
+    if (p.suspect.length) t += '\nСхожі назви, які я не чіпала:\n  ' + p.suspect.slice(0, 40).join('\n  ');
+    console.log(t);
+    return t;
+  } finally { lock.releaseLock(); }
+}
+
+/* ============================================================
+ * v8. Дата замовлення (колонка в кінці «Бажанок»)
+ * ============================================================ */
+/** Запустіть один раз: додає колонку «Дата замовлення» в кінець листа «Бажанки» (якщо її ще нема). */
+function lbAddOrderDateColumn() {
+  var sh = lbSs_().getSheetByName(LB_SHEETS.wish);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0].map(lbKey_);
+  if (head.indexOf(lbKey_('Дата замовлення')) !== -1) { console.log('Колонка «Дата замовлення» вже є ✓'); return; }
+  var col = sh.getLastColumn() + 1;
+  if (sh.getMaxColumns() < col) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
+  sh.getRange(1, col).setValue('Дата замовлення');
+  sh.getRange(2, col, Math.max(1, sh.getMaxRows() - 1), 1).setNumberFormat('dd.mm.yyyy');
+  lbLog_('➕ Нова колонка', 'Бажанки', '', 'Дата замовлення (колонка ' + col + ')');
+  console.log('Додано колонку «Дата замовлення» (колонка ' + col + ') ✓ Тепер дата ставиться сама, коли статус стає «Замовлено».');
+}
+
+/* ============================================================
+ * v8. Нова пошта — модуль додатку
+ * Те саме, що npUpdate + npSyncBooksFromNp_, але колонки шукаються за заголовками.
+ * Перевіряє лише відомі ТТН, статус бажанки рухає лише вперед, нічого не пише,
+ * якщо таблиця змінилася під час запиту. Ключ — NP_API_KEY у властивостях скрипту.
+ * ============================================================ */
+var LB_NP_HEADS = ['Статус НП', 'НП: остання перевірка', 'НП: помилка перевірки', 'НП: перевірена ТТН'];
+var LB_NP_STAGE = { 'Замовлено': 0, 'Створено ТТН': 1, 'Відправлено': 2, 'В дорозі': 2, 'Доставлено': 3, 'В бібліотеці': 4 };
+function lbNpStatusFromCode_(code) {
+  return { '1': 'Створено ТТН', '4': 'Відправлено', '41': 'Відправлено', '5': 'Відправлено', '6': 'Відправлено', '101': 'Відправлено',
+    '7': 'Доставлено', '8': 'Доставлено', '9': 'В бібліотеці', '10': 'В бібліотеці', '11': 'В бібліотеці' }[String(code)] || null;
+}
+function lbNpNorm_(v) { return String(v == null ? '' : v).trim().replace(/\s/g, ''); }
+function lbNpText_(v) { var s = String(v).slice(0, 500); return /^[=+@-]/.test(s) ? "'" + s : s; }
+function lbNpFetch_(key, numbers) {
+  var response;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      response = UrlFetchApp.fetch('https://api.novaposhta.ua/v2.0/json/', {
+        method: 'post', contentType: 'application/json', muteHttpExceptions: true, followRedirects: false,
+        payload: JSON.stringify({ apiKey: key, modelName: 'TrackingDocument', calledMethod: 'getStatusDocuments',
+          methodProperties: { Documents: numbers.map(function (n) { return { DocumentNumber: n }; }) } })
+      });
+    } catch (e) { throw new Error('НП: мережевий запит не виконано. Попередні статуси збережено.'); }
+    var code = response.getResponseCode();
+    if (code === 200) break;
+    if ((code === 429 || code >= 500) && attempt < 2) { Utilities.sleep(1000 * Math.pow(2, attempt)); continue; }
+    throw new Error('НП: HTTP ' + code + '. Попередні статуси збережено.');
+  }
+  var body;
+  try { body = JSON.parse(response.getContentText()); } catch (e) { throw new Error('НП: відповідь не є JSON.'); }
+  // відповідь, ключ і особисті дані в журнал не пишемо
+  if (body.success !== true || !Array.isArray(body.data)) throw new Error('НП відхилила запит. Перевірте чинність ключа в кабінеті НП. Попередні статуси збережено.');
+  return body.data;
+}
+/** Один прохід. dryRun = true — лише рахує, що змінилося б, і нічого не пише. */
+function lbNpRun_(dryRun) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(dryRun ? 30000 : 1000)) throw new Error('НП: інше оновлення ще виконується.');
+  try {
+    var key = (PropertiesService.getScriptProperties().getProperty('NP_API_KEY') || '').trim();
+    if (!key) throw new Error('Додайте NP_API_KEY у Налаштування проєкту → Властивості скрипту. Не вставляйте ключ у код або таблицю.');
+    var sh = lbSs_().getSheetByName(LB_SHEETS.wish);
+    if (!sh) throw new Error('Вкладку «Бажанки» не знайдено.');
+    var lastCol = sh.getLastColumn();
+    var headRaw = sh.getRange(1, 1, 1, lastCol).getDisplayValues()[0], head = headRaw.map(lbKey_);
+    var c = { status: lbCol_(head, ['Статус']), ttn: lbCol_(head, ['ТТН']) };
+    if (c.status < 0 || c.ttn < 0) throw new Error('НП: не знайшла колонки «Статус» або «ТТН». Оновлення зупинено.');
+    var outCols = LB_NP_HEADS.map(function (h) { return lbCol_(head, [h]); });
+    if (outCols.some(function (x) { return x < 0; })) throw new Error('НП: бракує колонок ' + LB_NP_HEADS.filter(function (h, i) { return outCols[i] < 0; }).join(', ') + '. Оновлення зупинено.');
+    var count = Math.max(0, sh.getLastRow() - 1);
+    if (!count) return { checked: 0, errors: 0, npChanged: 0, statusChanged: [] };
+    var old = outCols.map(function (oc) { return sh.getRange(2, oc + 1, count, 1).getValues().map(function (r) { return r[0]; }); });
+    var formulas = outCols.some(function (oc) { return sh.getRange(2, oc + 1, count, 1).getFormulas().some(function (r) { return r[0]; }); });
+    if (formulas) throw new Error('НП: у колонках статусу НП є формули; автоматичний запис зупинено.');
+    var ttnRange = sh.getRange(2, c.ttn + 1, count, 1);
+    var source = ttnRange.getDisplayValues().map(function (r) { return r[0]; });
+    var numbers = [];
+    source.forEach(function (t) { var n = lbNpNorm_(t); if (/^\d{14}$/.test(n) && numbers.indexOf(n) === -1) numbers.push(n); });
+    var statuses = {};
+    for (var i = 0; i < numbers.length; i += 100) {
+      var batch = numbers.slice(i, i + 100);
+      var data = lbNpFetch_(key, batch), group = {};
+      data.forEach(function (d) { var n = String(d.Number || ''); if (batch.indexOf(n) !== -1) (group[n] = group[n] || []).push(d); });
+      batch.forEach(function (n) {
+        var m = group[n] || [];
+        statuses[n] = m.length !== 1 || !String(m[0].Status || '').trim() ? { error: 'Немає однозначної відповіді API' } : { status: String(m[0].Status), code: String(m[0].StatusCode || '') };
+      });
+      if (i + 100 < numbers.length) Utilities.sleep(1100);
+    }
+    // рядки відсортували, змінили або перемістили під час запиту — нічого не пишемо
+    if (sh.getLastRow() - 1 !== count || JSON.stringify(ttnRange.getDisplayValues().map(function (r) { return r[0]; })) !== JSON.stringify(source) ||
+        JSON.stringify(sh.getRange(1, 1, 1, lastCol).getDisplayValues()[0]) !== JSON.stringify(headRaw)) throw new Error('Таблиця змінилася під час запиту. Повторіть оновлення.');
+    var stamp = new Date(), errors = 0, npChanged = 0;
+    var next = old.map(function (col) { return col.slice(); });
+    source.forEach(function (t, r) {
+      var n = lbNpNorm_(t);
+      if (!n) { if (old.some(function (col) { return col[r] !== ''; })) { next.forEach(function (col) { col[r] = ''; }); npChanged++; } return; }
+      var rec = statuses[n];
+      var err = !/^\d{14}$/.test(n) ? 'Потрібна одна ТТН із 14 цифр; виправте ТТН вручну' : rec && rec.error;
+      if (err) {
+        errors++;
+        var same = String(old[3][r]) === n;
+        if (!same) { next[0][r] = ''; next[1][r] = ''; next[3][r] = ''; }
+        next[2][r] = err;
+      } else if (rec) {
+        if (String(old[0][r]) !== lbNpText_(rec.status).replace(/^'/, '') || String(old[3][r]) !== n) npChanged++;
+        next[0][r] = lbNpText_(rec.status); next[1][r] = stamp; next[2][r] = ''; next[3][r] = n;
+      }
+    });
+    // статус бажанки: лише вперед і лише зі звичних статусів (ручні й скасовані не чіпаємо)
+    var cur = sh.getRange(2, c.status + 1, count, 1).getDisplayValues().map(function (r) { return String(r[0]).trim(); });
+    var changes = [];
+    source.forEach(function (t, r) {
+      var n = lbNpNorm_(t);
+      if (!/^\d{14}$/.test(n) || !statuses[n] || statuses[n].error) return;
+      var to = lbNpStatusFromCode_(statuses[n].code);
+      if (!to || !(cur[r] in LB_NP_STAGE) || LB_NP_STAGE[to] <= LB_NP_STAGE[cur[r]]) return;
+      changes.push({ row: r + 2, from: cur[r], to: to });
+    });
+    if (!dryRun) {
+      outCols.forEach(function (oc, k) { sh.getRange(2, oc + 1, count, 1).setValues(next[k].map(function (v) { return [v]; })); });
+      sh.getRange(2, outCols[1] + 1, count, 1).setNumberFormat('dd.MM.yyyy HH:mm');
+      changes.forEach(function (ch) { sh.getRange(ch.row, c.status + 1).setValue(ch.to); });
+      SpreadsheetApp.flush();
+      if (changes.length) {
+        var cA = lbCol_(head, ['Автор']), cT = lbCol_(head, ['Назва']);
+        var vals = sh.getRange(2, 1, count, lastCol).getDisplayValues();
+        lbLog_('📦 Нова пошта', '', '', changes.map(function (ch) { var v = vals[ch.row - 2]; return v[cA] + ' — ' + v[cT] + ': ' + ch.from + ' → ' + ch.to; }).join('; ').slice(0, 45000));
+      }
+    }
+    return { checked: numbers.length, errors: errors, npChanged: npChanged, statusChanged: changes };
+  } finally { lock.releaseLock(); }
+}
+/** Тригер щогодини (після lbNpSwitch). */
+function lbNpUpdate() {
+  var r = lbNpRun_(false);
+  console.log('НП: перевірено ТТН ' + r.checked + ', помилок ' + r.errors + ', статусів бажанок змінено ' + r.statusChanged.length + '.');
+  return r;
+}
+/** Перевірка (нічого не змінює): чи новий код бачить ті самі ТТН і статуси, що й старий. */
+function lbNpTest() {
+  var r = lbNpRun_(true);
+  var t = ['НП, тест (нічого не записано):', 'ТТН у таблиці: ' + r.checked + ', рядків із помилкою (неправильна ТТН або немає однозначної відповіді НП): ' + r.errors + '.',
+    'Рядків, де «Статус НП» відрізнявся б від записаного зараз: ' + r.npChanged + ' (якщо старий код щойно відпрацював, тут 0 або кілька свіжих змін).',
+    'Статус бажанки змінився б: ' + r.statusChanged.length + (r.statusChanged.length ? ' — ' + r.statusChanged.map(function (c) { return 'рядок ' + c.row + ': ' + c.from + ' → ' + c.to; }).join('; ') : '') + '.'];
+  console.log(t.join('\n'));
+  return t.join('\n');
+}
+/** Перехід на новий код НП: один справжній запуск; якщо без помилок — вимикає старий тригер npUpdate і вмикає lbNpUpdate щогодини. */
+function lbNpSwitch() {
+  var r = lbNpRun_(false);
+  if (r.errors) throw new Error('Новий код НП відпрацював, але є ' + r.errors + ' ТТН з помилками (див. колонку «НП: помилка перевірки»). Старий тригер НЕ вимкнено. Виправте ТТН і запустіть ще раз.');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var tr = ScriptApp.getProjectTriggers();
+    tr.forEach(function (t) { if (t.getHandlerFunction() === 'npUpdate') ScriptApp.deleteTrigger(t); });
+    var mine = tr.filter(function (t) { return t.getHandlerFunction() === 'lbNpUpdate'; });
+    if (!mine.length) ScriptApp.newTrigger('lbNpUpdate').timeBased().everyHours(1).create();
+  } finally { lock.releaseLock(); }
+  lbLog_('📦 Нова пошта', '', '', 'Перехід на модуль додатку: тригер npUpdate вимкнено, lbNpUpdate щогодини. Перевірено ТТН: ' + r.checked);
+  console.log('Готово ✓ Нова пошта тепер працює з коду додатку (lbNpUpdate щогодини). Старий тригер npUpdate вимкнено. ТТН перевірено: ' + r.checked + '.');
+}
+/** Відкат: повертає старий код НП (npUpdate щогодини), вимикає lbNpUpdate. */
+function lbNpBack() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'lbNpUpdate') ScriptApp.deleteTrigger(t); });
+  if (!ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'npUpdate'; })) ScriptApp.newTrigger('npUpdate').timeBased().everyHours(1).create();
+  lbLog_('📦 Нова пошта', '', '', 'Відкат: знову працює старий код npUpdate.');
+  console.log('Повернула старий код НП (npUpdate щогодини).');
 }
