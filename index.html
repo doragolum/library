@@ -4363,7 +4363,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 
   /* ---------- свайпи і довге натискання ---------- */
   var touch = null, lpTimer = null;
-  function resetSwipe(el) { if (!el) return; el.style.transition = 'transform .2s, background .2s'; el.style.transform = ''; el.style.background = ''; setTimeout(function () { el.style.transition = ''; }, 220); }
+  function resetSwipe(el) {
+    // лише для рядків списку, які справді рухали свайпом: у корінців колір задано в style, його не можна стирати
+    if (!el || !el.classList.contains('item')) return;
+    el.style.transition = 'transform .2s, background .2s'; el.style.transform = ''; el.style.background = ''; setTimeout(function () { el.style.transition = ''; }, 220);
+  }
   document.addEventListener('touchstart', function (ev) {
     var el = ev.target.closest('[data-book]');
     if (!el || ev.touches.length > 1 || ev.target.closest('select,input,textarea')) { touch = null; return; }
