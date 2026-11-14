@@ -43,6 +43,11 @@ button.tile::after{content:"›";float:right;color:var(--muted);margin-top:-30px
 input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
 input[type=search],select,.form input,.form select{width:100%}
 input[type=search]{font-size:16px}
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.sbox{position:relative;display:block;min-width:0}
+.sbox input{width:100%;padding-right:40px}
+.sclr{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0}
+.sbox input:placeholder-shown+.sclr{display:none}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .grow{flex:1;min-width:0}
@@ -416,6 +421,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function saveView() { try { localStorage.setItem(SAVED_KEY, JSON.stringify({ f: view.f, sort: view.sort, bookMode: view.bookMode })); } catch (e) {} }
 
   /* ---------- дрібниці ---------- */
+  function sbox(inputHtml, cls, style) { return '<span class="sbox' + (cls ? ' ' + cls : '') + '"' + (style ? ' style="' + style + '"' : '') + '>' + inputHtml + '<button type="button" class="sclr" aria-label="Стерти">×</button></span>'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function norm(s) {
     return String(s == null ? '' : s).toLowerCase().replace(/ґ/g, 'г').normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -880,7 +886,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (D.cols.rating) sortOpts.push(['ratingDesc', 'за оцінкою']);
     if (D.cols.readOn) sortOpts.push(['readDesc', 'нещодавно прочитані']);
     if (D.cols.bought) sortOpts.push(['boughtDesc', 'нещодавно куплені']);
-    var h = '<div class="row"><input class="grow" type="search" data-input="bq" placeholder="Пошук: назва, автор, серія, видавництво" value="' + esc(view.q) + '">' +
+    var h = '<div class="row">' + sbox('<input type="search" data-input="bq" placeholder="Пошук: назва, автор, серія, видавництво" value="' + esc(view.q) + '">', 'grow') +
       (WIDE ? '<div class="pick" style="margin:0"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '<button class="tbtn" data-action="bmore-toggle" aria-label="Вигляд">⋯</button>') + '</div>' +
       (!WIDE && view.bookMoreOpen ? '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Вигляд:</span><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '');
     var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Роттердам'], ['place', 'Київ'], ['avail', 'позичена']]
@@ -1592,7 +1598,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!WIDE && view.wishMode === 'board') view.wishMode = 'list';
     var list = wishFiltered();
     if (view.wishFx === '_soon') list.sort(function (a, b) { return a.release < b.release ? -1 : 1; });
-    var h = '<div class="row" style="flex-wrap:nowrap"><input class="grow" type="search" data-input="wq" placeholder="Пошук у бажанках" value="' + esc(view.wq) + '">' +
+    var h = '<div class="row" style="flex-wrap:nowrap">' + sbox('<input type="search" data-input="wq" placeholder="Пошук у бажанках" value="' + esc(view.wq) + '">', 'grow') +
       '<button class="tbtn' + (view.wishFxOpen || view.wishFx ? ' on' : '') + '" data-action="wfx-toggle" aria-label="Фільтри" title="Фільтри"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>' + (view.wishFx ? '<span class="dot"></span>' : '') + '</button>' +
       '<button class="tbtn" data-action="wmore-toggle" aria-label="Ще">⋯</button>' +
       (WIDE ? '<div class="pick" style="margin:0;flex:none"><button data-wmode="board" class="' + (view.wishMode === 'board' ? 'on' : '') + '">Дошка</button><button data-wmode="list" class="' + (view.wishMode === 'list' ? 'on' : '') + '">Список</button></div>' : '') + '</div>';
@@ -2831,7 +2837,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- загальний пошук ---------- */
   function openSearch() {
     nav = []; modalStack = null;
-    openModal('<div class="row" style="gap:8px"><input class="grow" type="search" data-input="sq" placeholder="Чи є в мене? Назва, автор, серія або ISBN" value="' + esc(view.sq || '') + '" autocomplete="off"><button class="btn" data-action="scan-find" title="Сканувати штрихкод">📷</button><button class="close" style="position:static" data-action="close">×</button></div><div id="sres">' + globalResults(view.sq || '') + '</div>', true, true);
+    openModal('<div class="row" style="gap:8px">' + sbox('<input type="search" data-input="sq" placeholder="Чи є в мене? Назва, автор, серія або ISBN" value="' + esc(view.sq || '') + '" autocomplete="off">', 'grow') + '<button class="btn" data-action="scan-find" title="Сканувати штрихкод">📷</button><button class="close" style="position:static" data-action="close">×</button></div><div id="sres">' + globalResults(view.sq || '') + '</div>', true, true);
     setTimeout(function () { var i = document.querySelector('[data-input="sq"]'); if (i) i.focus(); }, 60);
   }
   function entityHits(q) {
@@ -3484,7 +3490,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var scores = {}; recommend().forEach(function (r, i) { scores[r.b.row] = 1000 - i; });
     var list = S.inLib.filter(function (b) { return !isRead(b) && !isDropped(b) && (!q || q.split(' ').every(function (w) { return b._q.indexOf(w) !== -1; })); })
       .sort(function (a, b) { return (b.plan === to) - (a.plan === to) || (scores[b.row] || 0) - (scores[a.row] || 0) || a.author.localeCompare(b.author, 'uk'); }).slice(0, 60);
-    var h = heads() + '<h2 style="margin-top:0">Додати в план</h2><div class="pick">' + chips + '</div><input type="search" data-input="pq" placeholder="Пошук серед непрочитаних" value="' + esc(view.pq || '') + '" style="margin:6px 0 10px">';
+    var h = heads() + '<h2 style="margin-top:0">Додати в план</h2><div class="pick">' + chips + '</div>' + sbox('<input type="search" data-input="pq" placeholder="Пошук серед непрочитаних" value="' + esc(view.pq || '') + '">', '', 'margin:6px 0 10px');
     h += '<div id="pqres">' + list.map(function (b) {
       var on = b.plan === to;
       return '<div class="lst" data-book="' + b.row + '">' + cover(b) + '<div class="grow"><b>' + esc(b.title) + '</b><div class="muted small">' + esc(b.author) + (b.pages ? ' · ' + b.pages + ' стор.' : '') + (b.plan && !on ? ' · у плані на ' + MONTHS_ON[mIdx(b.plan)] : '') + (!atHome(b) ? ' · ' + esc(b.avail) : '') + '</div></div>' +
@@ -4272,6 +4278,17 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       saveSet(p[0], item, set);
     }
   });
+  // хрестик у полі пошуку: стирає текст і одразу оновлює результати
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('.sclr');
+    if (!b) return;
+    ev.preventDefault(); ev.stopPropagation();
+    var inp = b.parentNode.querySelector('input');
+    if (!inp) return;
+    inp.value = '';
+    inp.focus();
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+  }, true);
   var timer = null;
   document.addEventListener('input', function (ev) {
     var t = ev.target, k = t.getAttribute('data-input');
