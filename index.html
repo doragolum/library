@@ -392,7 +392,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   'use strict';
   // Сторінка працює і з Apps Script (google.script.run), і з GitHub Pages (запити на API_URL).
   var API_URL = window.LB_API_URL || '';
-  if (window.LB_DB) { var dbb = document.createElement('a'); dbb.className = 'chip'; dbb.textContent = '🧪 нова база'; dbb.title = 'Пробний режим: дані з нової бази. Вимкнути — відкрити посилання з &db=0'; dbb.style.cssText = 'margin-left:6px;font-size:12px'; var h1 = document.querySelector('.top h1'); if (h1) h1.after(dbb); }
+  // з 14.11 основне джерело — база; позначку показуємо лише в старому режимі таблиці (&db=0)
+  if (!window.LB_DB) { var dbb = document.createElement('a'); dbb.className = 'chip'; dbb.textContent = '📄 стара таблиця'; dbb.title = 'Дані з Google-таблиці. Повернутися до бази — відкрити посилання з &db=1'; dbb.style.cssText = 'margin-left:6px;font-size:12px'; var h1 = document.querySelector('.top h1'); if (h1) h1.after(dbb); }
   var ON_GAS = !!(window.google && google.script && google.script.run);
   var IN_TG = document.body.getAttribute('data-tg') === '1' || /[?&]tg=1\b/.test(location.search) || /tgWebAppData=/.test(location.hash);
   // 4 розділи, у кожному свої вкладки (старі екрани нікуди не зникли)
