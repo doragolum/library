@@ -147,6 +147,8 @@ async function newsHash(id: number, ch: Row) {
   const d = new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(id + "|" + JSON.stringify(ch))));
   return [...d].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 10);
 }
+const titleKey = (x: unknown) => String(x ?? "").toLowerCase().replace(/ґ/g, "г").replace(/\([^)]*\)|\[[^\]]*\]/g, " ").replace(/(частина|книга|том|кн|ч)\.?\s*\d+/g, " ").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
+function sameTitle(a: unknown, b: unknown) { const x = titleKey(a), y = titleKey(b); return !!x && !!y && (x === y || x.includes(y) || y.includes(x)); }
 async function seriesNews(budgetMs: number) {
   const started = Date.now(), td = today();
   const st: Row = await kvGet("news_state", { seen: [], cur: 0 });
@@ -169,6 +171,8 @@ async function seriesNews(budgetMs: number) {
         f = placeholder(w.title) ? (w.series && w.part ? await megogoVolume(w.series, Number(w.part), w.author) : null) : await fromMegogo(String(w.isbn || "").replace(/\D/g, ""), w.title, w.author, w.pub);
       } catch { f = null; }
       if (!f || f.pubMismatch || (f.lang && !/укр/i.test(f.lang))) continue; // лише українські видання того ж видавництва
+      // знайдено за назвою (не за ISBN) — назва має збігатися, інакше це інша книга серії
+      if (!placeholder(w.title) && !(w.isbn && String(f.isbn || "").replace(/\D/g, "") === String(w.isbn).replace(/\D/g, "")) && !sameTitle(w.title, f.title)) continue;
       const ch: Row = {};
       if (placeholder(w.title) && f.title && !placeholder(f.title)) ch.title = f.title;
       if (f.release && f.release !== w.release && f.release >= td.slice(0, 4) + "-01-01") ch.release = f.release;
