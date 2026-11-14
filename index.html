@@ -86,6 +86,7 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px 28px}
 .modal .sheet.wide{max-width:900px}
+.modal:not(.top) .sheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--line);margin:-8px auto 10px}
 .modal.mid{align-items:flex-start;padding:9vh 16px 0}.modal.mid .sheet{border-radius:18px;max-width:420px}
 .modal.top{align-items:flex-start}.modal.top .sheet{border-radius:0 0 18px 18px;max-height:85vh;padding-top:12px}
 .ebar{position:sticky;bottom:-28px;margin:14px -16px -28px;padding:10px 16px 18px;background:var(--card);border-top:1px solid var(--line);z-index:2}
@@ -4330,6 +4331,35 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     }, 200);
   });
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeModal(); if (ev.key === 'Enter' && ev.target.id === 'pg-val') { ev.preventDefault(); var sv = document.querySelector('[data-action="pg-save"]'); if (sv) sv.click(); } });
+
+  /* ---------- картка знизу: потягнути вниз, щоб закрити ----------
+     Закривається лише тоді, коли картка вже прокручена в самий верх і палець тягне вниз.
+     Якщо ви внизу картки, свайп вниз просто прокручує її вгору — випадково не закриється. */
+  var sheetDrag = null;
+  document.addEventListener('touchstart', function (ev) {
+    var sh = ev.target.closest && ev.target.closest('#modal .modal:not(.top) .sheet');
+    if (!sh || ev.touches.length !== 1 || /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) { sheetDrag = null; return; }
+    sheetDrag = { sh: sh, y: ev.touches[0].clientY, x: ev.touches[0].clientX, top: sh.scrollTop <= 0, dy: 0, on: false };
+  }, { passive: true });
+  document.addEventListener('touchmove', function (ev) {
+    var d = sheetDrag;
+    if (!d || !d.top) return;
+    var dy = ev.touches[0].clientY - d.y, dx = Math.abs(ev.touches[0].clientX - d.x);
+    if (!d.on) {
+      if (dy < 8 || dx > dy) { if (dy < -4 || dx > 12) sheetDrag = null; return; }
+      if (d.sh.scrollTop > 0) { sheetDrag = null; return; }
+      d.on = true; d.sh.style.transition = 'none';
+    }
+    d.dy = Math.max(0, dy);
+    d.sh.style.transform = 'translateY(' + d.dy + 'px)';
+    if (ev.cancelable) ev.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', function () {
+    var d = sheetDrag; sheetDrag = null;
+    if (!d || !d.on) return;
+    if (d.dy > 110) { d.sh.style.transition = 'transform .18s ease-in'; d.sh.style.transform = 'translateY(100%)'; suppressClick = Date.now(); setTimeout(closeModal, 170); }
+    else { d.sh.style.transition = 'transform .2s'; d.sh.style.transform = ''; }
+  });
 
   /* ---------- свайпи і довге натискання ---------- */
   var touch = null, lpTimer = null;
