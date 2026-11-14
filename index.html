@@ -2142,7 +2142,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<button class="close" data-action="close">×</button><h2>📚 ' + (addState.wish ? 'Отримала → у бібліотеку' : 'Додати книгу') + '</h2>';
     if (addState.wish) h += '<p class="muted small">З бажанок: ' + esc(addState.wish.author) + ' — ' + esc(addState.wish.title) + '. Заповніть, чого бракує, і виберіть, де книга.</p>';
     h += '<div class="form">';
-    h += '<div class="full"><div class="row"><input id="f-isbn" class="grow" inputmode="numeric" placeholder="ISBN (штрихкод на звороті)" value="' + esc(b.isbn || '') + '"><button class="btn" data-action="scan-add" title="Сканувати">📷</button><button class="btn" data-action="lookup">🔍 Підтягнути</button></div><div id="f-look" class="small muted" style="margin-top:6px"></div></div>';
+    h += '<div class="full"><div class="row"><input id="f-isbn" class="grow" inputmode="numeric" placeholder="ISBN (штрихкод на звороті)" value="' + esc(b.isbn || '') + '"><button class="btn" data-action="paste" data-for="f-isbn" title="Вставити скопійований ISBN">📋</button><button class="btn" data-action="scan-add" title="Сканувати">📷</button><button class="btn" data-action="lookup">🔍 Підтягнути</button></div><div id="f-look" class="small muted" style="margin-top:6px"></div></div>';
     h += inp('f-author', 'Автор *', b.author, 'list="dl-authors" autocomplete="off"') + inp('f-title', 'Назва *', b.title);
     // «Серія / Одиночна» більше не обирається: є назва серії — значить серія
     h += '<select id="f-type" hidden><option' + (b.type !== 'Серія' ? ' selected' : '') + '>Одиночна</option><option' + (b.type === 'Серія' ? ' selected' : '') + '>Серія</option></select>';
@@ -3566,7 +3566,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (c.wishCover ? inp('we-cover', 'Обкладинка (посилання)', w.cover, 'placeholder="https://…"') : '') +
       (c.wishOrig ? inp('we-orig', 'Оригінальна назва', w.orig) : '') + (c.wishSrc ? inp('we-src', 'Джерело (посилання)', w.src, 'placeholder="https://…"') : '') +
       '</div><div id="we-err"></div><div class="ebar"><div id="we-look" class="small"></div><div class="row">' +
-      (c.wishIsbn ? '<input id="we-isbn" class="grow" data-input="we-isbn" inputmode="numeric" value="' + esc(w.isbn || '') + '" placeholder="ISBN 978…" aria-label="ISBN"><button class="btn" data-action="wish-look" title="Знайти дані за ISBN або назвою">🔎</button>' : '<span class="grow"></span>') +
+      (c.wishIsbn ? '<input id="we-isbn" class="grow" data-input="we-isbn" inputmode="numeric" value="' + esc(w.isbn || '') + '" placeholder="ISBN 978…" aria-label="ISBN"><button class="btn" data-action="paste" data-for="we-isbn" title="Вставити скопійований ISBN">📋</button><button class="btn" data-action="wish-look" title="Знайти дані за ISBN або назвою">🔎</button>' : '<span class="grow"></span>') +
       '<button class="btn p" data-action="wish-edit-save" data-row="' + w.row + '">Зберегти</button></div></div>';
     openModal(h, true);
   }
@@ -4050,6 +4050,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'wish-edit') { var we = D.wish.filter(function (x) { return x.row === row; })[0]; if (we) editWish(we); return; }
     if (a === 'wish-back') { showWish(row); return; }
     if (a === 'wish-look') { wishLook(); return; }
+    if (a === 'paste') { pasteInto(act.getAttribute('data-for')); return; }
     if (a === 'wish-look-all') { wishLookAll(); return; }
     if (a === 'wish-edit-save') { var ws2 = D.wish.filter(function (x) { return x.row === row; })[0]; if (ws2) wishEditSave(ws2); return; }
     if (a === 'add-from-wish') { var w = D.wish.filter(function (x) { return x.row === row; })[0]; if (w) openAdd({ wish: w, book: wishToBook(w) }); }
@@ -4278,6 +4279,20 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       saveSet(p[0], item, set);
     }
   });
+  // кнопка «📋 Вставити»: бере текст з буфера (iPhone покаже маленьке «Вставити» — натиснути його),
+  // з тексту дістає ISBN (13 або 10 цифр), інакше вставляє як є
+  function pasteInto(id) {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    var put = function (txt) {
+      var s = String(txt || '').trim(), m = s.replace(/[\s-]/g, '').match(/97[89]\d{10}|\d{9}[\dXx]/);
+      inp.value = m ? m[0] : s;
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(put, function () { inp.focus(); toast('Не вдалося прочитати буфер. Утримайте палець на полі ISBN → «Вставити».'); });
+    } else { inp.focus(); toast('Утримайте палець на полі ISBN → «Вставити».'); }
+  }
   // хрестик у полі пошуку: стирає текст і одразу оновлює результати
   document.addEventListener('click', function (ev) {
     var b = ev.target.closest && ev.target.closest('.sclr');
