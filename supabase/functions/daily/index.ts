@@ -1,7 +1,7 @@
 // Розклад (pg_cron): нагадування в Телеграм о ~9:00 за Києвом, нічне «вийшли з друку → Є у продажу», новини серій щопонеділка.
 // Тіло: {job:"remind"} | {job:"night"} | {job:"news"}; {job:"remind", test:true} — надіслати зараз релізи на 14 днів і тиждень (перевірка).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { tgSend } from "../_shared/tg.ts";
+import { tgSend, tgApi } from "../_shared/tg.ts";
 import { todayKyiv } from "../_shared/ai.ts";
 import { dailyText, weekText, monthText, weekday, addDays, reminderLine } from "../_shared/texts.ts";
 
@@ -15,12 +15,15 @@ async function api(fn: string, arg: unknown) {
   if (!j.ok) throw new Error(j.error || "Не вдалося");
   return j.data;
 }
+// Поки бот працює з Apps Script (до lbSwitchToDb), нагадування й новини шле Apps Script — тут пропускаємо, щоб не було дублів.
+async function switched() { const w = await tgApi("getWebhookInfo"); return !!(w.ok && String(w.result?.url || "").includes("/functions/v1/bot")); }
 const kyivHour = () => Number(new Date().toLocaleString("en-GB", { timeZone: "Europe/Kyiv", hour: "2-digit", hour12: false }));
 
 async function remind(test: boolean) {
   const today = todayKyiv();
   if (!test) {
     if (kyivHour() < 9) return { skipped: "ще рано" };
+    if (!(await switched())) return { skipped: "бот ще в Apps Script" };
     if ((await kvGet("last_remind", "")) === today) return { skipped: "сьогодні вже надсилали" };
   }
   const data = await api("lbApiData", null);
@@ -59,7 +62,7 @@ Deno.serve(async (req) => {
     const b = await req.json().catch(() => ({}));
     if (b.job === "remind") return json({ ok: true, ...(await remind(!!b.test)) });
     if (b.job === "night") return json({ ok: true, ...(await night()) });
-    if (b.job === "news") return json({ ok: true, ...(await api("lbApiNews", { action: "cron" })) });
+    if (b.job === "news") return json(await switched() ? { ok: true, ...(await api("lbApiNews", { action: "cron" })) } : { ok: true, skipped: "бот ще в Apps Script" });
     return json({ ok: false, error: "невідома робота" });
   } catch (e) {
     return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);

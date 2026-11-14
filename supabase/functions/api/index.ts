@@ -116,6 +116,10 @@ const FIELDS: Record<string, Record<string, FD>> = {
     isbn: { col: "isbn", type: "isbn", label: "ISBN" },
     orig: { col: "orig_title", type: "text", label: "Оригінальна назва" },
     src: { col: "source_url", type: "url", label: "Джерело" },
+    where: { col: "shop", type: "text", label: "Де замовлено" },
+    site: { col: "shop_site", type: "text", label: "Сайт" },
+    order: { col: "order_no", type: "text", label: "Номер замовлення" },
+    ttn: { col: "ttn", type: "ttn", label: "ТТН" },
   },
 };
 
@@ -145,6 +149,11 @@ function clean(kind: string, f: string, fd: FD, value: unknown, options: Row) {
     case "url":
       if (!/^https:\/\/[^\s"'<>]+$/.test(v) || v.length > 500) fail(`${fd.label}: потрібне посилання https://…`);
       return { db: v, show: v };
+    case "ttn": {
+      const d = v.replace(/[\s-]/g, "");
+      if (!/^\d{14}$/.test(d)) fail("ТТН Нової пошти — це 14 цифр (наприклад 20451234567890).");
+      return { db: d, show: d };
+    }
     case "tags": return { db: v.split(/\s*[,;]\s*/).map((x) => x.trim()).filter(Boolean), show: v };
     default: return { db: v.slice(0, 200), show: v.slice(0, 200) };
   }
@@ -330,7 +339,25 @@ async function saveOne(options: Row, ch: Row) {
   if (kind === "wish" && upd.stage === "ordered" && !("ordered_on" in upd) && !b.ordered_on) {
     upd.ordered_on = today(); values.ordered = upd.ordered_on; notes.push(`Дата замовлення: ${human(upd.ordered_on)}`);
   }
+  // ТТН додали вручну: скидаємо старий статус НП; замовлена/бажана книга стає «Створено ТТН», далі статус веде Нова пошта
+  const newTtn = kind === "wish" && "ttn" in upd && upd.ttn !== (b.ttn ?? null);
+  if (newTtn) {
+    upd.np_status = null; upd.np_error = null; upd.np_checked = null;
+    if (upd.ttn && ["wish", "ordered"].includes(upd.stage ?? b.stage)) { upd.stage = "ttn"; upd.wish_kind = null; values.status = STAGE_STATUS.ttn; notes.push(`Статус → ${STAGE_STATUS.ttn}`); }
+  }
   if (Object.keys(upd).length) chk(await db.from("books").update(upd).eq("id", b.id), "books");
+  if (newTtn && upd.ttn) {
+    // одразу питаємо Нову пошту (якщо ключ NP_API_KEY уже додано), щоб у картці був свіжий статус
+    try {
+      const tok = await kvGet("import_token", "");
+      await Promise.race([
+        fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/np", { method: "POST", headers: { "Content-Type": "application/json", "x-import-token": String(tok) }, body: JSON.stringify({ ids: [b.id] }) }).then((r) => r.text()),
+        new Promise((r) => setTimeout(r, 15000)),
+      ]);
+      const fresh = chk(await db.from("books").select("stage,np_status,np_checked,np_error").eq("id", b.id).maybeSingle(), "books") as Row | null;
+      if (fresh) { values.status = STAGE_STATUS[fresh.stage] || values.status; values.np = fresh.np_status || ""; values.npErr = fresh.np_error || ""; }
+    } catch { /* статус підтягнеться щогодини */ }
+  }
   if (notes.length) await log("✏️ Змінено в додатку", upd.title ?? b.title, upd.author ?? b.author, notes.join("; "), b.id);
   return { row: b.id, values };
 }

@@ -210,7 +210,7 @@ async function setup() {
   if (!me.ok) return { ok: false, error: "Бот не відповів: " + (me.description || "перевірте секрет LB_TG_TOKEN") };
   const hook = await tgApi("setWebhook", { url: BASE + "/functions/v1/bot", secret_token: await hookSecret(), allowed_updates: ["message", "callback_query"], drop_pending_updates: false });
   const chat = tgChat();
-  const menu = chat ? await tgApi("setChatMenuButton", { chat_id: Number(chat), menu_button: { type: "web_app", text: "Бібліотека", web_app: { url: PAGE + "?tg=1" } } }) : { ok: false };
+  const menu = chat ? await tgApi("setChatMenuButton", { chat_id: Number(chat), menu_button: { type: "web_app", text: "Бібліотека", web_app: { url: PAGE + "?tg=1&db=1" } } }) : { ok: false };
   await tgApi("setMyCommands", { commands: [{ command: "week", description: "Підсумок тижня" }, { command: "month", description: "Підсумок місяця" }, { command: "kyiv", description: "Що чекає в Києві" }, { command: "help", description: "Що я вмію" }] });
   return { ok: !!hook.ok, bot: "@" + me.result.username, webhook: hook.description || hook.ok, menu: menu.ok };
 }

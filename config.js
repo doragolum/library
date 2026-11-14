@@ -10,5 +10,6 @@ window.LB_API_URL = "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99
   if (on) {
     window.LB_DB = true;
     window.LB_API_URL = "https://syrwtxxgbybftkuxuvlq.supabase.co/functions/v1/api";
+    window.LB_AI_URL = "https://syrwtxxgbybftkuxuvlq.supabase.co/functions/v1/ai";
   }
 })();

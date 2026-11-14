@@ -2,7 +2,7 @@
 // Етап (Замовлено → Створено ТТН → Відправлено → Доставлено) лише просувається вперед, ніколи назад.
 // «В бібліотеку» книга не переноситься сама: це робить кнопка «Отримала» (полиця, дата покупки, дублі).
 // Ключ — секрет NP_API_KEY у Supabase (Edge Functions → Secrets). У журнал не пишуться ні ключ, ні відповіді НП.
-// Виклик: лише з самої бази (pg_cron / net.http_post) із заголовком x-import-token. Тіло {dry:true} — перевірка без запису.
+// Виклик: лише з самої бази (pg_cron / net.http_post) із заголовком x-import-token. Тіло {dry:true} — перевірка без запису; {ids:[…]} — лише ці книги.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -45,7 +45,10 @@ Deno.serve(async (req) => {
     const key = (Deno.env.get("NP_API_KEY") || "").trim();
     if (!key) return json({ ok: false, error: "Немає секрету NP_API_KEY у Supabase (Edge Functions → Secrets)." });
 
-    const books = chk(await db.from("books").select("id,stage,author,title,ttn,np_status,np_error").in("stage", ACTIVE).not("ttn", "is", null), "books") as Row[];
+    // {ids:[…]} — перевірити лише ці книги (одразу після того, як ТТН вписали вручну)
+    let q = db.from("books").select("id,stage,author,title,ttn,np_status,np_error").in("stage", ACTIVE).not("ttn", "is", null);
+    if (Array.isArray(body.ids) && body.ids.length) q = q.in("id", body.ids.slice(0, 50));
+    const books = chk(await q, "books") as Row[];
     const numbers = [...new Set(books.map((b) => norm(b.ttn)).filter((n) => /^\d{14}$/.test(n)))];
     const statuses = new Map<string, Row>();
     for (let i = 0; i < numbers.length; i += 100) {
