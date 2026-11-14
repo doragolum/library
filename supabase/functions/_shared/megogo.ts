@@ -1,4 +1,5 @@
 // Пошук книги на MEGOGO Books (перше джерело) за ISBN або за назвою й автором.
+import { samePub } from "./pub.ts";
 type Row = Record<string, any>;
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", laquo: "«", raquo: "»", mdash: "—", ndash: "–", hellip: "…", rsquo: "’", lsquo: "‘" };
@@ -13,7 +14,7 @@ export async function getHtml(url: string, ms = 12000) {
     return { code: r.status, html: r.ok ? await r.text() : "" };
   } catch { return { code: 0, html: "" }; } finally { clearTimeout(t); }
 }
-const norm = (v: unknown) => String(v ?? "").toLowerCase().replace(/ґ/g, "г").normalize("NFD").replace(/[̀-ͯ]/g, "")
+export const norm = (v: unknown) => String(v ?? "").toLowerCase().replace(/ґ/g, "г").normalize("NFD").replace(/[̀-ͯ]/g, "")
   .replace(/['’`"ʼ«»]/g, "").replace(/[-–—]/g, " ").replace(/[.,:;!?()[\]{}#№]/g, " ").replace(/\s+/g, " ").trim();
 export function dice(a: unknown, b: unknown) {
   const x = norm(a).replace(/\s+/g, ""), y = norm(b).replace(/\s+/g, "");
@@ -30,7 +31,7 @@ export const authorOk = (mine: unknown, theirs: unknown) => {
   const t = norm(theirs);
   return norm(mine).split(" ").filter((w) => w.length > 2).some((w) => t.includes(w.slice(0, Math.max(4, w.length - 2))));
 };
-const cleanTitle = (t: unknown) => String(t ?? "").replace(/\s*\((?:[^()]*)\)\s*$/, "").replace(/\.\s*Книга\s+\d+\s*$/i, "").trim();
+export const cleanTitle = (t: unknown) => String(t ?? "").replace(/\s*\((?:[^()]*)\)\s*$/, "").replace(/\.\s*Книга\s+\d+\s*$/i, "").trim();
 
 function mgText(html: string) {
   const out: string[] = [];
@@ -94,26 +95,48 @@ export async function mgBook(slug: string): Promise<Row | null> {
     rating: Number(o.goodreadsAverageRating) || null, orig_title: o.originalTitle || null, description: desc.slice(0, 2000) || null,
   };
 }
-/** За ISBN (точний збіг видання), інакше за назвою (+ прізвище автора) з перевіркою автора. */
-export async function fromMegogo(isbn: string, title: string, author: string): Promise<Row | null> {
+/** За ISBN (точний збіг видання), інакше за назвою (+ прізвище автора) з перевіркою автора.
+ *  Якщо відоме видавництво (pub), береться видання саме цього видавництва; якщо такого немає,
+ *  повертається інше видання з позначкою pubMismatch (його дані про видання підставляти не можна). */
+export async function fromMegogo(isbn: string, title: string, author: string, pub = ""): Promise<Row | null> {
   const surname = String(author || "").split(/[ ,]+/).filter(Boolean).slice(-1)[0] || "";
   const qs: [string, string][] = [];
   if (isbn) qs.push(["isbn", isbn]);
   if (title) { qs.push(["t", cleanTitle(title) + (surname ? " " + surname : "")]); qs.push(["t", cleanTitle(title)]); }
   const seen = new Set<string>();
   const nums = String(title || "").match(/\d+/g) || [];
+  let alt: Row | null = null;
   for (const [kind, q] of qs) {
     let cands = (await mgSearch(q)).filter((c) => !seen.has(c.slug));
     if (kind !== "isbn" && nums.length) cands = cands.filter((c) => { const cn = String(c.name).match(/\d+/g) || []; return nums.every((n) => cn.includes(n)); });
     for (const c of cands) { c.score = kind === "isbn" ? 1 : dice(cleanTitle(title), cleanTitle(c.name)); if (author && !authorOk(author, c.author)) c.score -= 0.5; }
     cands.sort((a, b) => b.score - a.score);
-    for (const c of cands.filter((x) => x.score >= 0.62).slice(0, 2)) {
+    for (const c of cands.filter((x) => x.score >= 0.62).slice(0, pub ? 6 : 2)) {
       seen.add(c.slug);
       const out = await mgBook(c.slug);
       if (!out) continue;
-      if (kind === "isbn" ? out.isbn !== isbn && !authorOk(author, out.author) : !authorOk(author, out.author)) continue;
-      out.match = kind === "isbn" && out.isbn === isbn ? "isbn" : "назва";
-      return out;
+      const exact = kind === "isbn" && out.isbn === isbn;
+      if (kind === "isbn" ? !exact && !authorOk(author, out.author) : !authorOk(author, out.author)) continue;
+      out.match = exact ? "isbn" : "назва";
+      out.score = exact ? 1 : dice(cleanTitle(title), cleanTitle(out.title));
+      if (exact || !pub || samePub(pub, out.publisher)) return out;
+      if (!alt) { out.pubMismatch = true; alt = out; }
+    }
+  }
+  return alt;
+}
+
+/** Том серії, коли в назві лише «Частина N»: шукає за назвою серії й автором, том має збігтися за номером. */
+export async function megogoVolume(series: string, n: number, author: string): Promise<Row | null> {
+  const surname = String(author || "").split(/[ ,]+/).filter(Boolean).slice(-1)[0] || "";
+  const seen = new Set<string>();
+  for (const q of [series + (surname ? " " + surname : ""), series]) {
+    const cands = (await mgSearch(q)).filter((c) => !seen.has(c.slug) && (!author || authorOk(author, c.author)));
+    for (const c of cands.slice(0, 6)) {
+      seen.add(c.slug);
+      const out = await mgBook(c.slug);
+      if (!out || !authorOk(author, out.author)) continue;
+      if (out.series_num === n && dice(series, out.series) >= 0.7) { out.match = "серія"; out.score = 0.9; return out; }
     }
   }
   return null;

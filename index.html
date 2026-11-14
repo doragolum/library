@@ -81,7 +81,10 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px 28px}
 .modal .sheet.wide{max-width:900px}
-@media (min-width:700px){.modal{align-items:center}.modal .sheet{border-radius:18px}}
+.modal.top{align-items:flex-start}.modal.top .sheet{border-radius:0 0 18px 18px;max-height:85vh;padding-top:12px}
+.ebar{position:sticky;bottom:-28px;margin:14px -16px -28px;padding:10px 16px 18px;background:var(--card);border-top:1px solid var(--line);z-index:2}
+.ebar .row{gap:8px;align-items:center}.ebar input{min-width:0}
+@media (min-width:700px){.modal{align-items:center}.modal.top{align-items:flex-start;padding-top:60px}.modal .sheet{border-radius:18px}}
 .close{float:right;border:0;background:var(--line);color:var(--ink);border-radius:999px;width:32px;height:32px;font-size:18px;cursor:pointer;margin-left:8px}
 .msg{padding:14px;border-radius:12px;background:var(--bad-soft);color:var(--bad)}
 .note{padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--ink);font-size:14px;margin-bottom:12px}
@@ -163,7 +166,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .need span{color:var(--warn);font-weight:600}.need input{border:2px solid var(--warn)!important}
 .qa-hint{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px}
 @media (max-width:999px){
-  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(8px + env(safe-area-inset-bottom));overflow:visible}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(8px + env(safe-area-inset-bottom));overflow:visible}
   .tab{flex-direction:column;gap:2px;border-radius:10px;font-size:11px;padding:4px 2px;text-align:center}
   .tab.on{background:transparent;color:var(--accent);font-weight:700}
   main{padding-bottom:96px}
@@ -381,12 +384,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/></svg>',
     wishg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>',
     lib: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 2.5 15.5-3.5 1z"/></svg>',
+    plan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
     me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>'
   };
   var GROUPS = [
     { id: 'home', t: 'Головна', views: [['home', 'Головна']] },
     { id: 'wishg', t: 'Бажанки', views: [['wish', 'Бажанки'], ['delivery', 'Замовлені'], ['kyiv', 'У Києві']] },
     { id: 'lib', t: 'Бібліотека', views: [['books', 'Список'], ['shelves', 'Полиці'], ['series', 'Серії']] },
+    { id: 'plan', t: 'План', views: [['plan', 'План']] },
     { id: 'me', t: 'Я', views: [['reading', 'Читання'], ['stats', 'Статистика'], ['money', 'Фінанси']] }
   ];
   var TABS = [];
@@ -1971,43 +1976,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   VIEWS.reading = function () {
     var c = D.cols, lib = D.books;
-    var h = '<div class="cols"><div>' + monthShelfHtml(curYm()) + '</div><div>' + threadHtml(curYm()) + '</div></div>';
     var rec = recommend();
-    h += askHomeCard() + unfinishedHtml(6);
-    h += '<div class="cols"><div>';
+    var h = askHomeCard() + unfinishedHtml(6);
+    h += '<div>';
     h += '<div class="card rec"><h3>Що почитати далі</h3><p class="muted small">З непрочитаних книг, які у вас удома. Враховано серії (наступна після прочитаної), авторів і жанри, які ви читаєте найчастіше' + (c.rating ? ', і ваші оцінки' : '') + '.</p>' +
       (rec.length ? '<div class="list">' + rec.slice(0, 8).map(recItem).join('') + '</div>' : '<p class="muted">Немає непрочитаних книг удома.</p>') + '</div>';
-    var reading = lib.filter(function (b) { return low(b.status) === 'читаю'; });
-    if (reading.length) h += '<div class="card"><h3>Зараз читаю</h3><div class="list">' + reading.map(function (b) {
-      return bookItem(b).replace(/<\/div><\/div>$/, (b.started ? '<div class="small muted">читаю ' + (daysBetween(b.started, D.today) + 1) + ' дн.</div>' : '') + '<div style="margin-top:6px"><button class="btn p" data-action="finish" data-row="' + b.row + '">Дочитала</button></div></div></div>');
-    }).join('') + '</div></div>';
-    h += '</div><div>';
-    if (!c.readOn && !c.started) {
-      h += '<div class="card"><h3>Календар читання</h3><div class="note">Щоб вести щоденник і календар, потрібні колонки «Дата початку», «Дата прочитання» і «Оцінка». Коли вони з\'являться, дати ставитимуться самі: статус «читаю» → дата початку, «прочитано» → дата кінця й оцінка.</div></div>';
-    } else {
-      var m = view.calM || D.today.slice(0, 7);
-      var p = m.split('-').map(Number);
-      var first = m + '-01', dim = new Date(Date.UTC(p[0], p[1], 0)).getUTCDate();
-      var startDow = (new Date(Date.UTC(p[0], p[1] - 1, 1)).getUTCDay() + 6) % 7;
-      var names = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
-      var finished = lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === m; });
-      var pages = finished.reduce(function (a, b) { return a + (b.pages || 0); }, 0);
-      var withR = finished.filter(function (b) { return b.rating; });
-      h += '<div class="card"><div class="row"><button class="btn" data-cal="-1">‹</button><h3 class="grow" style="margin:0;text-align:center">' + names[p[1] - 1] + ' ' + p[0] + ' · ' + finished.length + ' кн.</h3><button class="btn" data-cal="1">›</button></div>';
-      h += '<div class="cal" style="margin-top:10px">' + ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(function (d) { return '<div class="dh">' + d + '</div>'; }).join('');
-      for (var i = 0; i < startDow; i++) h += '<div class="d out"></div>';
-      for (var d = 1; d <= dim; d++) {
-        var day = m + '-' + ('0' + d).slice(-2);
-        var act = lib.filter(function (b) { return activeOn(b, day); });
-        var fin = act.some(function (b) { return b.readOn === day; });
-        h += '<div class="d' + (day === D.today ? ' today' : '') + '"><span class="n">' + d + '</span>' + (fin ? '<span class="fin">✓</span>' : '') + '<div class="cv">' + act.slice(0, 3).map(function (b) {
-          return '<span data-book="' + b.row + '">' + cover(b) + '</span>';
-        }).join('') + (act.length > 3 ? '<span class="muted">+' + (act.length - 3) + '</span>' : '') + '</div></div>';
-      }
-      h += '</div><p class="muted small" style="margin-top:8px">Прочитано за місяць: <b>' + finished.length + '</b>, ' + pages.toLocaleString('uk-UA') + ' стор.' + (withR.length ? ', середня оцінка ' + (withR.reduce(function (a, b) { return a + b.rating; }, 0) / withR.length).toFixed(1) + '★' : '') + '</p>' +
-        (finished.length ? '<div class="list">' + finished.sort(function (a, b) { return a.readOn < b.readOn ? -1 : 1; }).map(bookItem).join('') + '</div>' : '') + '</div>';
-    }
-    h += '</div></div>';
+    h += '</div>';
     if (c.readOn) {
       var year = D.today.slice(0, 4);
       var ry = lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === year; });
@@ -2857,7 +2831,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- загальний пошук ---------- */
   function openSearch() {
     nav = []; modalStack = null;
-    openModal('<div class="hd"><span></span><button class="close" data-action="close">×</button></div><input type="search" data-input="sq" placeholder="Книга, автор, серія, видавництво або ISBN" value="' + esc(view.sq || '') + '" autocomplete="off"><div id="sres">' + globalResults(view.sq || '') + '</div>', true);
+    openModal('<div class="row" style="gap:8px"><input class="grow" type="search" data-input="sq" placeholder="Чи є в мене? Назва, автор, серія або ISBN" value="' + esc(view.sq || '') + '" autocomplete="off"><button class="btn" data-action="scan-find" title="Сканувати штрихкод">📷</button><button class="close" style="position:static" data-action="close">×</button></div><div id="sres">' + globalResults(view.sq || '') + '</div>', true, true);
     setTimeout(function () { var i = document.querySelector('[data-input="sq"]'); if (i) i.focus(); }, 60);
   }
   function entityHits(q) {
@@ -3177,6 +3151,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     for (var i = read.length + now.length; i < slots; i++) h += '<button class="mspine e" data-action="plan-open" style="height:' + (70 + (i * 7) % 18) + 'px">' + (i === read.length + now.length ? '＋' : '') + '</button>';
     return h + '</div><div class="board"></div></div>';
   }
+  function feedNowLink() {
+    var now = readingNow(), pile = pileFor(curYm());
+    if (!now.length && !pile.length) return '';
+    var b = now[0];
+    return '<button class="card" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer" data-tab="plan">' + (b ? cover(b) : '') + '<div class="grow"><div class="muted small">' + (b ? 'Зараз читаю' : 'Стос на ' + MONTHS_ON[mIdx(curYm())]) + '</div><b>' + esc(b ? b.title : pile.length + ' ' + bookWord(pile.length)) + '</b>' + (b && b.page && b.pages ? '<div class="muted small">' + b.page + ' / ' + b.pages + ' стор.</div>' : '') + '</div><span class="muted">План ›</span></button>';
+  }
   function deskHtml() {
     var now = readingNow();
     if (!now.length) {
@@ -3241,7 +3221,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var from = b.started || b.readOn, to = b.readOn || (low(b.status) === 'читаю' ? D.today : null);
       return from && to && from <= last && to >= first;
     }).sort(function (a, b) { return String(a.started || a.readOn).localeCompare(String(b.started || b.readOn)); });
-    var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Читання по днях</h3><a class="link small" data-tab="reading">Календар ›</a></div>';
+    var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Читання по днях</h3><a class="link small" data-action="cal-scroll">Календар ↓</a></div>';
     if (!books.length) return h + '<p class="muted small">Цього місяця ще немає книг з датами. Дати ставляться самі, коли змінюєте статус на «читаю» і «прочитано».</p></div>';
     var days = '';
     for (var d = 1; d <= dim; d++) days += '<span>' + (d === 1 || d % 5 === 0 ? d : '') + '</span>';
@@ -3260,6 +3240,41 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var st = streakNow();
     return h + '<div class="row" style="justify-content:space-between;margin-top:8px"><span class="muted small">Читала ' + cnt + ' ' + dayWord(cnt) + ' із ' + upto + '</span>' + (st > 1 ? '<span class="muted small">🔥 ' + st + ' ' + dayWord(st) + ' поспіль</span>' : '') + '</div></div>';
   }
+  function calendarCard() {
+    var c = D.cols, lib = D.books, h = '';
+    if (!c.readOn && !c.started) {
+      h += '<div class="card"><h3>Календар читання</h3><div class="note">Щоб вести щоденник і календар, потрібні колонки «Дата початку», «Дата прочитання» і «Оцінка». Коли вони з\'являться, дати ставитимуться самі: статус «читаю» → дата початку, «прочитано» → дата кінця й оцінка.</div></div>';
+    } else {
+      var m = view.calM || D.today.slice(0, 7);
+      var p = m.split('-').map(Number);
+      var first = m + '-01', dim = new Date(Date.UTC(p[0], p[1], 0)).getUTCDate();
+      var startDow = (new Date(Date.UTC(p[0], p[1] - 1, 1)).getUTCDay() + 6) % 7;
+      var names = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+      var finished = lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === m; });
+      var pages = finished.reduce(function (a, b) { return a + (b.pages || 0); }, 0);
+      var withR = finished.filter(function (b) { return b.rating; });
+      h += '<div class="card" id="calcard"><div class="row"><button class="btn" data-cal="-1">‹</button><h3 class="grow" style="margin:0;text-align:center">' + names[p[1] - 1] + ' ' + p[0] + ' · ' + finished.length + ' кн.</h3><button class="btn" data-cal="1">›</button></div>';
+      h += '<div class="cal" style="margin-top:10px">' + ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(function (d) { return '<div class="dh">' + d + '</div>'; }).join('');
+      for (var i = 0; i < startDow; i++) h += '<div class="d out"></div>';
+      for (var d = 1; d <= dim; d++) {
+        var day = m + '-' + ('0' + d).slice(-2);
+        var act = lib.filter(function (b) { return activeOn(b, day); });
+        var fin = act.some(function (b) { return b.readOn === day; });
+        h += '<div class="d' + (day === D.today ? ' today' : '') + '"><span class="n">' + d + '</span>' + (fin ? '<span class="fin">✓</span>' : '') + '<div class="cv">' + act.slice(0, 3).map(function (b) {
+          return '<span data-book="' + b.row + '">' + cover(b) + '</span>';
+        }).join('') + (act.length > 3 ? '<span class="muted">+' + (act.length - 3) + '</span>' : '') + '</div></div>';
+      }
+      h += '</div><p class="muted small" style="margin-top:8px">Прочитано за місяць: <b>' + finished.length + '</b>, ' + pages.toLocaleString('uk-UA') + ' стор.' + (withR.length ? ', середня оцінка ' + (withR.reduce(function (a, b) { return a + b.rating; }, 0) / withR.length).toFixed(1) + '★' : '') + '</p>' +
+        (finished.length ? '<div class="list">' + finished.sort(function (a, b) { return a.readOn < b.readOn ? -1 : 1; }).map(bookItem).join('') + '</div>' : '') + '</div>';
+    }
+    return h;
+  }
+  VIEWS.plan = function () {
+    var ym = curYm();
+    var h = '<div class="cols"><div>' + deskHtml() + '<div style="margin:14px 0">' + monthShelfHtml(ym) + '</div></div><div>' + pileHtml(ym) + '</div></div>';
+    h += '<div class="cols"><div>' + threadHtml(ym) + '</div><div>' + calendarCard() + '</div></div>';
+    return h;
+  };
   VIEWS.home = function () {
     var ym = curYm();
     var readM = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === ym; });
@@ -3270,10 +3285,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       ', витрачено <b data-list="orders|m" style="cursor:pointer;text-decoration:underline dotted">' + money(sumPrice(newM)) + '</b></div>';
     h += quickActions();
     h += '<div class="cols home4"><div>';
-    h += todayRowsHtml() + deskHtml();
+    h += todayRowsHtml();
     h += '</div><div>';
-    h += pileHtml(ym);
-    h += '<div class="card"><div class="row"><input class="grow" type="search" data-input="gq" placeholder="Чи є в мене ця книга? Назва, автор, серія або ISBN" value="' + esc(view.q) + '"><button class="btn" data-action="scan-find" title="Сканувати штрихкод">📷</button></div><div id="gres">' + globalResults() + '</div></div>';
+    h += feedNowLink();
     h += '</div></div>';
     return h;
   };
@@ -3540,14 +3554,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var inp = function (id, label, val, extra) { return '<label><span>' + label + '</span><input id="' + id + '" value="' + esc(val == null ? '' : val) + '" ' + (extra || '') + '></label>'; };
     var c = D.cols, hasSer = w.series && w.series !== '-' && w.series !== 'нонфік';
     var h = '<button class="close" data-action="wish-back" data-row="' + w.row + '">×</button><h2>✎ Редагувати бажанку</h2>' +
-      (c.wishIsbn ? '<div class="row" style="align-items:flex-end;margin-bottom:10px"><label class="grow" style="margin:0"><span class="muted small">ISBN</span><input id="we-isbn" inputmode="numeric" value="' + esc(w.isbn || '') + '" placeholder="978…"></label>' +
-        '<button class="btn p" data-action="wish-look">🔎 Знайти дані</button></div><div id="we-look" class="small"></div>' : '') +
       '<div class="form">' + inp('we-author', 'Автор', w.author) + inp('we-title', 'Назва', w.title) +
       inp('we-series', 'Назва серії', hasSer ? w.series : '', 'placeholder="порожньо — одиночна"') + inp('we-part', '№ у серії', w.part, 'inputmode="decimal"') + inp('we-total', 'Всього томів', w.total, 'inputmode="numeric"') +
       inp('we-pub', 'Видавництво', w.pub) + inp('we-release', 'Реліз', w.release || '', 'type="date"') +
       (c.wishCover ? inp('we-cover', 'Обкладинка (посилання)', w.cover, 'placeholder="https://…"') : '') +
       (c.wishOrig ? inp('we-orig', 'Оригінальна назва', w.orig) : '') + (c.wishSrc ? inp('we-src', 'Джерело (посилання)', w.src, 'placeholder="https://…"') : '') +
-      '</div><div id="we-err"></div><div class="row" style="margin-top:14px"><button class="btn p" data-action="wish-edit-save" data-row="' + w.row + '">Зберегти</button><button class="btn" data-action="wish-back" data-row="' + w.row + '">Скасувати</button></div>';
+      '</div><div id="we-err"></div><div class="ebar"><div id="we-look" class="small"></div><div class="row">' +
+      (c.wishIsbn ? '<input id="we-isbn" class="grow" data-input="we-isbn" inputmode="numeric" value="' + esc(w.isbn || '') + '" placeholder="ISBN 978…" aria-label="ISBN"><button class="btn" data-action="wish-look" title="Знайти дані за ISBN або назвою">🔎</button>' : '<span class="grow"></span>') +
+      '<button class="btn p" data-action="wish-edit-save" data-row="' + w.row + '">Зберегти</button></div></div>';
     openModal(h, true);
   }
   function wishLook() {
@@ -3555,8 +3569,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var isbn = e ? e.value.replace(/[^0-9Xx]/g, '') : '', title = fval('we-title'), author = fval('we-author');
     if (!isbn && !title) { box.innerHTML = '<p class="msg">Впишіть ISBN.</p>'; return; }
     box.innerHTML = '<p class="muted">Шукаю за ' + (isbn ? 'ISBN' : 'назвою') + '…</p>';
-    api('lbApiLookup', { isbn: isbn, title: title, author: author }).then(function (r) {
+    api('lbApiLookup', { isbn: isbn, title: title, author: author, pub: fval('we-pub') }).then(function (r) {
       if (!document.getElementById('we-title')) return;
+      if (r && r.otherEdition) {
+        var oe = r.otherEdition, got = r.orig && !fval('we-orig') && document.getElementById('we-orig');
+        if (got) { got.value = r.orig; got.style.borderColor = 'var(--acc)'; }
+        box.innerHTML = '<p class="msg">Видання «' + esc(fval('we-pub')) + '» не знайшла. Є лише інше: ' + (oe.url && /^https:/.test(oe.url) ? '<a class="link" target="_blank" rel="noopener" href="' + esc(oe.url) + '">«' + esc(oe.title || '') + '», ' + esc(oe.pub || '') + '</a>' : '«' + esc(oe.title || '') + '», ' + esc(oe.pub || '')) +
+          '. Його ISBN і обкладинку не підставляю' + (got ? ', додала лише оригінальну назву' : '') + '. Впишіть ISBN зі своєї книги або сайту видавництва.</p>';
+        return;
+      }
       if (!r || r.notFound) { box.innerHTML = '<p class="msg">Нічого не знайшла. Перевірте ISBN або заповніть вручну.</p>'; return; }
       var put = function (id, v, always) { var el = document.getElementById(id); if (!el || v == null || v === '') return false; if (!always && String(el.value).trim()) return false; el.value = v; el.style.borderColor = 'var(--acc)'; return true; };
       var filled = [];
@@ -3596,14 +3617,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (f === 'isbn') { v = v.replace(/[^0-9Xx]/g, ''); cur = cur.replace(/[^0-9Xx]/g, ''); }
       if (v !== cur) set[f] = f === 'release' && v ? dmy(v) : v;
     });
-    if (!Object.keys(set).length) return showWish(w.row);
+    if (!Object.keys(set).length) return closeModal();
     if (set.title === '' || set.author === '') { document.getElementById('we-err').innerHTML = '<p class="msg small">Автор і назва не можуть бути порожніми.</p>'; return; }
     if ('series' in set) set.isSer = set.series ? 'Так' : 'Ні';
     closeModal();
     saveSet('wish', w, set).then(function () {
       if ('isSer' in set) w.isSeries = set.isSer;
       if ('release' in set) { w.release = w.release || null; w.releaseText = w.release ? dmy(w.release) : ''; }
-      S = derive(D); showWish(w.row);
+      S = derive(D); refresh();
     }).catch(function () { editWish(w); });
   }
   function editSave(b) {
@@ -3810,7 +3831,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
 
   /* ---------- вікно ---------- */
-  function openModal(html, wide) { document.getElementById('modal').innerHTML = '<div class="modal" data-action="close-bg"><div class="sheet' + (wide ? ' wide' : '') + '">' + html + '</div></div>'; }
+  function openModal(html, wide, top) { document.getElementById('modal').innerHTML = '<div class="modal' + (top ? ' top' : '') + '" data-action="close-bg"><div class="sheet' + (wide ? ' wide' : '') + '">' + html + '</div></div>'; }
   function closeModal() { modalStack = null; finishState = null; nav = []; document.getElementById('modal').innerHTML = ''; }
 
   /* ---------- події ---------- */
@@ -3863,6 +3884,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       api('lbApiSetGoals', { month: fval('g-month'), year: fval('g-year') }).then(function (r) { D.goals = r; closeModal(); toast('Мету збережено ✓'); render(); }).catch(function (e) { act.disabled = false; toast(e.message, true); });
     }
     if (a === 'plan-open') { nav = []; showPlan(); }
+    if (a === 'cal-scroll') { var cc = document.getElementById('calcard'); if (cc) cc.scrollIntoView({ behavior: 'smooth' }); return; }
     if (a === 'plan-pick') showPlanPick(act.getAttribute('data-to'));
     if (a === 'plan-dlg' && b) planDialog(b);
     if (a === 'plan-set' && b) {
@@ -4258,6 +4280,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     clearTimeout(timer);
     timer = setTimeout(function () {
       if (k === 'gq') { view.q = t.value; document.getElementById('gres').innerHTML = globalResults(); return; }
+      if (k === 'we-isbn') { var dg = t.value.replace(/[^0-9Xx]/g, ''); if (dg.length === 13 || dg.length === 10) wishLook(); return; }
       if (k === 'pq') { view.pq = t.value; var top = nav[nav.length - 1]; if (top) { top.fn.apply(null, top.args); var pi = document.querySelector('[data-input="pq"]'); if (pi) { pi.focus(); try { pi.setSelectionRange(pi.value.length, pi.value.length); } catch (e) {} } } return; }
       if (k === 'sq') { view.sq = t.value; var sr = document.getElementById('sres'); if (sr) sr.innerHTML = globalResults(view.sq) || '<p class="muted small">Почніть друкувати: шукаю серед книг, бажанок, авторів, серій, видавництв і полиць.</p>'; return; }
       if (k === 'bq') view.q = t.value;

@@ -2,6 +2,7 @@
 // Бере дані через наявний API Apps Script (lbApiData) з ключем LB_WEB_KEY (секрет функцій, вписує користувачка).
 // Захист: заголовок x-import-token має збігатися з kv.import_token. Після переходу (kv.source = 'supabase') — відмова.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { wishKey, mergeFound } from "../_shared/wishfill.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
@@ -179,6 +180,19 @@ Deno.serve(async (req) => {
       report.sold++;
     }
 
+    // що база раніше сама знайшла для бажанок (wish-fill) — знову в порожні поля, щоб не губилося при повторному копіюванні
+    const { data: found } = await db.from("wish_found").select("key,data").eq("status", "auto");
+    const fmap = new Map((found ?? []).map((r: Record<string, unknown>) => [r.key as string, r.data as Record<string, unknown>]));
+    let refilled = 0;
+    for (const r of rows as Record<string, unknown>[]) {
+      if (!["wish", "ordered", "ttn", "shipped", "delivered"].includes(String(r.stage))) continue;
+      const f = fmap.get(wishKey(r.author, r.title));
+      if (!f) continue;
+      const notes = mergeFound(r, r.stage === "wish" ? f : { ...f, price: null, sale_status: null }, (i) => !usedIsbn.has(i));
+      if (r.isbn && notes.some((n) => n.startsWith("ISBN"))) usedIsbn.add(String(r.isbn));
+      if (notes.length) refilled++;
+    }
+    (report as Record<string, unknown>).refilled = refilled;
     const catRows = [...cat.values()];
     for (let i = 0; i < catRows.length; i += 200) { const { error } = await db.from("catalog").upsert(catRows.slice(i, i + 200), { onConflict: "isbn", ignoreDuplicates: true }); if (error) throw new Error("catalog: " + error.message); }
     for (let i = 0; i < rows.length; i += 200) { const { error } = await db.from("books").insert(rows.slice(i, i + 200)); if (error) throw new Error("books: " + error.message); }

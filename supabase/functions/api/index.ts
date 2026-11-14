@@ -1,7 +1,9 @@
 // API сайту «Моя бібліотека» на базі Supabase. Ті самі назви дій і та сама відповідь, що й у doPost з Apps Script,
 // тож сайт змінює лише адресу. Дії, що лише шукають в інтернеті (Gemini, MEGOGO, OCR), поки що виконує Apps Script.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { fromMegogo } from "./megogo.ts";
+import { fromMegogo } from "../_shared/megogo.ts";
+import { fromYakaboo } from "../_shared/yakaboo.ts";
+import { PUBLISHERS, pubCanon, samePub } from "../_shared/pub.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
@@ -53,17 +55,6 @@ function isbnKey(v: unknown): string {
   }
   return /^\d{13}$/.test(d) ? d : "";
 }
-const PUBLISHERS: Record<string, string[]> = {
-  "А-ба-ба-га-ла-ма-га": ["А-ба-ба", "Абабагаламага", "Видавництво А-ба-ба-га-ла-ма-га", "A-BA-BA-HA-LA-MA-HA"],
-  "BookChef": ["Book Chef", "Bookchef", "Букшеф"],
-  "Книголав": ["Knigolove", "#книголав"],
-  "Nebo Publishing": ["Nebo BookLab Publishing", "Nebo BookLab", "Nebo", "Небо", "Небо Publishing"],
-};
-const pubKey = (x: unknown) => String(x ?? "").toLowerCase().replace(/ґ/g, "г").replace(/[\s\-–—_.,:;'’`"ʼ«»()]/g, "");
-const PUB_MAP: Record<string, string> = {};
-for (const [c, vs] of Object.entries(PUBLISHERS)) { PUB_MAP[pubKey(c)] = c; vs.forEach((v) => (PUB_MAP[pubKey(v)] = c)); }
-const pubCanon = (p: unknown) => { const t = String(p ?? "").replace(/\s+/g, " ").trim(); return t ? PUB_MAP[pubKey(t)] || t : ""; };
-
 const WISH_KINDS = ["Хочу купити", "Докупити серію", "На майбутнє"];
 const STAGE_STATUS: Record<string, string> = { ordered: "Замовлено", ttn: "Створено ТТН", shipped: "Відправлено", delivered: "Доставлено", library: "В бібліотеці" };
 const STATUS_STAGE: Record<string, string> = { "Замовлено": "ordered", "Створено ТТН": "ttn", "Відправлено": "shipped", "Доставлено": "delivered", "В бібліотеці": "library" };
@@ -548,18 +539,31 @@ async function apiLookup(q: Row) {
     const c = chk(await db.from("catalog").select("*").eq("isbn", isbn).maybeSingle(), "catalog") as Row | null;
     if (c?.fetched_at && c.sources?.urls) add({ ...c, url: c.sources.urls[0] }, (c.sources.title || "каталог") + " (каталог)");
   }
+  const pub = isbn ? "" : s(q.pub); // вписаний ISBN точніший за видавництво
   if (!out.cover || !out.title) {
-    const mg = await fromMegogo(isbn, title, author).catch(() => null);
+    let mg = await fromMegogo(isbn, title, author, pub).catch(() => null);
+    if (!mg || mg.pubMismatch) {
+      const y = await fromYakaboo(title, author, pub).catch(() => null);
+      if (y && !y.pubMismatch) mg = y;
+    }
+    if (mg?.pubMismatch) {
+      // знайшлося лише видання іншого видавництва: ISBN, обкладинку, ціну не підставляємо — лише те, що спільне для твору
+      add({ orig_title: mg.orig_title, description: mg.description }, mg.source);
+      out.otherEdition = { pub: pubCanon(mg.publisher), title: mg.title, url: mg.url };
+      out.sources = sources.length ? sources : [mg.source];
+      return out;
+    }
     if (mg) {
-      add(mg, "MEGOGO Books");
+      add(mg, mg.source || "MEGOGO Books");
       const k = isbnKey(mg.isbn);
       if (k) await db.from("catalog").upsert({ isbn: k, title: mg.title, author: mg.author, publisher: mg.publisher, pages: mg.pages, cover: mg.cover, series: mg.series, series_num: mg.series_num,
-        description: mg.description, orig_title: mg.orig_title, genres: mg.genres, lang: mg.lang, year: mg.year, release: mg.release, rating: mg.rating,
-        sources: { title: "MEGOGO Books", urls: [mg.url] }, fetched_at: new Date().toISOString() }, { onConflict: "isbn" });
+        description: mg.description, orig_title: mg.orig_title, genres: mg.genres || [], lang: mg.lang, year: mg.year, release: mg.release, rating: mg.rating,
+        sources: { title: mg.source || "MEGOGO Books", urls: [mg.url] }, fetched_at: new Date().toISOString() }, { onConflict: "isbn" });
     }
   }
+  if (pub && out.pub && !samePub(pub, out.pub)) { out.otherEdition = { pub: out.pub, title: out.title, url: out.url }; return { orig: out.orig, description: out.description, otherEdition: out.otherEdition, sources }; }
   if (!out.cover || !out.description || !out.pages) {
-    try { const r = await proxy("lbApiLookup", [{ isbn: out.isbn || isbn, title: out.title || title, author: author || out.author }]) as Row; if (r && !r.notFound) add(r, (r.sources || []).join(", ") || "Goodreads"); } catch { /* */ }
+    try { const r = await proxy("lbApiLookup", [{ isbn: out.isbn || isbn, title: out.title || title, author: author || out.author }]) as Row; if (r && !r.notFound && !(pub && r.pub && !samePub(pub, r.pub))) add(r, (r.sources || []).join(", ") || "Goodreads"); } catch { /* */ }
   }
   if (!sources.length) return { notFound: true, sources: ["MEGOGO Books", "Goodreads"] };
   out.sources = sources;
