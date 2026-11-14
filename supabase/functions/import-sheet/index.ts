@@ -65,10 +65,9 @@ Deno.serve(async (req) => {
     if (!body.ok) return json({ ok: false, error: "Apps Script: " + body.error }, 502);
     const D = body.data;
 
-    // очистка (до переходу таблиця — головна, тож копія повністю перезаписується)
-    for (const t of ["log", "books", "series", "catalog"]) {
-      const q = db.from(t).delete();
-      const { error } = await (t === "catalog" ? q.neq("isbn", "") : q.gte("id", 0));
+    // очистка (до переходу таблиця — головна, тож копія повністю перезаписується). Каталог з інтернету лишається.
+    for (const t of ["log", "books", "series"]) {
+      const { error } = await db.from(t).delete().gte("id", 0);
       if (error) throw new Error(t + ": " + error.message);
     }
 
@@ -181,7 +180,7 @@ Deno.serve(async (req) => {
     }
 
     const catRows = [...cat.values()];
-    for (let i = 0; i < catRows.length; i += 200) { const { error } = await db.from("catalog").insert(catRows.slice(i, i + 200)); if (error) throw new Error("catalog: " + error.message); }
+    for (let i = 0; i < catRows.length; i += 200) { const { error } = await db.from("catalog").upsert(catRows.slice(i, i + 200), { onConflict: "isbn", ignoreDuplicates: true }); if (error) throw new Error("catalog: " + error.message); }
     for (let i = 0; i < rows.length; i += 200) { const { error } = await db.from("books").insert(rows.slice(i, i + 200)); if (error) throw new Error("books: " + error.message); }
 
     await db.from("kv").upsert([

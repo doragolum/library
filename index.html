@@ -3566,7 +3566,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (put('we-pub', mapPub(r.pub))) filled.push('видавництво');
       if (r.seriesName && put('we-series', r.seriesName)) filled.push('серію');
       if (r.seriesNum && put('we-part', r.seriesNum)) filled.push('№ у серії');
-      if (r.isbn && e && !e.value.trim()) e.value = r.isbn;
+      if (r.release && put('we-release', String(r.release).slice(0, 10))) filled.push('дату релізу');
+      if (r.orig && put('we-orig', r.orig)) filled.push('оригінальну назву');
+      if (r.url && /^https:/.test(r.url) && put('we-src', r.url)) filled.push('посилання');
+      if (r.isbn && e && !e.value.trim()) { e.value = r.isbn; e.style.borderColor = 'var(--acc)'; filled.push('ISBN'); }
       var diff = [];
       if (r.title && norm(r.title) !== norm(fval('we-title'))) diff.push('назва «' + r.title + '»');
       if (r.cover && fval('we-cover') && r.cover !== fval('we-cover')) diff.push('інша обкладинка');

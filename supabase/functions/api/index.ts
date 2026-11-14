@@ -1,6 +1,7 @@
 // API сайту «Моя бібліотека» на базі Supabase. Ті самі назви дій і та сама відповідь, що й у doPost з Apps Script,
 // тож сайт змінює лише адресу. Дії, що лише шукають в інтернеті (Gemini, MEGOGO, OCR), поки що виконує Apps Script.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { fromMegogo } from "./megogo.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
@@ -55,7 +56,7 @@ function isbnKey(v: unknown): string {
 const PUBLISHERS: Record<string, string[]> = {
   "А-ба-ба-га-ла-ма-га": ["А-ба-ба", "Абабагаламага", "Видавництво А-ба-ба-га-ла-ма-га", "A-BA-BA-HA-LA-MA-HA"],
   "BookChef": ["Book Chef", "Bookchef", "Букшеф"],
-  "Книголав": ["Knigolove"],
+  "Книголав": ["Knigolove", "#книголав"],
   "Nebo Publishing": ["Nebo BookLab Publishing", "Nebo BookLab", "Nebo", "Небо", "Небо Publishing"],
 };
 const pubKey = (x: unknown) => String(x ?? "").toLowerCase().replace(/ґ/g, "г").replace(/[\s\-–—_.,:;'’`"ʼ«»()]/g, "");
@@ -114,6 +115,7 @@ const FIELDS: Record<string, Record<string, FD>> = {
     author: { col: "author", type: "text", label: "Автор" },
     title: { col: "title", type: "text", label: "Назва" },
     pub: { col: "publisher", type: "text", label: "Видавництво" },
+    price: { col: "price", type: "number", label: "Ціна" },
     release: { col: "release", type: "date", label: "Реліз" },
     ordered: { col: "ordered_on", type: "date", label: "Дата замовлення" },
     series: { type: "text", label: "Назва серії" },
@@ -517,7 +519,7 @@ async function apiSetGoals(g: Row) {
 }
 
 /** Пошукові дії поки що виконує Apps Script (нічого не пише в базу, лише відповідає). */
-const PROXY = ["lbApiOcr", "lbApiAi", "lbApiGenre", "lbApiCoverUpload", "lbApiLookup", "lbApiOfficial", "lbApiTropes", "lbApiSeriesCheck", "lbApiFromLink", "lbApiNews"];
+const PROXY = ["lbApiOcr", "lbApiAi", "lbApiGenre", "lbApiCoverUpload", "lbApiOfficial", "lbApiTropes", "lbApiSeriesCheck", "lbApiFromLink", "lbApiNews"];
 async function proxy(fn: string, args: unknown[]) {
   const k = Deno.env.get("LB_WEB_KEY");
   const r = await fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ fn, args, key: k }) });
@@ -527,7 +529,45 @@ async function proxy(fn: string, args: unknown[]) {
   return res.data;
 }
 
+/** Дані про книгу: спершу каталог бази, потім MEGOGO Books (за ISBN або назвою й автором), а чого бракує — пошук Apps Script (Goodreads, Google Books). */
+async function apiLookup(q: Row) {
+  q = q || {};
+  const isbn = isbnKey(q.isbn) || String(q.isbn || "").replace(/[^0-9Xx]/g, "");
+  const title = s(q.title), author = s(q.author);
+  const out: Row = {}, sources: string[] = [];
+  const add = (r: Row | null, src: string) => {
+    if (!r) return;
+    const map: Row = { title: r.title, author: r.author, cover: r.cover, pages: r.pages, isbn: r.isbn, pub: r.publisher ? pubCanon(r.publisher) : r.pub,
+      seriesName: r.series ?? r.seriesName, seriesNum: r.series_num ?? r.seriesNum, description: r.description, language: r.lang ?? r.language,
+      orig: r.orig_title ?? r.orig, release: r.release, price: r.price, avail: r.avail, url: r.url, genresRaw: r.genresRaw };
+    let used = false;
+    for (const [k, v] of Object.entries(map)) if (v != null && v !== "" && !(Array.isArray(v) && !v.length) && (out[k] == null || out[k] === "")) { out[k] = v; used = true; }
+    if (used && !sources.includes(src)) sources.push(src);
+  };
+  if (isbn) {
+    const c = chk(await db.from("catalog").select("*").eq("isbn", isbn).maybeSingle(), "catalog") as Row | null;
+    if (c?.fetched_at && c.sources?.urls) add({ ...c, url: c.sources.urls[0] }, (c.sources.title || "каталог") + " (каталог)");
+  }
+  if (!out.cover || !out.title) {
+    const mg = await fromMegogo(isbn, title, author).catch(() => null);
+    if (mg) {
+      add(mg, "MEGOGO Books");
+      const k = isbnKey(mg.isbn);
+      if (k) await db.from("catalog").upsert({ isbn: k, title: mg.title, author: mg.author, publisher: mg.publisher, pages: mg.pages, cover: mg.cover, series: mg.series, series_num: mg.series_num,
+        description: mg.description, orig_title: mg.orig_title, genres: mg.genres, lang: mg.lang, year: mg.year, release: mg.release, rating: mg.rating,
+        sources: { title: "MEGOGO Books", urls: [mg.url] }, fetched_at: new Date().toISOString() }, { onConflict: "isbn" });
+    }
+  }
+  if (!out.cover || !out.description || !out.pages) {
+    try { const r = await proxy("lbApiLookup", [{ isbn: out.isbn || isbn, title: out.title || title, author: author || out.author }]) as Row; if (r && !r.notFound) add(r, (r.sources || []).join(", ") || "Goodreads"); } catch { /* */ }
+  }
+  if (!sources.length) return { notFound: true, sources: ["MEGOGO Books", "Goodreads"] };
+  out.sources = sources;
+  return out;
+}
+
 const API: Record<string, (...a: any[]) => Promise<unknown>> = {
+  lbApiLookup: (q: Row) => apiLookup(q),
   lbApiData: () => readAll(),
   lbApiSave: (changes: Row[]) => apiSave(changes),
   lbApiUpdate: async (ch: Row) => {
