@@ -441,6 +441,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function moodChips(sel, action, row) {
     return '<div class="chips">' + MOODS.map(function (m) { var on = sel.indexOf(m) !== -1; return '<button type="button" class="chip' + (on ? ' a' : '') + '" style="font-size:13px;padding:6px 11px;cursor:pointer' + (on ? ';font-weight:600' : '') + '" data-action="' + action + '"' + (row ? ' data-row="' + row + '"' : '') + ' data-v="' + esc(m) + '">' + (on ? '✓ ' : '') + esc(m) + '</button>'; }).join('') + '</div>';
   }
+  // тропи сховано (14.11: Gemini надто повільний, не найнеобхідніше); дані в базі лишаються
+  var NO_TROPES = true;
   var bookTab = 'about', tropeEd = null;
   function tropeEdHtml() {
     var t = tropeEd, known = allTropes().filter(function (x) { return t.list.indexOf(x) === -1; }).slice(0, 14);
@@ -988,7 +990,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var pane = function (id, html) { return '<div data-pane="' + id + '"' + (id === curTab ? '' : ' style="display:none"') + '>' + html + '</div>'; };
     // --- Про книгу
     var pa = '<div class="card" id="aboutcard"' + (ABOUT[b.row] === '' ? ' style="display:none"' : '') + '><h3>Опис</h3><div class="about clip" data-about="' + b.row + '" data-action="about-toggle">' + (ABOUT[b.row] ? esc(ABOUT[b.row]) : '<span class="muted small">Шукаю опис…</span>') + '</div></div>';
-    if (c.tropes) pa += '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Тропи</h3>' + (tropeEd && tropeEd.row === b.row ? '' : '<button class="chip" style="cursor:pointer" data-action="trope-edit" data-row="' + b.row + '">' + (b._t.length ? '✎ змінити' : '+ додати') + '</button>') + '</div>' +
+    if (c.tropes && !NO_TROPES) pa += '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Тропи</h3>' + (tropeEd && tropeEd.row === b.row ? '' : '<button class="chip" style="cursor:pointer" data-action="trope-edit" data-row="' + b.row + '">' + (b._t.length ? '✎ змінити' : '+ додати') + '</button>') + '</div>' +
       (tropeEd && tropeEd.row === b.row ? '' : b._t.length ? '<div class="chips" style="margin-top:8px">' + b._t.map(function (t) { return '<a class="chip" style="font-size:13px;padding:5px 10px" data-go="' + esc('trope|' + t) + '">' + esc(t) + '</a>'; }).join('') + '</div>' : ('<p class="muted small" style="margin:6px 0 0">Ще не вказані. Натисніть «+ додати», там є підказка від Gemini.</p>')) +
       '<div id="tropeed">' + (tropeEd && tropeEd.row === b.row ? tropeEdHtml() : '') + '</div></div>';
     var ab = S.inLib.filter(function (x) { return x.author === b.author; });
@@ -1325,7 +1327,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     h += '<button class="btn" style="width:100%;margin:0 0 10px;background:var(--ink);color:var(--bg);justify-content:center" data-action="move-open">⇄ Перестановка' + (mv ? ': ' + mv + ' кн. варто переставити' : '') + '</button>';
     var noCov = S.inLib.filter(function (x) { return !x.cover; }).length, noIsbn = S.inLib.filter(function (x) { return !x.isbn; }).length;
     var noTr = S.inLib.filter(function (x) { return !(x._t || []).length; }).length;
-    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noTr ? '<button class="chip" data-action="mt-open">🏷 Без тропів: ' + noTr + ' — підказати</button>' : '') + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
+    h += '<div class="chips" style="margin:0 0 8px"><button class="chip a" data-action="auto-fill">⚡ Автозвірка у фоні</button>' + (noTr && !NO_TROPES ? '<button class="chip" data-action="mt-open">🏷 Без тропів: ' + noTr + ' — підказати</button>' : '') + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
@@ -1920,7 +1922,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         }).join('') + '</div>';
         var tc = {}; base.forEach(function (b) { b._t.forEach(function (t) { tc[t] = (tc[t] || 0) + 1; }); });
         var tk = Object.keys(tc).sort(function (x, y) { return tc[y] - tc[x]; }).slice(0, 30);
-        if (tk.length) h += '<h3 style="margin-top:14px">Тропи? <span class="muted small">можна кілька</span></h3><div class="chips">' + tk.map(function (t) {
+        if (tk.length && !NO_TROPES) h += '<h3 style="margin-top:14px">Тропи? <span class="muted small">можна кілька</span></h3><div class="chips">' + tk.map(function (t) {
           var on = (a.tropes || []).indexOf(t) !== -1;
           return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-trope" data-v="' + esc(t) + '">' + esc(t) + ' <small>' + tc[t] + '</small></button>';
         }).join('') + '</div>';
