@@ -86,6 +86,7 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px 28px}
 .modal .sheet.wide{max-width:900px}
+.modal.mid{align-items:flex-start;padding:9vh 16px 0}.modal.mid .sheet{border-radius:18px;max-width:420px}
 .modal.top{align-items:flex-start}.modal.top .sheet{border-radius:0 0 18px 18px;max-height:85vh;padding-top:12px}
 .ebar{position:sticky;bottom:-28px;margin:14px -16px -28px;padding:10px 16px 18px;background:var(--card);border-top:1px solid var(--line);z-index:2}
 .ebar .row{gap:8px;align-items:center}.ebar input{min-width:0}
@@ -3517,10 +3518,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function pageDialog(b) {
     nav = []; modalStack = null;
     openModal('<button class="close" data-action="back-book" data-row="' + b.row + '">×</button><h2>📑 На якій ви сторінці?</h2><p class="muted small">«' + esc(b.title) + '»' + (b.pages ? ', усього ' + b.pages + ' стор.' : '') + '</p>' +
-      '<input type="number" inputmode="numeric" id="pg-val" min="0" ' + (b.pages ? 'max="' + b.pages + '" ' : '') + 'value="' + esc(b.page || '') + '" style="font-size:24px;text-align:center">' +
+      '<input type="number" inputmode="numeric" id="pg-val" min="0" ' + (b.pages ? 'max="' + b.pages + '" ' : '') + 'value="' + esc(b.page || '') + '" enterkeyhint="done" style="font-size:28px;text-align:center;width:100%">' +
       '<div class="pick" style="margin-top:10px;justify-content:center">' + [10, 25, 50, 100].map(function (n) { return '<button data-action="pg-add" data-n="' + n + '">+' + n + '</button>'; }).join('') + '</div>' +
-      '<div class="row" style="margin-top:14px"><button class="btn p" data-action="pg-save" data-row="' + b.row + '">Зберегти</button><button class="btn" data-action="back-book" data-row="' + b.row + '">Скасувати</button></div>');
-    setTimeout(function () { var i = document.getElementById('pg-val'); if (i) i.focus(); }, 60);
+      '<div class="row" style="margin-top:14px"><button class="btn p" data-action="pg-save" data-row="' + b.row + '">Зберегти</button><button class="btn" data-action="back-book" data-row="' + b.row + '">Скасувати</button></div>', false, 'mid');
+    // фокус одразу (ще в межах натискання), щоб iPhone підняв клавіатуру
+    var pi = document.getElementById('pg-val');
+    if (pi) { pi.focus(); try { pi.select(); } catch (e) {} }
   }
   function goalDialog() {
     nav = []; modalStack = null;
@@ -3837,7 +3840,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
 
   /* ---------- вікно ---------- */
-  function openModal(html, wide, top) { document.getElementById('modal').innerHTML = '<div class="modal' + (top ? ' top' : '') + '" data-action="close-bg"><div class="sheet' + (wide ? ' wide' : '') + '">' + html + '</div></div>'; }
+  function openModal(html, wide, top) { document.getElementById('modal').innerHTML = '<div class="modal' + (top === 'mid' ? ' mid' : top ? ' top' : '') + '" data-action="close-bg"><div class="sheet' + (wide ? ' wide' : '') + '">' + html + '</div></div>'; }
   function closeModal() { modalStack = null; finishState = null; nav = []; document.getElementById('modal').innerHTML = ''; }
 
   /* ---------- події ---------- */
@@ -4324,7 +4327,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (again) { again.focus(); try { again.setSelectionRange(pos, pos); } catch (e) {} }
     }, 200);
   });
-  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeModal(); if (ev.key === 'Enter' && ev.target.id === 'pg-val') { ev.preventDefault(); var sv = document.querySelector('[data-action="pg-save"]'); if (sv) sv.click(); } });
 
   /* ---------- свайпи і довге натискання ---------- */
   var touch = null, lpTimer = null;
