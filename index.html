@@ -1403,7 +1403,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       '<div class="grow"><h2 style="margin-top:0">' + esc(w.title) + '</h2><div>' + lk('author', w.author) + '</div>' + (hasSer ? '<div class="small">' + lk('series', w.series) + (w.part ? ' · #' + esc(numTxt(w.part)) : '') + '</div>' : '') + '<div class="chips" style="margin-top:6px">' + wishChip(w.status) + (w._lib ? '<a class="chip b" data-go="' + esc('book|' + w._lib.row) + '">📚 за ISBN уже є в бібліотеці ›</a>' : '') + '</div></div></div></div>' +
       (wv.length > 1 ? '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Серія</h3><a class="link small" data-go="' + esc('series|' + w.series) + '">Уся серія ›</a></div>' + trackHtml(wv) + '</div>' : '') + '<div class="edits">' + editSelect('wish', w, 'status', 'Статус') + editSelect('wish', w, 'avail', 'Наявність') +
       (D.cols.wishOrdered && (ORDERED.indexOf(w.status) !== -1 || w.ordered || w.order) ? '<label class="edit"><span>Дата замовлення</span><input type="date" data-wdate="ordered|' + w.row + '" value="' + esc(w.ordered || '') + '"></label>' : '') + '</div>' +
-      '<div class="row" style="margin-bottom:12px"><button class="btn p" data-action="add-from-wish" data-row="' + w.row + '">📚 Купила / отримала → у бібліотеку</button><button class="btn" data-action="wish-del" data-row="' + w.row + '">🗑 Видалити</button></div><div id="wdel"></div>' +
+      '<div class="row" style="margin-bottom:12px"><button class="btn p" data-action="add-from-wish" data-row="' + w.row + '">📚 Купила / отримала → у бібліотеку</button><button class="btn" data-action="wish-edit" data-row="' + w.row + '">✎ Редагувати</button><button class="btn" data-action="wish-del" data-row="' + w.row + '">🗑 Видалити</button></div><div id="wdel"></div>' +
       '<table class="kv">' + rows.map(function (r) {
         var v = linked[r[0]] ? r[1] : r[0] === 'Джерело' ? srcLink(r[1]) : r[0] === 'Сайт' && /^https?:\/\//.test(r[1]) ? '<a href="' + esc(r[1]) + '" target="_blank" rel="noopener">' + esc(r[1]) + '</a>' : esc(r[1]);
         return '<tr><td>' + esc(r[0]) + '</td><td>' + v + '</td></tr>';
@@ -3534,6 +3534,75 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       '<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:12px"><button class="btn" style="color:var(--bad)" data-action="del-book" data-row="' + b.row + '">🗑 Видалити книгу з бібліотеки</button><div id="e-del"></div></div>';
     openModal(h, true);
   }
+  /* ---------- редагування бажанки: усі поля + «Знайти за ISBN» ---------- */
+  function editWish(w) {
+    nav = []; modalStack = null;
+    var inp = function (id, label, val, extra) { return '<label><span>' + label + '</span><input id="' + id + '" value="' + esc(val == null ? '' : val) + '" ' + (extra || '') + '></label>'; };
+    var c = D.cols, hasSer = w.series && w.series !== '-' && w.series !== 'нонфік';
+    var h = '<button class="close" data-action="wish-back" data-row="' + w.row + '">×</button><h2>✎ Редагувати бажанку</h2>' +
+      (c.wishIsbn ? '<div class="row" style="align-items:flex-end;margin-bottom:10px"><label class="grow" style="margin:0"><span class="muted small">ISBN</span><input id="we-isbn" inputmode="numeric" value="' + esc(w.isbn || '') + '" placeholder="978…"></label>' +
+        '<button class="btn p" data-action="wish-look">🔎 Знайти дані</button></div><div id="we-look" class="small"></div>' : '') +
+      '<div class="form">' + inp('we-author', 'Автор', w.author) + inp('we-title', 'Назва', w.title) +
+      inp('we-series', 'Назва серії', hasSer ? w.series : '', 'placeholder="порожньо — одиночна"') + inp('we-part', '№ у серії', w.part, 'inputmode="decimal"') + inp('we-total', 'Всього томів', w.total, 'inputmode="numeric"') +
+      inp('we-pub', 'Видавництво', w.pub) + inp('we-release', 'Реліз', w.release || '', 'type="date"') +
+      (c.wishCover ? inp('we-cover', 'Обкладинка (посилання)', w.cover, 'placeholder="https://…"') : '') +
+      (c.wishOrig ? inp('we-orig', 'Оригінальна назва', w.orig) : '') + (c.wishSrc ? inp('we-src', 'Джерело (посилання)', w.src, 'placeholder="https://…"') : '') +
+      '</div><div id="we-err"></div><div class="row" style="margin-top:14px"><button class="btn p" data-action="wish-edit-save" data-row="' + w.row + '">Зберегти</button><button class="btn" data-action="wish-back" data-row="' + w.row + '">Скасувати</button></div>';
+    openModal(h, true);
+  }
+  function wishLook() {
+    var box = document.getElementById('we-look'), e = document.getElementById('we-isbn');
+    var isbn = e ? e.value.replace(/[^0-9Xx]/g, '') : '', title = fval('we-title'), author = fval('we-author');
+    if (!isbn && !title) { box.innerHTML = '<p class="msg">Впишіть ISBN.</p>'; return; }
+    box.innerHTML = '<p class="muted">Шукаю за ' + (isbn ? 'ISBN' : 'назвою') + '…</p>';
+    api('lbApiLookup', { isbn: isbn, title: title, author: author }).then(function (r) {
+      if (!document.getElementById('we-title')) return;
+      if (!r || r.notFound) { box.innerHTML = '<p class="msg">Нічого не знайшла. Перевірте ISBN або заповніть вручну.</p>'; return; }
+      var put = function (id, v, always) { var el = document.getElementById(id); if (!el || v == null || v === '') return false; if (!always && String(el.value).trim()) return false; el.value = v; el.style.borderColor = 'var(--acc)'; return true; };
+      var filled = [];
+      if (put('we-title', r.title)) filled.push('назву');
+      if (put('we-author', r.author)) filled.push('автора');
+      if (put('we-cover', r.cover)) filled.push('обкладинку');
+      if (put('we-pub', mapPub(r.pub))) filled.push('видавництво');
+      if (r.seriesName && put('we-series', r.seriesName)) filled.push('серію');
+      if (r.seriesNum && put('we-part', r.seriesNum)) filled.push('№ у серії');
+      if (r.isbn && e && !e.value.trim()) e.value = r.isbn;
+      var diff = [];
+      if (r.title && norm(r.title) !== norm(fval('we-title'))) diff.push('назва «' + r.title + '»');
+      if (r.cover && fval('we-cover') && r.cover !== fval('we-cover')) diff.push('інша обкладинка');
+      box.innerHTML = '<div class="row" style="margin:6px 0">' + (r.cover ? '<img class="thumb" referrerpolicy="no-referrer" src="' + esc(r.cover) + '">' : '') +
+        '<span>' + (filled.length ? 'Заповнила порожні поля: ' + filled.join(', ') + '.' : 'Порожніх полів для заповнення не було.') +
+        (diff.length ? ' В інтернеті: ' + esc(diff.join('; ')) + ' — <a class="link" data-action="wish-look-all">підставити все</a>.' : '') +
+        ' <span class="muted">Джерело: ' + esc((r.sources || []).join(', ')) + '</span></span></div>';
+      wishLook.last = r;
+    }).catch(function (err) { box.innerHTML = '<p class="msg">' + esc(err.message) + '</p>'; });
+  }
+  function wishLookAll() {
+    var r = wishLook.last; if (!r) return;
+    [['we-title', r.title], ['we-cover', r.cover], ['we-pub', mapPub(r.pub)], ['we-series', r.seriesName], ['we-part', r.seriesNum]].forEach(function (p) {
+      var el = document.getElementById(p[0]); if (el && p[1]) { el.value = p[1]; el.style.borderColor = 'var(--acc)'; }
+    });
+  }
+  function wishEditSave(w) {
+    var map = { author: 'we-author', title: 'we-title', series: 'we-series', part: 'we-part', total: 'we-total', pub: 'we-pub', release: 'we-release', isbn: 'we-isbn', cover: 'we-cover', orig: 'we-orig', src: 'we-src' };
+    var set = {}, hasSer = w.series && w.series !== '-' && w.series !== 'нонфік';
+    Object.keys(map).forEach(function (f) {
+      var e = document.getElementById(map[f]); if (!e) return;
+      var v = String(e.value).trim(), cur = f === 'series' && !hasSer ? '' : w[f] == null ? '' : String(w[f]);
+      if (f === 'part' || f === 'total') { v = v.replace(',', '.'); cur = cur.replace(',', '.'); }
+      if (f === 'isbn') { v = v.replace(/[^0-9Xx]/g, ''); cur = cur.replace(/[^0-9Xx]/g, ''); }
+      if (v !== cur) set[f] = f === 'release' && v ? dmy(v) : v;
+    });
+    if (!Object.keys(set).length) return showWish(w.row);
+    if (set.title === '' || set.author === '') { document.getElementById('we-err').innerHTML = '<p class="msg small">Автор і назва не можуть бути порожніми.</p>'; return; }
+    if ('series' in set) set.isSer = set.series ? 'Так' : 'Ні';
+    closeModal();
+    saveSet('wish', w, set).then(function () {
+      if ('isSer' in set) w.isSeries = set.isSer;
+      if ('release' in set) { w.release = w.release || null; w.releaseText = w.release ? dmy(w.release) : ''; }
+      S = derive(D); showWish(w.row);
+    }).catch(function () { editWish(w); });
+  }
   function editSave(b) {
     var map = { author: 'e-author', title: 'e-title', type: 'e-type', pub: 'e-pub', series: 'e-series', num: 'e-num', total: 'e-total', genre: 'e-genre', genres: 'e-genres', pages: 'e-pages', lang: 'e-lang', price: 'e-price', bought: 'e-bought', isbn: 'e-isbn', cover: 'e-cover', page: 'e-page' };
     var set = {};
@@ -3947,6 +4016,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
           return load();
         }).catch(function (e) { act.disabled = false; act.textContent = 'Зберегти в бажанки'; toast(e.message, true); });
     }
+    if (a === 'wish-edit') { var we = D.wish.filter(function (x) { return x.row === row; })[0]; if (we) editWish(we); return; }
+    if (a === 'wish-back') { showWish(row); return; }
+    if (a === 'wish-look') { wishLook(); return; }
+    if (a === 'wish-look-all') { wishLookAll(); return; }
+    if (a === 'wish-edit-save') { var ws2 = D.wish.filter(function (x) { return x.row === row; })[0]; if (ws2) wishEditSave(ws2); return; }
     if (a === 'add-from-wish') { var w = D.wish.filter(function (x) { return x.row === row; })[0]; if (w) openAdd({ wish: w, book: wishToBook(w) }); }
     if (a === 'wish-del') {
       document.getElementById('wdel').innerHTML = '<div class="note">Видалити з бажанок назавжди? Рядок зникне з таблиці (у Лозі залишиться запис).<div class="row" style="margin-top:8px">' +
