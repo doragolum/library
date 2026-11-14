@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       if (seriesMap.has(k) || serRows.some((s) => norm(s.name) + "|" + norm(s.author) === k)) return;
       serRows.push({ name, author: author || "", ...extra });
     };
-    for (const s of D.series ?? []) addSer(txt(s.name), String(s.author ?? ""), { total: int(s.total), finished: yes(s.finished), full_ua: yes(s.translated) });
+    for (const s of D.series ?? []) addSer(txt(s.name), String(s.author ?? ""), { total: int(s.total), finished: yes(s.finished), full_ua: yes(s.translated), publisher: txt(s.pub) });
     for (const b of D.books ?? []) if (b.type === "Серія" || (txt(b.series) && b.type !== "Одиночна")) addSer(txt(b.series), String(b.author ?? ""), { total: int(b.total), finished: yes(b.finished), full_ua: yes(b.translated) });
     for (const w of D.wish ?? []) if (txt(w.series)) addSer(txt(w.series), String(w.author ?? ""), { total: int(w.total) });
     for (let i = 0; i < serRows.length; i += 200) {
@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
         isbn, author: txt(w.author) ?? "?", title: txt(w.title) ?? "?", orig_title: txt(w.orig), series_id: serId(w.series, w.author), series_num: num(w.part),
         publisher: txt(w.pub), cover: txt(w.cover), source_url: txt(w.src), price: num(w.price),
         sale_status: SALE.includes(String(w.avail)) ? w.avail : null, release: iso(w.release), ...order,
-        avail: "у колекції", place: "Роттердам", read_status: "не читала", legacy: { wish_row: w.row, id: txt(w.bid), status_raw: status },
+        avail: "у колекції", place: "Роттердам", read_status: "не читала", legacy: { wish_row: w.row, id: txt(w.bid), status_raw: status, release_text: w.release ? undefined : txt(w.releaseText), np_check: txt(w.npCheck) },
       });
       report.wish++;
     }
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
 
     await db.from("kv").upsert([
       { key: "goals", value: D.goals ?? null }, { key: "shelf_marks", value: D.shelfMarks ?? null }, { key: "news", value: D.news ?? [] },
-      { key: "options", value: D.options ?? null }, { key: "import_report", value: { at: new Date().toISOString(), ...report } },
+      { key: "options", value: D.options ?? null }, { key: "series_catalog", value: D.catalog ?? [] }, { key: "import_report", value: { at: new Date().toISOString(), ...report } },
     ]);
     await db.from("log").insert({ action: "⇄ Скопійовано з таблиці", details: `бібліотека ${report.books}, бажанки ${report.wish}, продані ${report.sold}` });
     return json({ ok: true, report });

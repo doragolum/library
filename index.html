@@ -373,6 +373,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   'use strict';
   // Сторінка працює і з Apps Script (google.script.run), і з GitHub Pages (запити на API_URL).
   var API_URL = window.LB_API_URL || '';
+  if (window.LB_DB) { var dbb = document.createElement('a'); dbb.className = 'chip'; dbb.textContent = '🧪 нова база'; dbb.title = 'Пробний режим: дані з нової бази. Вимкнути — відкрити посилання з &db=0'; dbb.style.cssText = 'margin-left:6px;font-size:12px'; var h1 = document.querySelector('.top h1'); if (h1) h1.after(dbb); }
   var ON_GAS = !!(window.google && google.script && google.script.run);
   var IN_TG = document.body.getAttribute('data-tg') === '1' || /[?&]tg=1\b/.test(location.search) || /tgWebAppData=/.test(location.hash);
   // 4 розділи, у кожному свої вкладки (старі екрани нікуди не зникли)
@@ -572,7 +573,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
 
   // Останні дані зберігаються на пристрої: сторінка показує їх одразу, а свіжі підтягує у фоні.
-  var CACHE_KEY = 'lb.data.v4', firstLoad = true;
+  var CACHE_KEY = window.LB_DB ? 'lb.data.db1' : 'lb.data.v4', firstLoad = true;
   function localToday() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function load(keepTab) {
     document.getElementById('sync').textContent = 'оновлюю…';
@@ -4085,6 +4086,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       act.disabled = true;
       api('lbApiAutoFill').then(function (r) {
         act.disabled = false;
+        if (r.note) { toast(r.note); return; }
         toast(r.started ? 'Автозвірку запущено ✓ Вона йде у фоні порціями (≈ година на всю бібліотеку). Можна закрити додаток.' : 'Автозвірка вже йде у фоні' + (r.last && r.last.filled != null ? ' (останній раз доповнено ' + r.last.filled + ')' : '') + '.');
       }).catch(function (e) { act.disabled = false; toast(e.message, true); });
     }
