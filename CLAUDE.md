@@ -56,7 +56,7 @@
 - `Statistics.html` — вікно статистики в самій таблиці (відкриває `showStatistics` з `Код.gs`).
 - `NovaPoshta.gs` — Нова пошта: `npUpdate` (щогодини перевіряє ТТН з колонки O і пише статус у P–S), `npInstall`, `npSelfTest`. **Не чіпати.**
 - `NpWishlistStatus.gs` — переносить статус НП у колонку E бажанок (Створено ТТН → Відправлено → Доставлено → В бібліотеці); викликається з `npUpdate`. **Не чіпати.**
-- `LbExport.gs` (v14) — щонічна копія нової бази (Supabase, функція `export`) в окрему таблицю «Книги — копія з бази»: `lbExportFromDb`, `lbExportInstall` (тригер ~4:00), `lbExportUninstall`. Основну таблицю не чіпає.
+- `LbExport.gs` (v14) — щонічна копія нової бази (Supabase, функція `export`) в окрему таблицю «Книги — копія з бази»: `lbExportFromDb`, `lbExportInstall` (тригер ~4:00), `lbExportUninstall`. Основну таблицю не чіпає. З v15 тут же перемикання на базу: `lbSwitchToDb` (вимикає `lbBotPoll`, `lbDailyReminders`, `lbNightly`, `lbSeriesNews`, `lbAutoFill`, ставить webhook бота на функцію `bot` у Supabase) і відкат `lbSwitchBack`.
 - `NpGmailProbe.gs`, `NpIncomingProbe.gs` — разові перевірки (нічого не записують, лише журнал): чи можна знаходити ТТН у листах Gmail і серед вхідних накладних НП. Заготовка для задачі «Імпорт замовлень із Gmail».
 
 Під час релізу сервера в репозиторії оновлюються `apps-script/LibApp.gs` і `ОНОВЛЕННЯ_vN.md` у корені (див. «Правило релізів сервера»).
