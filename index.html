@@ -569,6 +569,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function numTxt(n) { return String(n).replace('.', ','); }
   function initials(name) { return String(name || '?').split(/\s+/).filter(function (w) { return /^[A-Za-zА-ЯҐЄІЇа-яґєії]/.test(w); }).map(function (w) { return w[0]; }).join('').slice(-2).toUpperCase() || '?'; }
   function sumPrice(arr) { return arr.reduce(function (a, b) { return a + (b.price || 0); }, 0); }
+  /* Витрати за період: замовлення за датою замовлення + куплені книги за датою покупки (без повторів). */
+  function spentIn(pfx) {
+    var k = function (x) { return norm(x.author) + '|' + norm(x.title); }, seen = {}, out = [];
+    D.wish.forEach(function (w) { if (w.ordered && String(w.ordered).indexOf(pfx) === 0) { seen[k(w)] = 1; out.push(w); } });
+    D.books.forEach(function (b) { if (b.bought && String(b.bought).indexOf(pfx) === 0 && !seen[k(b)]) out.push(b); });
+    return out;
+  }
   function sumPages(arr) { return arr.reduce(function (a, b) { return a + (b.pages || 0); }, 0); }
   function avgRating(arr) { var r = arr.filter(function (b) { return b.rating; }); return r.length ? r.reduce(function (a, b) { return a + b.rating; }, 0) / r.length : 0; }
   function mostCommon(arr, fn) { var t = topList(count(arr, fn), 1)[0]; return t ? t[0] : ''; }
@@ -3456,7 +3463,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var newM = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 7) === ym; });
     var del = deliveryRows(), ready = del.filter(arrived), way = del.filter(function (w) { return !arrived(w); });
     var h = '<div class="plaques">' +
-      '<button class="plq" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(newM)) + '</b></button>' +
+      '<button class="plq" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
       '<button class="plq" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
       '<button class="plq' + (ready.length ? ' hot' : '') + '" data-action="got-open"><small>Можна забирати</small><b>' + ready.length + '</b></button></div>';
     var seg = view.hseg || 'today';
