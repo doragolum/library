@@ -89,7 +89,7 @@ a.chip,button.chip{cursor:pointer;border:0;font:inherit;font-size:12px;text-deco
 table.kv{width:100%;border-collapse:collapse}
 table.kv td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top;word-break:break-word}
 table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
-.shelf{font-size:20px;font-weight:700;background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:12px 14px;margin:8px 0 12px}
+.shelf{font-size:20px;font-weight:700;background:var(--line);color:var(--ink);border-radius:12px;padding:12px 14px;margin:8px 0 12px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px 28px}
 .modal .sheet.wide{max-width:900px}
@@ -101,7 +101,7 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 @media (min-width:700px){.modal:not(.top) .sheet::before{display:none}.modal{align-items:center}.modal.top{align-items:flex-start;padding-top:60px}.modal .sheet{border-radius:18px}}
 .close{float:right;border:0;background:var(--line);color:var(--ink);border-radius:999px;width:40px;height:40px;font-size:20px;cursor:pointer;margin-left:8px}
 .msg{padding:14px;border-radius:12px;background:var(--bad-soft);color:var(--bad)}
-.note{padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--ink);font-size:15px;margin-bottom:12px}
+.note{padding:10px 12px;border-radius:12px;background:var(--line);color:var(--ink);font-size:15px;margin-bottom:12px}
 .loading{padding:40px 0;text-align:center;color:var(--muted)}
 details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .num{font-variant-numeric:tabular-nums}
@@ -266,7 +266,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .qm button:last-child{border-bottom:0}
 .item,.cov,.spine{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .item{transition:transform .2s,background .2s}
-.src{font-style:normal;font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:0 6px;margin-left:4px;white-space:nowrap}
+.src{font-style:normal;font-size:12px;background:var(--line);color:var(--muted);border-radius:99px;padding:0 6px;margin-left:4px;white-space:nowrap}
 .src:empty{display:none}
 .form .need input,.form .need select{border-color:var(--warn);background:var(--warn-soft)}
 .form .lack input,.form .lack select{border-style:dashed}
@@ -371,12 +371,12 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .trow{margin-bottom:10px}.trow .tlab{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 5px 2px}
 .pills{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:2px}.pills::-webkit-scrollbar{display:none}
 .pill{flex:none;border:0;background:var(--card);color:var(--ink);border-radius:12px;padding:8px 11px;font:inherit;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid var(--accent);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pill.ok{border-left-color:var(--ok)}.pill.warn{border-left-color:#e0a011}.pill.bad{border-left-color:var(--bad)}
+.pill.ok{border-left-color:var(--ok)}.pill.warn{border-left-color:var(--warn)}.pill.bad{border-left-color:var(--bad)}
 .pile{display:flex;flex-direction:column;gap:3px;align-items:center;margin-top:10px}
 .ly{height:30px;border:0;border-radius:4px;color:#fff;font:inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);cursor:pointer;min-width:0}
 .ly span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ly small{opacity:.9;flex:none;white-space:nowrap}
 .ly em{font-style:normal;background:#fff;color:#c0392b;border-radius:6px;font-size:12px;padding:0 5px;margin-left:6px}
-.tip{background:var(--accent-soft);border-radius:12px;padding:9px 11px;font-size:13px;margin-top:10px}.tip.ok{background:var(--ok-soft)}
+.tip{background:var(--line);border-radius:12px;padding:9px 11px;font-size:13px;margin-top:10px}.tip.ok{background:var(--ok-soft)}
 .tl{position:relative;margin-top:10px}.tl .days{display:grid;font-size:12px;color:var(--muted);text-align:center;margin-bottom:4px}
 .tl .grid{position:absolute;top:16px;bottom:0;left:0;right:0;display:grid;pointer-events:none}.tl .grid div{border-left:1px dashed var(--line)}
 .tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#fff;font-size:12px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
@@ -442,7 +442,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .chip.s,.pill2.s{background:var(--teal-soft);color:var(--teal)}
 .chip.f,.pill2.f{background:var(--plum-soft);color:var(--plum)}
 .pill2.a{background:var(--accent-soft);color:var(--accent)}
-.chip.g{background:color-mix(in srgb,var(--gc) 16%,var(--card));color:color-mix(in srgb,var(--gc) 72%,var(--ink))}
+.chip.g{background:var(--line);color:var(--ink)}.chip.g::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gc);margin-right:5px;vertical-align:1px}
+.rt{font-size:12px;padding:2px 2px;white-space:nowrap;color:var(--muted)}.rt span{color:color-mix(in srgb,var(--star) 70%,var(--muted))!important}
 .plq b{color:var(--pc,var(--ink))}.plq.money{--pc:var(--gold)}.plq.rel{--pc:var(--warn)}.plq.way{--pc:var(--blue)}.plq.read{--pc:var(--ok)}.plq.hot{--pc:var(--ok)}
 .plq small::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pc,var(--line));margin-right:5px;vertical-align:1px}
 .hbox.ok .hbh h4{color:var(--ok)}.hbox.bad .hbh h4{color:var(--bad)}
@@ -588,16 +589,16 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     }).join('') + '</div>';
   }
   function statusChip(s) {
-    var k = { 'прочитано': 'ok', 'читаю': 't', 'закинула': 'b' }[low(s)] || '';
+    var k = { 'прочитано': 'ok' }[low(s)] || '';
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
   }
   function wishChip(s) {
     var k = wishKind(s);
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
   }
-  // колір статусу бажанки: хочу — зелений, докупити — бірюзовий, на майбутнє — сливовий, замовлено — бурштиновий, в дорозі — синій, приїхала — зелений
+  // колір = значення: світло-зелений — готово (ТТН є, приїхала), жовтий — в дорозі, решта сіра
   function wishKind(s) {
-    return { 'Хочу купити': 'a', 'Докупити серію': 's', 'На майбутнє': 'f', 'Замовлено': 'w', 'Створено ТТН': 'w', 'Відправлено': 't', 'В дорозі': 't', 'Доставлено': 'ok', 'В бібліотеці': 'ok' }[s] || '';
+    return { 'Створено ТТН': 'ok', 'Відправлено': 'w', 'В дорозі': 'w', 'Доставлено': 'ok', 'В бібліотеці': 'ok' }[s] || '';
   }
   function genreChip(g) {
     return g ? '<span class="chip g" style="--gc:' + genreColor(g) + '">' + esc(g) + '</span>' : '';
@@ -1065,7 +1066,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function bookItem(b) {
     var ser = b.type === 'Серія' && b.series && b.series !== '-' ? esc(b.series) + (b.num ? ' #' + esc(b.num) : '') + (b.total ? ' з ' + esc(b.total) : '') : '';
     return '<div class="item" data-book="' + b.row + '">' + cover(b) + '<div class="body"><div class="t">' + esc(b.title) + '</div><div class="muted small">' + esc(b.author) + (ser ? ' · ' + ser : '') + '</div>' +
-      '<div class="chips">' + statusChip(b.status) + (b.rating ? '<span class="chip">' + stars(b.rating) + '</span>' : '') + '<span class="chip">' + whereText(b) + '</span>' + genreChip(b.genre) + '</div></div></div>';
+      '<div class="chips">' + statusChip(b.status) + (b.rating ? '<span class="rt">' + stars(b.rating) + '</span>' : '') + '<span class="chip">' + whereText(b) + '</span>' + genreChip(b.genre) + '</div></div></div>';
   }
 
   /* ---------- картка книги ---------- */
@@ -1098,7 +1099,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       '<div class="grow"><h2 style="margin-top:0">' + esc(b.title) + '</h2><div>' + lk('author', b.author) + '</div>' +
       (isSer ? '<div class="small" style="margin-top:2px">' + lk('series', b.series) + (b.num ? ' · #' + esc(numTxt(b.num)) : '') + '</div>' : '') +
       '<div class="shelf" style="font-size:16px">' + whereHtml(b) + '</div>' + (b.rating ? '<div>' + stars(b.rating) + '</div>' : '') +
-      (b._m.length ? '<div class="chips">' + b._m.map(function (m) { return '<a class="chip a" data-go="' + esc('mood|' + m) + '">' + esc(m) + '</a>'; }).join('') + '</div>' : '') +
+      (b._m.length ? '<div class="chips">' + b._m.map(function (m) { return '<a class="chip" data-go="' + esc('mood|' + m) + '">' + esc(m) + '</a>'; }).join('') + '</div>' : '') +
       '<div class="small" style="margin-top:6px"><a class="link" style="opacity:.75" data-action="bug-menu">Знайшла помилку?</a><span id="bugm" style="display:none"> · <a class="link" data-action="edit-book" data-row="' + b.row + '">✎ Редагувати</a>' + (c.cover || c.isbn ? ' · <a class="link" data-action="vf-one" data-row="' + b.row + '">🔎 Звірити з книгарнями</a>' : '') + '</span></div>' +
       '</div></div></div>';
     var si = isSer ? seriesInfo(b.series) : null, vols = si ? volumes(si) : [];
@@ -1501,7 +1502,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="bar"><i style="width:' + pct(x.ownedCount, x.expected) + '%"></i></div>';
     h += '<div class="chips">' + (x.finished ? '<span class="chip">Завершена: ' + esc(x.finished) + '</span>' : '') + (x.translated ? '<span class="chip">Переклад: ' + esc(x.translated) + '</span>' : '') + (x.extraOwned ? '<span class="chip">+ ' + x.extraOwned + ' додаткових</span>' : '') + (!x.inRef ? '<span class="chip w">немає в «Серіях»</span>' : '') + '</div>';
     if (x.missing.length) h += '<div class="small" style="margin-top:8px;display:flex;flex-direction:column;gap:4px">' + x.missing.map(function (m) {
-      var inner = 'Бракує #' + esc(m.n) + (m.title ? ' — ' + esc(m.title) : '') + ' ' + (m.wish ? wishChip(m.wish.status) + (m.wish.avail ? ' <span class="chip">' + esc(m.wish.avail) + '</span>' : '') + (m.wish.release && m.wish.release >= D.today ? ' <span class="chip a">реліз ' + dmy(m.wish.release) + '</span>' : '') + ' <span class="muted">›</span>' : '<span class="chip b">немає в бажанках</span>');
+      var inner = 'Бракує #' + esc(m.n) + (m.title ? ' — ' + esc(m.title) : '') + ' ' + (m.wish ? wishChip(m.wish.status) + (m.wish.avail ? ' <span class="chip">' + esc(m.wish.avail) + '</span>' : '') + (m.wish.release && m.wish.release >= D.today ? ' <span class="chip">реліз ' + dmy(m.wish.release) + '</span>' : '') + ' <span class="muted">›</span>' : '<span class="chip b">немає в бажанках</span>');
       return m.wish ? '<div data-wish="' + m.wish.row + '" style="cursor:pointer">' + inner + '</div>' : '<div>' + inner + '</div>';
     }).join('') + '</div>';
     return h;
@@ -2932,7 +2933,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = heads();
     h += '<div class="hero"><div class="ava">' + esc(initials(name)) + '</div><h2>' + esc(name) + '</h2><div class="sub">' + lib.length + ' кн. у бібліотеці' + (serNames.length ? ' · ' + serNames.length + ' сер.' : '') + (all.length > lib.length ? ' · ' + (all.length - lib.length) + ' продано/подаровано' : '') + '</div><div class="chips">' +
       genres.map(function (g) { return '<span class="chip">' + esc(g) + '</span>'; }).join('') + (pubs.length ? '<span class="chip">' + pubs.map(esc).join(' · ') + '</span>' : '') +
-      (rated >= 2 && ar >= 4.3 ? '<span class="chip">★ ' + ar.toFixed(1).replace('.', ',') + ' · серед улюблених</span>' : rated ? '<span class="chip">★ ' + ar.toFixed(1).replace('.', ',') + '</span>' : '') + '</div></div>';
+      (rated >= 2 && ar >= 4.3 ? '<span class="rt">★ ' + ar.toFixed(1).replace('.', ',') + ' · серед улюблених</span>' : rated ? '<span class="rt">★ ' + ar.toFixed(1).replace('.', ',') + '</span>' : '') + '</div></div>';
     var firstRead = read.filter(function (b) { return b.readOn; }).sort(function (a, b) { return a.readOn < b.readOn ? -1 : 1; })[0];
     h += '<div class="card"><div class="nums"><div data-list="author|' + esc(name) + '"><b>' + lib.length + '</b><span>маю</span></div><div><b>' + read.length + '</b><span>прочитано</span></div><div><b>' + wish.length + '</b><span>у бажанках</span></div></div>' +
       '<div class="muted small" style="margin-top:12px">Прочитано сторінок: ' + sumPages(read).toLocaleString('uk-UA') + ' з ' + sumPages(lib).toLocaleString('uk-UA') + '</div><div class="bar"><i style="width:' + pct(sumPages(read), sumPages(lib)) + '%;background:var(--ok)"></i></div>' +
@@ -3534,8 +3535,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var del = deliveryRows(), out = [];
     var ready = del.filter(arrived);
     if (ready.length) out.push(hbox('Можна забирати', '<span class="muted small">' + ready.length + '</span>',
-      ready.map(function (w) { return hrow(w, [esc(shopOf(w)), w.order ? '№ ' + esc(w.order) : ''].filter(Boolean).join(' · '), '<button class="btn p sm" data-action="add-from-wish" data-row="' + w.row + '">✓ Отримала</button>', 'data-wish="' + w.row + '"'); }).join('') +
-      (ready.length > 1 ? '<div class="hfoot"><button class="btn sm" data-action="got-order" data-rows="' + ready.map(function (w) { return w.row; }).join(',') + '">Отримала всі ' + ready.length + '</button></div>' : ''), 'ok'));
+      ready.map(function (w) { return hrow(w, [esc(shopOf(w)), w.order ? '№ ' + esc(w.order) : ''].filter(Boolean).join(' · '), '<button class="btn sm' + (ready.length > 1 ? '' : ' p') + '" data-action="add-from-wish" data-row="' + w.row + '">✓ Отримала</button>', 'data-wish="' + w.row + '"'); }).join('') +
+      (ready.length > 1 ? '<div class="hfoot"><button class="btn p sm" data-action="got-order" data-rows="' + ready.map(function (w) { return w.row; }).join(',') + '">Отримала всі ' + ready.length + '</button></div>' : ''), 'ok'));
     // найближчі до тебе першими: в дорозі → ТТН створено → замовлено; серед однакових — новіші замовлення
     var wayRank = function (w) { return /дорозі|прямує|відправлен/i.test(w.np || '') ? 1 : stageOf(w); };
     var way = del.filter(function (w) { return !arrived(w); }).sort(function (a, b) { return wayRank(a) - wayRank(b) || String(b.ordered || '').localeCompare(String(a.ordered || '')); });
