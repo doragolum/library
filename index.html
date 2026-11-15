@@ -2095,7 +2095,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return '<div class="item"' + (u.b ? ' data-book="' + u.b.row + '"' : u.w ? ' data-wish="' + u.w.row + '"' : '') + '>' + (u.b ? cover(u.b) : '') + '<div class="body"><b data-go="series|' + esc(u.x.name) + '">' + esc(u.x.name) + '</b>' + segs(u) +
         '<div class="muted small">' + u.read + ' з ' + u.total + (u.last ? ' · востаннє ' + MONTHS_IN[mIdx(u.last.slice(0, 7))] + (u.last.slice(0, 4) !== D.today.slice(0, 4) ? ' ' + u.last.slice(0, 4) : '') : '') + ' · лишилось ' + u.left + '</div>' +
         '<div class="small">Далі: «' + esc(nextT) + '» — ' + where + '</div>' +
-        (u.b && atHome(u.b) ? '<div style="margin-top:6px"><button class="btn p" data-action="qm-start" data-row="' + u.b.row + '">Почати</button></div>' : '') + '</div></div>';
+        (u.b && atHome(u.b) ? '<div style="margin-top:6px"><button class="btn sm" data-action="qm-start" data-row="' + u.b.row + '">Почати</button></div>' : '') + '</div></div>';
     }).join('') + '</div></div>';
   }
   function askOpen() { nav = []; modalStack = null; ask = { step: 0, kind: '', genres: [], tropes: [], mood: '', lang: '', size: '', shuffle: 0 }; askRender(); }
