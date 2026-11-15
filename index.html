@@ -3519,7 +3519,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   VIEWS.plan = function () {
     var ym = curYm();
-    var h = '<div class="cols"><div>' + deskHtml() + '<div style="margin:14px 0">' + monthShelfHtml(ym) + '</div></div><div>' + pileHtml(ym) + '</div></div>';
+    var readM = D.books.filter(function (b) { return b.readOn && String(b.readOn).slice(0, 7) === ym; });
+    var h = '<div class="plaques" style="grid-template-columns:minmax(0,320px)"><div class="plq read" style="cursor:default"><small>Прочитано в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + readM.length + ' ' + bookWord(readM.length) + (sumPages(readM) ? ' · ' + sumPages(readM).toLocaleString('uk-UA') + ' стор.' : '') + '</b></div></div>';
+    h += '<div class="cols"><div>' + deskHtml() + '<div style="margin:14px 0">' + monthShelfHtml(ym) + '</div></div><div>' + pileHtml(ym) + '</div></div>';
     h += '<div class="cols"><div>' + threadHtml(ym) + '</div><div>' + calendarCard() + '</div></div>';
     return h;
   };
@@ -3606,12 +3608,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var del = deliveryRows(), way = del.filter(function (w) { return !arrived(w); });
     // релізи бажанок на найближчі 7 днів (без того, що вже в бібліотеці)
     var rel7 = D.wish.filter(function (w) { return w.release && w.release >= D.today && w.release <= addDays(D.today, 7) && w.status !== 'В бібліотеці'; }).length;
-    var readM = D.books.filter(function (b) { return b.readOn && String(b.readOn).slice(0, 7) === ym; }).length;
+    // плашки: витрати за місяць (натиснути — список покупок), в дорозі, релізи; «Прочитано» — на вкладці «План»
     var h = '<div class="plaques">' +
+      '<button class="plq money" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
       '<button class="plq way" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
-      '<button class="plq rel" data-action="hseg" data-v="30"><small>Релізи за тиждень</small><b>' + rel7 + ' ' + bookWord(rel7) + '</b></button>' +
-      // «Можна забирати» вже є блоком нижче (і в «＋»), тому третя плашка — прочитане за місяць
-      '<button class="plq read" data-tab="plan"><small>Прочитано в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + readM + ' ' + bookWord(readM) + '</b></button></div>';
+      '<button class="plq rel" data-action="hseg" data-v="30"><small>Релізи за тиждень</small><b>' + rel7 + ' ' + bookWord(rel7) + '</b></button></div>';
     var seg = view.hseg || 'today';
     h += '<div class="subtabs hseg">' + [['today', 'Сьогодні'], ['30', '30 днів'], ['new', 'Нове']].map(function (x) { return '<button class="' + (seg === x[0] ? 'on' : '') + '" data-action="hseg" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
     h += seg === '30' ? home30() : seg === 'new' ? homeNew() : homeToday();
