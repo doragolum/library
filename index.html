@@ -914,7 +914,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var v = f[k];
       if (!v) continue;
       if (k === 'genre') { if (b._g.indexOf(v) === -1) return false; }
-      else if (k === 'place') { if (placeOf(b) !== v) return false; }
+      else if (k === 'place') { if (placeOf(b) !== v) return false; if (!f.avail && GONE.indexOf(low(b.avail)) !== -1) return false; } // продані/подаровані фізично вже не тут
       else if (k === 'size') {
         var p = b.pages || 0;
         if (v[0] === 'д' && !(p && p < 300)) return false;
