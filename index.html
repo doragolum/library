@@ -353,16 +353,17 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .mspine.e{width:26px;background:transparent;border:1.5px dashed #c9ad8c;color:#b39776;box-shadow:none;font-size:15px;align-items:center}
 .mshelf .board{height:10px;background:linear-gradient(var(--wood),var(--wood-dark));border-radius:0 0 6px 6px;margin:0 -12px}
 .desks{display:flex;flex-direction:column;gap:10px}
-.desk{background:linear-gradient(160deg,#1f3d34,#2f5d50);color:#fff;border-radius:20px;padding:16px}
-.desk .lbl{font-size:12px;opacity:.75;text-transform:uppercase;letter-spacing:.06em}
-.desk .bk{width:88px;height:132px;border-radius:5px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;font-size:11px;text-align:center;box-shadow:4px 6px 14px rgba(0,0,0,.4);cursor:pointer;overflow:visible}
+/* «Зараз читаю»: світла картка, як інші блоки (розбір ієрархії 15.11), щоб не перекрикувала посилки */
+.desk{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.desk .lbl{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.desk .bk{width:56px;height:84px;border-radius:5px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;font-size:11px;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,.2);cursor:pointer;overflow:visible}
 .desk .bk img{width:100%;height:100%;object-fit:cover;border-radius:5px}.desk .bk span{padding:4px}
 .desk .rib{position:absolute;right:12px;top:-4px;width:12px;background:#f2b01e;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 8px),0 100%);transition:height .4s}
-.desk h3{margin:0;font-size:18px;color:#fff;cursor:pointer;overflow:hidden;text-overflow:ellipsis}.desk .a{opacity:.8;font-size:13px}
-.desk .pg{font-size:30px;font-weight:700;margin-top:6px;line-height:1.1}.desk .pg small{font-size:14px;opacity:.7;font-weight:400}
-.desk .info{font-size:13px;opacity:.9;margin-top:3px}.desk p{color:#fff}
-.desk .btns{display:flex;gap:8px;margin-top:12px}.desk button.b1,.desk button.b2{flex:1;border:0;border-radius:12px;padding:10px;font:inherit;font-weight:600;cursor:pointer}
-.desk .b1{background:#fff;color:#1f3d34}.desk .b2{background:rgba(255,255,255,.16);color:#fff}
+.desk h3{margin:0;font-size:16px;color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis}.desk .a{color:var(--muted);font-size:13px}
+.desk .pg{font-size:20px;font-weight:700;margin-top:4px;line-height:1.1}.desk .pg small{font-size:14px;color:var(--muted);font-weight:400}
+.desk .info{font-size:13px;color:var(--muted);margin-top:3px}.desk p{color:var(--ink)}.desk .lnk.w{color:var(--accent);opacity:1}
+.desk .btns{display:flex;gap:8px;margin-top:10px}.desk button.b1,.desk button.b2{flex:1;border:0;border-radius:12px;padding:10px;font:inherit;font-weight:600;cursor:pointer}
+.desk .b1{background:var(--accent-fill);color:#fff}.desk .b2{background:var(--card);color:var(--ink);border:1px solid var(--line)!important}
 .desk .thumb,.desk .ph{width:48px;height:72px}
 .trow{margin-bottom:10px}.trow .tlab{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 5px 2px}
 .pills{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:2px}.pills::-webkit-scrollbar{display:none}
