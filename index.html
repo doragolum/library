@@ -106,6 +106,10 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .num{font-variant-numeric:tabular-nums}
 .edits{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.bstat{margin:0 0 8px}.bstat button{padding:10px 4px;min-height:42px}
+.bmore{border:1px solid var(--line);border-radius:12px;margin:0 0 12px;background:var(--card)}
+.bmore summary{display:flex;gap:10px;align-items:center;padding:11px 12px;min-height:44px;box-sizing:border-box;cursor:pointer;list-style:none;font-size:14px}
+.bmore summary::-webkit-details-marker{display:none}.bmore[open] summary .link{visibility:hidden}.bmore .edits{padding:0 12px;margin-bottom:12px}
 .edit span,.form label>span{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(80px);opacity:0;visibility:hidden;pointer-events:none;transition:transform .2s,opacity .2s,visibility .2s;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;transition:transform .2s;max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible;pointer-events:auto;cursor:pointer}
@@ -314,7 +318,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .hgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .hbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .hbox.ok{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}.hbox.bad{border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
-.hbh{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}.hbh h4{margin:0;flex:1;font:700 12px/1.3 inherit;font-family:inherit;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hbh{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}.hbh .link{position:relative}.hbh .link::after{content:"";position:absolute;inset:-12px -8px}.hbh h4{margin:0;flex:1;font:700 12px/1.3 inherit;font-family:inherit;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .hrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);cursor:pointer;min-width:0}.hbh+.hrow{border-top:0}
 .hrow .thumb,.hrow .ph{width:32px;height:48px}
 .hrow .g{flex:1;min-width:0;display:flex;flex-direction:column}.hrow .g b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hrow .g small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -388,7 +392,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .ost{display:inline-block;font-size:14px;font-weight:700;border-radius:999px;padding:4px 11px;background:var(--line);color:var(--ink)}.ost.ok{background:var(--ok-soft);color:var(--ok)}.ost.w{background:var(--warn-soft);color:var(--warn)}.ocard.ready{border-color:var(--ok)}
 .oline{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}.oline .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .oi-got.sm{min-width:58px;padding:6px 6px 4px;font-size:16px;line-height:1}.oi-got.sm span{font-size:10.5px}
-.btn.sm{padding:5px 11px;font-size:13px}.chip.add{border:1px dashed var(--accent);color:var(--accent);background:transparent;font:inherit;font-size:13px;cursor:pointer}
+.btn.sm{padding:5px 11px;font-size:13px;min-height:38px}.chip.add{border:1px dashed var(--accent);color:var(--accent);background:transparent;font:inherit;font-size:13px;cursor:pointer}
 .oi{align-items:center}.oi .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .oi-meta{font-size:13px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
 .oi-np{display:flex;align-items:baseline;gap:6px;font-size:12.5px;color:var(--warn);margin-top:3px}.oi-np i{flex:none;width:7px;height:7px;border-radius:50%;background:currentColor;transform:translateY(-1px)}.oi-np.ok{color:var(--ok)}
@@ -1099,9 +1103,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var i = -1; list.forEach(function (v, j) { if (v.n === me) i = j; });
       if (i !== -1) h += '<div class="prevnext">' + (neighbour(list[i - 1], -1, si) || '<span class="grow"></span>') + (neighbour(list[i + 1], 1, si) || '<span class="grow"></span>') + '</div>';
     }
-    h += '<div class="edits">' + editSelect('library', b, 'status', 'Статус') + editSelect('library', b, 'shelf', 'Полиця') + editSelect('library', b, 'avail', 'Наявність') +
+    // статус — кнопками (міняють найчастіше), решта полів згорнута під одним рядком, щоб картка не виглядала як анкета
+    var stList = ['не читала', 'читаю', 'прочитано', 'закинула'];
+    opts('library', 'status').forEach(function (o) { if (o && stList.indexOf(o) === -1) stList.push(o); });
+    if (b.status && stList.indexOf(b.status) === -1) stList.push(b.status);
+    h += '<div class="subtabs bstat" style="max-width:none">' + stList.map(function (o) { return '<button type="button" data-action="bstat" data-row="' + b.row + '" data-v="' + esc(o) + '" class="' + (o === b.status ? 'on' : '') + '">' + esc(o) + '</button>'; }).join('') + '</div>';
+    var moreSum = [b.shelf, b.avail, c.place ? b.place : '', inKyiv(b) && b.prio ? 'пріоритет ' + b.prio : '', c.plan && !isRead(b) && b.plan ? 'план: ' + monthLabel(b.plan) : ''].filter(Boolean).map(esc).join(' · ');
+    h += '<details class="bmore"><summary><span class="grow">' + (moreSum || 'Полиця, наявність, місце') + '</span><span class="link small">змінити</span></summary><div class="edits">' + editSelect('library', b, 'shelf', 'Полиця') + editSelect('library', b, 'avail', 'Наявність') +
       (c.place ? editSelect('library', b, 'place', 'Де фізично') : '') +
-      (inKyiv(b) ? editSelect('library', b, 'prio', 'Пріоритет передачі') : '') + (c.plan && !isRead(b) ? planSelect(b) : '') + '</div>';
+      (inKyiv(b) ? editSelect('library', b, 'prio', 'Пріоритет передачі') : '') + (c.plan && !isRead(b) ? planSelect(b) : '') + '</div></details>';
     var lendBtn = c.lentTo && low(b.avail) !== 'позичена' && atHome(b) ? '<button class="btn" data-action="lend" data-row="' + b.row + '">🤝 Позичити</button>' : '';
     h += '<div class="row" style="margin:-4px 0 12px;flex-wrap:wrap">' + (low(b.status) === 'читаю' && c.page ? '<button class="btn" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка' + (b.page ? ': с. ' + b.page : '') + '</button>' : '') +
       '<button class="btn" data-action="edit-book" data-row="' + b.row + '">✎ Редагувати</button>' + lendBtn + (inKyiv(b) ? '<button class="btn" data-action="got-kyiv" data-row="' + b.row + '">✈️ Отримала з Києва</button>' : '') + '</div>';
@@ -3535,7 +3545,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var late = b.lentDue && b.lentDue < D.today;
       return hrow(b, [b.lentTo ? esc(b.lentTo) : '', b.lentDue ? 'до ' + dmy(b.lentDue) : ''].filter(Boolean).join(' · '), late ? '<span class="pill2 bad">прострочено</span>' : '', 'data-book="' + b.row + '"');
     }).join('')));
-    var rec = recommend().slice(0, 2);
+    var deskNext = readingNow().length ? null : (pileFor(curYm())[0] || (recommend()[0] || {}).b);
+    var rec = recommend().filter(function (r) { return !deskNext || r.b.row !== deskNext.row; }).slice(0, 2);
     if (rec.length) out.push(hbox('Що почитати далі', '<a class="link small" data-tab="reading">ще ›</a>', rec.map(function (r) {
       return hrow(r.b, esc(r.why.slice(0, 2).join(' · ')), '<button class="btn sm" data-action="qm-start" data-row="' + r.b.row + '">Почати</button>', 'data-book="' + r.b.row + '"');
     }).join('')));
@@ -3575,11 +3586,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   VIEWS.home = function () {
     var ym = curYm();
     var newM = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 7) === ym; });
-    var del = deliveryRows(), ready = del.filter(arrived), way = del.filter(function (w) { return !arrived(w); });
+    var del = deliveryRows(), way = del.filter(function (w) { return !arrived(w); });
+    var readM = D.books.filter(function (b) { return b.readOn && String(b.readOn).slice(0, 7) === ym; }).length;
     var h = '<div class="plaques">' +
       '<button class="plq money" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
       '<button class="plq way" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
-      '<button class="plq' + (ready.length ? ' hot' : '') + '" data-action="got-open"><small>Можна забирати</small><b>' + ready.length + '</b></button></div>';
+      // «Можна забирати» вже є блоком нижче (і в «＋»), тому третя плашка — прочитане за місяць
+      '<button class="plq read" data-tab="plan"><small>Прочитано в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + readM + ' ' + bookWord(readM) + '</b></button></div>';
     var seg = view.hseg || 'today';
     h += '<div class="subtabs hseg">' + [['today', 'Сьогодні'], ['30', '30 днів'], ['new', 'Нове']].map(function (x) { return '<button class="' + (seg === x[0] ? 'on' : '') + '" data-action="hseg" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
     h += seg === '30' ? home30() : seg === 'new' ? homeNew() : homeToday();
@@ -4337,6 +4350,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'close' || (a === 'close-bg' && t === act)) softClose();
     if (a === 'close-finish') { var fb = finishState && bookByRow(finishState.row); closeModal(); refresh(); if (fb) showBook(fb.row); }
     if (a === 'more') { view.limit += 60; render(); }
+    if (a === 'bstat' && b) { var sv2 = act.getAttribute('data-v'); if (sv2 !== b.status) onStatusChange(b, sv2); return; }
     if (a === 'clear') { view.f = {}; view.q = ''; saveView(); render(); }
     if (a === 'nav-back') { nav.pop(); var nt = nav[nav.length - 1]; if (nt) nt.fn.apply(null, nt.args); else closeModal(); }
     if (a === 'search') openSearch();
