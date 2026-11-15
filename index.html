@@ -3528,7 +3528,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (ready.length) out.push(hbox('Можна забирати', '<span class="muted small">' + ready.length + '</span>',
       ready.map(function (w) { return hrow(w, [esc(shopOf(w)), w.order ? '№ ' + esc(w.order) : ''].filter(Boolean).join(' · '), '<button class="btn p sm" data-action="add-from-wish" data-row="' + w.row + '">✓ Отримала</button>', 'data-wish="' + w.row + '"'); }).join('') +
       (ready.length > 1 ? '<div class="hfoot"><button class="btn sm" data-action="got-order" data-rows="' + ready.map(function (w) { return w.row; }).join(',') + '">Отримала всі ' + ready.length + '</button></div>' : ''), 'ok'));
-    var way = del.filter(function (w) { return !arrived(w); }).sort(function (a, b) { return stageOf(b) - stageOf(a); });
+    // найближчі до тебе першими: в дорозі → ТТН створено → замовлено; серед однакових — новіші замовлення
+    var wayRank = function (w) { return /дорозі|прямує|відправлен/i.test(w.np || '') ? 1 : stageOf(w); };
+    var way = del.filter(function (w) { return !arrived(w); }).sort(function (a, b) { return wayRank(a) - wayRank(b) || String(b.ordered || '').localeCompare(String(a.ordered || '')); });
     if (way.length) out.push(hbox('Замовлення', '<a class="link small" data-tab="delivery">усі ' + way.length + ' ›</a>',
       way.slice(0, 4).map(function (w) {
         var pill = w.np ? '<span class="pill2 w" title="' + esc(w.np) + '">' + esc(npShort(w.np)) + '</span>' : '<span class="pill2 ' + wishKind(w.status) + '">' + esc(w.status) + '</span>';
