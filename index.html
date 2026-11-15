@@ -18,9 +18,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>if ('serviceWorker' in navigator && location.protocol === 'https:' && !/script\.google/.test(location.host)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });</script>
 <style>
-:root{--bg:#f4f3ef;--card:#fff;--ink:#1c1e1d;--muted:#6a6d67;--line:#e3e1da;--accent:#2f5d50;--accent-soft:#e2ebe6;--ok:#2e6b3f;--ok-soft:#e1efe4;--warn:#9a5b13;--warn-soft:#f6ead9;--bad:#a8342b;--bad-soft:#f8e3e0;--wood:#9b6a3c;--wood-dark:#6e4626;--shelf-bg:#efe6d9;--accent-fill:#2f5d50;--shelf-ink:#6e4626;--plate:rgba(255,255,255,.7);--field:#8a8d86;--star:#b98000;--head:"Literata",Georgia,"Times New Roman",serif;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--shelf-ink:#e4c9a6;--plate:rgba(0,0,0,.35);--field:#6b726c;--star:#f2b01e;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--shelf-ink:#e4c9a6;--plate:rgba(0,0,0,.35);--field:#6b726c;--star:#f2b01e;color-scheme:dark}
+:root{--bg:#f4f3ef;--card:#fff;--ink:#1c1e1d;--muted:#6a6d67;--line:#e3e1da;--accent:#2f5d50;--accent-soft:#e2ebe6;--ok:#2e6b3f;--ok-soft:#e1efe4;--warn:#9a5b13;--warn-soft:#f6ead9;--bad:#a8342b;--bad-soft:#f8e3e0;--wood:#9b6a3c;--wood-dark:#6e4626;--shelf-bg:#efe6d9;--accent-fill:#2f5d50;--blue:#2d5f93;--blue-soft:#e1eaf4;--teal:#1d6f6c;--teal-soft:#dbeeec;--plum:#7a4a88;--plum-soft:#efe4f2;--gold:#8a6100;--gold-soft:#f6ebcd;--shelf-ink:#6e4626;--plate:rgba(255,255,255,.7);--field:#8a8d86;--star:#b98000;--head:"Literata",Georgia,"Times New Roman",serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#6fb497;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--blue:#93b9e6;--blue-soft:#1c2633;--teal:#7fcfc8;--teal-soft:#17302d;--plum:#d1a9de;--plum-soft:#2b2231;--gold:#e6c46e;--gold-soft:#2f2816;--shelf-ink:#e4c9a6;--plate:rgba(0,0,0,.35);--field:#6b726c;--star:#f2b01e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#6fb497;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--blue:#93b9e6;--blue-soft:#1c2633;--teal:#7fcfc8;--teal-soft:#17302d;--plum:#d1a9de;--plum-soft:#2b2231;--gold:#e6c46e;--gold-soft:#2f2816;--shelf-ink:#e4c9a6;--plate:rgba(0,0,0,.35);--field:#6b726c;--star:#f2b01e;color-scheme:dark}
 *{box-sizing:border-box}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
@@ -429,6 +429,21 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .vft{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.vft th{text-align:left;font-size:11px;color:var(--muted);font-weight:500;padding:4px}
 .vft td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}.vft td:first-child{white-space:nowrap}
 .vft label{display:flex;gap:6px;align-items:center;cursor:pointer}
+/* ===== кольори: статуси, жанри, плашки ===== */
+.chip.t,.pill2.t{background:var(--blue-soft);color:var(--blue)}
+.chip.s,.pill2.s{background:var(--teal-soft);color:var(--teal)}
+.chip.f,.pill2.f{background:var(--plum-soft);color:var(--plum)}
+.pill2.a{background:var(--accent-soft);color:var(--accent)}
+.chip.g{background:color-mix(in srgb,var(--gc) 16%,var(--card));color:color-mix(in srgb,var(--gc) 72%,var(--ink))}
+.plq b{color:var(--pc,var(--ink))}.plq.money{--pc:var(--gold)}.plq.way{--pc:var(--blue)}.plq.read{--pc:var(--ok)}.plq.hot{--pc:var(--ok)}
+.plq small::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pc,var(--line));margin-right:5px;vertical-align:1px}
+.hbox.ok .hbh h4{color:var(--ok)}.hbox.bad .hbh h4{color:var(--bad)}
+.mrow .mi{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:var(--mc-soft)}
+.mi.g1{--mc-soft:var(--gold-soft)}.mi.g2{--mc-soft:var(--blue-soft)}.mi.g3{--mc-soft:var(--teal-soft)}.mi.g4{--mc-soft:var(--plum-soft)}.mi.g5{--mc-soft:var(--accent-soft)}.mi.g6{--mc-soft:var(--bad-soft)}.mi.g7{--mc-soft:var(--warn-soft)}
+.card.ask{background:linear-gradient(135deg,var(--accent-fill),color-mix(in srgb,var(--accent-fill) 65%,#1d6f8c))!important}
+.hero{background:linear-gradient(135deg,#1e3b33,#2f5d50 55%,#4f7d5c)}
+.hero .ava{color:#2f5d50}
+@media (max-width:999px){.tab svg{box-sizing:content-box;padding:3px 14px;border-radius:999px;transition:background .15s}.tab.on svg{background:var(--accent-soft)}}
 /* розбір дизайну 15.11: кнопки-фільтри зручні для пальця, іконка пошуку по центру */
 .fchips button,.pick button{min-height:40px}
 .iconbtn{display:inline-flex;align-items:center;justify-content:center}
@@ -561,16 +576,23 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function hbars(rows, fmt, clickKey) {
     var max = Math.max.apply(null, rows.map(function (r) { return r[1]; }).concat([1]));
     return '<div class="hbars">' + rows.map(function (r) {
-      return '<div class="r"' + (clickKey ? ' style="cursor:pointer" data-list="' + clickKey + '|' + esc(r[0]) + '"' : '') + '><span title="' + esc(r[0]) + '">' + esc(r[0]) + '</span><div class="bar"><i style="width:' + (r[1] / max * 100).toFixed(1) + '%"></i></div><span class="v">' + esc(fmt ? fmt(r[1], r) : r[1]) + '</span></div>';
+      return '<div class="r"' + (clickKey ? ' style="cursor:pointer" data-list="' + clickKey + '|' + esc(r[0]) + '"' : '') + '><span title="' + esc(r[0]) + '">' + esc(r[0]) + '</span><div class="bar"><i style="width:' + (r[1] / max * 100).toFixed(1) + '%' + (clickKey === 'genre' || clickKey === 'maingenre' ? ';background:' + genreColor(r[0]) : '') + '"></i></div><span class="v">' + esc(fmt ? fmt(r[1], r) : r[1]) + '</span></div>';
     }).join('') + '</div>';
   }
   function statusChip(s) {
-    var k = { 'прочитано': 'ok', 'читаю': 'a', 'закинула': 'b' }[low(s)] || '';
+    var k = { 'прочитано': 'ok', 'читаю': 't', 'закинула': 'b' }[low(s)] || '';
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
   }
   function wishChip(s) {
-    var k = ORDERED.indexOf(s) !== -1 ? 'w' : s === 'В бібліотеці' ? 'ok' : s === 'Хочу купити' ? 'a' : '';
+    var k = wishKind(s);
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
+  }
+  // колір статусу бажанки: хочу — зелений, докупити — бірюзовий, на майбутнє — сливовий, замовлено — бурштиновий, в дорозі — синій, приїхала — зелений
+  function wishKind(s) {
+    return { 'Хочу купити': 'a', 'Докупити серію': 's', 'На майбутнє': 'f', 'Замовлено': 'w', 'Створено ТТН': 'w', 'Відправлено': 't', 'В дорозі': 't', 'Доставлено': 'ok', 'В бібліотеці': 'ok' }[s] || '';
+  }
+  function genreChip(g) {
+    return g ? '<span class="chip g" style="--gc:' + genreColor(g) + '">' + esc(g) + '</span>' : '';
   }
   function stars(r) { if (!r) return ''; var f = Math.floor(r), h = r - f >= .5; return '<span style="color:var(--star)">' + '★'.repeat(f) + (h ? '½' : '') + '</span>'; }
   function tile(val, label, list) {
@@ -1035,7 +1057,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function bookItem(b) {
     var ser = b.type === 'Серія' && b.series && b.series !== '-' ? esc(b.series) + (b.num ? ' #' + esc(b.num) : '') + (b.total ? ' з ' + esc(b.total) : '') : '';
     return '<div class="item" data-book="' + b.row + '">' + cover(b) + '<div class="body"><div class="t">' + esc(b.title) + '</div><div class="muted small">' + esc(b.author) + (ser ? ' · ' + ser : '') + '</div>' +
-      '<div class="chips">' + statusChip(b.status) + (b.rating ? '<span class="chip">' + stars(b.rating) + '</span>' : '') + '<span class="chip">' + whereText(b) + '</span>' + (b.genre ? '<span class="chip">' + esc(b.genre) + '</span>' : '') + '</div></div></div>';
+      '<div class="chips">' + statusChip(b.status) + (b.rating ? '<span class="chip">' + stars(b.rating) + '</span>' : '') + '<span class="chip">' + whereText(b) + '</span>' + genreChip(b.genre) + '</div></div></div>';
   }
 
   /* ---------- картка книги ---------- */
@@ -2133,7 +2155,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function askHomeCard() {
     var u = unfinishedSeries().length;
-    return '<button class="card" data-action="ask-open" style="display:flex;width:100%;align-items:center;gap:12px;background:var(--accent-fill);color:#fff;border:0;font:inherit;text-align:left;cursor:pointer">' +
+    return '<button class="card ask" data-action="ask-open" style="display:flex;width:100%;align-items:center;gap:12px;background:var(--accent-fill);color:#fff;border:0;font:inherit;text-align:left;cursor:pointer">' +
       '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 013 3v12a2 2 0 00-2-2H2zM22 5h-7a3 3 0 00-3 3v12a2 2 0 012-2h8z"/></svg>' +
       '<span style="flex:1"><b style="font-size:16px">Що почитати?</b><br><span class="small" style="opacity:.9">4 питання' + (u ? ' · недочитаних серій: ' + u : '') + '</span></span><span style="font-size:20px">›</span></button>';
   }
@@ -3499,7 +3521,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var way = del.filter(function (w) { return !arrived(w); }).sort(function (a, b) { return stageOf(b) - stageOf(a); });
     if (way.length) out.push(hbox('Замовлення', '<a class="link small" data-tab="delivery">усі ' + way.length + ' ›</a>',
       way.slice(0, 4).map(function (w) {
-        var pill = w.np ? '<span class="pill2 w" title="' + esc(w.np) + '">' + esc(npShort(w.np)) + '</span>' : '<span class="pill2">' + esc(w.status) + '</span>';
+        var pill = w.np ? '<span class="pill2 w" title="' + esc(w.np) + '">' + esc(npShort(w.np)) + '</span>' : '<span class="pill2 ' + wishKind(w.status) + '">' + esc(w.status) + '</span>';
         return hrow(w, [esc(shopOf(w)), w.release && w.release > D.today ? 'вийде ' + dmy(w.release).slice(0, 5) : ''].filter(Boolean).join(' · '), pill, 'data-wish="' + w.row + '"');
       }).join('')));
     var ns = notSent();
@@ -3545,7 +3567,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return '<button class="hc" data-book="' + b.row + '" title="' + esc(b.title) + '">' + cover(b) + '<small>' + (b.bought ? dmy(b.bought).slice(0, 5) : '') + '</small></button>';
     }).join('') + '</div>');
     var ord = D.wish.filter(function (w) { return w.ordered && w.status !== 'В бібліотеці'; }).sort(function (a, b) { return String(b.ordered).localeCompare(String(a.ordered)); }).slice(0, 6);
-    if (ord.length) h += hbox('Нові замовлення', '<a class="link small" data-tab="delivery">усі ›</a>', ord.map(function (w) { return hrow(w, [esc(shopOf(w)), 'замовлено ' + dmy(w.ordered).slice(0, 5), w.price != null ? money(w.price) : ''].filter(Boolean).join(' · '), '<span class="pill2">' + esc(w.status) + '</span>', 'data-wish="' + w.row + '"'); }).join(''));
+    if (ord.length) h += hbox('Нові замовлення', '<a class="link small" data-tab="delivery">усі ›</a>', ord.map(function (w) { return hrow(w, [esc(shopOf(w)), 'замовлено ' + dmy(w.ordered).slice(0, 5), w.price != null ? money(w.price) : ''].filter(Boolean).join(' · '), '<span class="pill2 ' + wishKind(w.status) + '">' + esc(w.status) + '</span>', 'data-wish="' + w.row + '"'); }).join(''));
     var wl = D.wish.filter(function (w) { return ORDERED.indexOf(w.status) === -1 && w.status !== 'В бібліотеці'; }).sort(function (a, b) { return (b.row || 0) - (a.row || 0); }).slice(0, 5);
     if (wl.length) h += hbox('Нові бажанки', '<a class="link small" data-tab="wish">усі ›</a>', wl.map(function (w) { return hrow(w, [esc(w.author), w.release ? 'вийде ' + dmy(w.release) : ''].filter(Boolean).join(' · '), '', 'data-wish="' + w.row + '"'); }).join(''));
     return '<div class="hgrid">' + h + '</div>';
@@ -3555,8 +3577,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var newM = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 7) === ym; });
     var del = deliveryRows(), ready = del.filter(arrived), way = del.filter(function (w) { return !arrived(w); });
     var h = '<div class="plaques">' +
-      '<button class="plq" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
-      '<button class="plq" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
+      '<button class="plq money" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
+      '<button class="plq way" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
       '<button class="plq' + (ready.length ? ' hot' : '') + '" data-action="got-open"><small>Можна забирати</small><b>' + ready.length + '</b></button></div>';
     var seg = view.hseg || 'today';
     h += '<div class="subtabs hseg">' + [['today', 'Сьогодні'], ['30', '30 днів'], ['new', 'Нове']].map(function (x) { return '<button class="' + (seg === x[0] ? 'on' : '') + '" data-action="hseg" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
@@ -3650,12 +3672,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var readY = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === y; });
     var lent = S.inLib.filter(function (b) { return low(b.avail) === 'позичена'; });
     var cur = (function () { try { return localStorage.getItem('lb.theme') || ''; } catch (e) { return ''; } })();
-    var row = function (attr, t, s) { return '<button class="mrow" ' + attr + '><span class="g"><b>' + t + '</b><small>' + s + '</small></span><span class="chev">›</span></button>'; };
+    var row = function (attr, t, s, ic) { return '<button class="mrow" ' + attr + '>' + (ic ? '<span class="mi ' + ic[1] + '" aria-hidden="true">' + ic[0] + '</span>' : '') + '<span class="g"><b>' + t + '</b><small>' + s + '</small></span><span class="chev">›</span></button>'; };
     var h = '<div class="mlist">' +
-      row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y) +
-      row('data-tab="stats"', 'Статистика', 'прочитано ' + readY.length + ' ' + bookWord(readY.length) + ' за ' + y) +
-      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' у людей' : 'нікому не позичено') +
-      row('data-list="sold"', 'Продані', D.sold.length + ' ' + bookWord(D.sold.length)) +
+      row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, ['💸', 'g1']) +
+      row('data-tab="stats"', 'Статистика', 'прочитано ' + readY.length + ' ' + bookWord(readY.length) + ' за ' + y, ['📊', 'g2']) +
+      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' у людей' : 'нікому не позичено', ['🤝', 'g4']) +
+      row('data-list="sold"', 'Продані', D.sold.length + ' ' + bookWord(D.sold.length), ['🏷', 'g6']) +
       '</div>';
     h += '<div class="mlist"><div class="mrow mtheme"><span class="g"><b>Тема</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div></div>';
     return h;
