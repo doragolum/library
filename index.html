@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Моя бібліотека</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="icons/icon-192.png?v=2">
@@ -18,20 +18,21 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>if ('serviceWorker' in navigator && location.protocol === 'https:' && !/script\.google/.test(location.host)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });</script>
 <style>
-:root{--bg:#f4f3ef;--card:#fff;--ink:#1c1e1d;--muted:#6a6d67;--line:#e3e1da;--accent:#2f5d50;--accent-soft:#e2ebe6;--ok:#2e6b3f;--ok-soft:#e1efe4;--warn:#9a5b13;--warn-soft:#f6ead9;--bad:#a8342b;--bad-soft:#f8e3e0;--wood:#9b6a3c;--wood-dark:#6e4626;--shelf-bg:#efe6d9;--head:"Literata",Georgia,"Times New Roman",serif;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;color-scheme:dark}
+:root{--bg:#f4f3ef;--card:#fff;--ink:#1c1e1d;--muted:#6a6d67;--line:#e3e1da;--accent:#2f5d50;--accent-soft:#e2ebe6;--ok:#2e6b3f;--ok-soft:#e1efe4;--warn:#9a5b13;--warn-soft:#f6ead9;--bad:#a8342b;--bad-soft:#f8e3e0;--wood:#9b6a3c;--wood-dark:#6e4626;--shelf-bg:#efe6d9;--accent-fill:#2f5d50;--shelf-ink:#6e4626;--plate:rgba(255,255,255,.7);--field:#8a8d86;--star:#b98000;--head:"Literata",Georgia,"Times New Roman",serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--shelf-ink:#e4c9a6;--plate:rgba(0,0,0,.35);--field:#6b726c;--star:#f2b01e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--shelf-ink:#e4c9a6;--plate:rgba(0,0,0,.35);--field:#6b726c;--star:#f2b01e;color-scheme:dark}
 *{box-sizing:border-box}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:8px;padding:10px 16px 4px}
 .top h1{font:600 19px var(--head);margin:0;flex:1}
 h2,h3,.hello{font-family:var(--head);font-weight:600}
-.addbtn{border:0;background:var(--accent);color:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.addbtn{border:0;background:var(--accent-fill);color:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
 .tabs{display:flex;gap:4px;overflow-x:auto;padding:6px 12px 8px;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:999px;font:inherit;white-space:nowrap;cursor:pointer;text-align:left}
-.tab.on{background:var(--accent);color:#fff}
+.tab.on{background:var(--accent-fill);color:#fff}
 main{max-width:980px;margin:0 auto;padding:14px 16px 60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;min-width:0}
 h2{font-size:17px;margin:4px 0 10px}
@@ -41,16 +42,17 @@ h3{font-size:15px;margin:0 0 8px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;font:inherit;color:inherit}
 .tile b{display:block;font-size:22px}
+.tiles.sm{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
 button.tile{cursor:pointer}
 button.tile:hover{border-color:var(--accent)}
 button.tile::after{content:"›";float:right;color:var(--muted);margin-top:-30px;font-size:18px}
-input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--field);border-radius:10px;padding:9px 11px}
 input[type=search],select,.form input,.form select{width:100%}
 input[type=search]{font-size:16px}
 input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
 .sbox{position:relative;display:block;min-width:0}
 .sbox input{width:100%;padding-right:40px}
-.sclr{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0}
+.sclr{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0}
 .sbox input:placeholder-shown+.sclr{display:none}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -72,10 +74,10 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appeara
 .chip.b{background:var(--bad-soft);color:var(--bad)}
 a.chip,button.chip{cursor:pointer;border:0;font:inherit;font-size:12px;text-decoration:none}
 .pick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.pick button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
-.pick button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pick button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;min-height:40px;font:inherit;font-size:14px;cursor:pointer}
+.pick button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 13px;font:inherit;cursor:pointer}
-.btn.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.p{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff;font-weight:600}
 .btn:disabled{opacity:.5;cursor:default}
 .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
@@ -96,7 +98,7 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 .ebar{position:sticky;bottom:-28px;margin:14px -16px -28px;padding:10px 16px 18px;background:var(--card);border-top:1px solid var(--line);z-index:2}
 .ebar .row{gap:8px;align-items:center}.ebar input{min-width:0}
 @media (min-width:700px){.modal{align-items:center}.modal.top{align-items:flex-start;padding-top:60px}.modal .sheet{border-radius:18px}}
-.close{float:right;border:0;background:var(--line);color:var(--ink);border-radius:999px;width:32px;height:32px;font-size:18px;cursor:pointer;margin-left:8px}
+.close{float:right;border:0;background:var(--line);color:var(--ink);border-radius:999px;width:40px;height:40px;font-size:20px;cursor:pointer;margin-left:8px}
 .msg{padding:14px;border-radius:12px;background:var(--bad-soft);color:var(--bad)}
 .note{padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--ink);font-size:14px;margin-bottom:12px}
 .loading{padding:40px 0;text-align:center;color:var(--muted)}
@@ -109,8 +111,8 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .toast.bad{background:var(--bad);color:#fff}
 .more{display:block;margin:10px auto 0;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
 .stars{display:inline-flex;gap:2px}
-.stars button{border:0;background:none;font-size:24px;line-height:1;cursor:pointer;padding:0 1px;color:var(--line)}
-.stars button.on{color:#f2b01e}
+.stars button{border:0;background:none;font-size:30px;line-height:1;cursor:pointer;padding:4px 3px;min-width:40px;min-height:40px;color:var(--field)}
+.stars button.on{color:var(--star)}
 .bookhead{display:flex;gap:14px;align-items:flex-start}
 .bookhead .cover{width:110px;height:165px;border-radius:8px;object-fit:cover;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .bookhead .ph{width:110px;height:165px;font-size:13px;border-radius:8px;padding:10px}
@@ -172,7 +174,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .qa{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 6px}
 .qa button{border:0;border-radius:16px;background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);padding:14px 6px;font:inherit;font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:84px;cursor:pointer}
 .qa button svg{width:24px;height:24px;color:var(--accent)}
-.qa button.p{background:var(--accent);color:#fff;box-shadow:none}
+.qa button.p{background:var(--accent-fill);color:#fff;box-shadow:none}
 .qa button.p svg{color:#fff}
 .need span{color:var(--warn);font-weight:600}.need input{border:2px solid var(--warn)!important}
 .qa-hint{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px}
@@ -210,18 +212,17 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .hd{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:8px}
 .backb{border:0;background:var(--line);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hd .close{float:none;margin-left:auto}
-.iconbtn{border:0;background:var(--line);color:var(--ink);border-radius:999px;width:34px;height:34px;font-size:15px;cursor:pointer;flex:none}
+.iconbtn{border:0;background:var(--line);color:var(--ink);border-radius:999px;width:40px;height:40px;font-size:15px;cursor:pointer;flex:none}
 .bhero{position:relative;margin:-18px -16px 12px;padding:14px 16px;overflow:hidden;border-radius:18px 18px 0 0}
 .bhero .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) saturate(1.5);opacity:.55;z-index:0}
 .bhero>*{position:relative;z-index:1}
-.bhero .shelf{background:rgba(255,255,255,.7)}
-@media (prefers-color-scheme:dark){.bhero .shelf{background:rgba(0,0,0,.35)}}
+.bhero .shelf{background:var(--plate)}
 .link{color:var(--accent);cursor:pointer;text-decoration:none;border-bottom:1px dashed currentColor}
-.hero{background:linear-gradient(135deg,#2b2140,#5b3a9a);color:#fff;border-radius:16px;padding:16px;margin:0 0 12px;position:relative;overflow:hidden}
+.hero{background:linear-gradient(160deg,#1f3d34,#2f5d50);color:#fff;border-radius:16px;padding:16px;margin:0 0 12px;position:relative;overflow:hidden}
 .hero h2{margin:0;color:#fff;font-size:21px}.hero .sub{opacity:.9;font-size:13px;margin-top:2px}
 .hero .sub .link{color:#fff}
 .hero .chips .chip{background:rgba(255,255,255,.18);color:#fff}
-.hero .ava{float:right;width:56px;height:56px;border-radius:50%;background:#fff;color:#5b3a9a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;margin-left:10px}
+.hero .ava{float:right;width:56px;height:56px;border-radius:50%;background:#fff;color:#2f5d50;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;margin-left:10px}
 .hero .fan{float:right;display:flex;margin-left:10px}.hero .fan img,.hero .fan .ph{width:34px;height:51px;margin-left:-12px;border-radius:3px;box-shadow:-2px 2px 6px rgba(0,0,0,.35);font-size:0;padding:0}
 .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.nums b{display:block;font-size:21px}.nums span{font-size:12px;color:var(--muted)}
 .nums [data-list],.nums [data-go]{cursor:pointer}
@@ -229,10 +230,11 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .vol{flex:1 0 34px;text-align:center;font-size:11px;color:var(--muted);min-width:34px;max-width:70px}
 .vol[data-book],.vol[data-wish]{cursor:pointer}
 .vol i{display:block;height:30px;border-radius:6px;margin-bottom:3px;line-height:30px;font-style:normal;font-weight:600;color:#fff;font-size:12px}
-.v-read{background:var(--ok)}.v-own{background:var(--accent)}.v-now{background:#e0a011}.v-wish{background:transparent;border:2px dashed var(--warn);color:var(--warn)!important;line-height:26px!important}.v-none{background:var(--line);color:var(--muted)!important}
+.v-read{background:var(--ok)}.v-own{background:var(--accent-fill)}.v-now{background:#e0a011}.v-wish{background:transparent;border:2px dashed var(--warn);color:var(--warn)!important;line-height:26px!important}.v-none{background:var(--line);color:var(--muted)!important}
 .legend2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted);margin-top:8px}.legend2 em{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
-.strip .cov{flex:0 0 72px}
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;padding-bottom:4px}
+.strip>.cov:nth-child(n+11){display:none}
+@media (min-width:1000px){.strip{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}.strip>.cov:nth-child(n+11){display:block}.strip>.cov:nth-child(n+17){display:none}}
 .strip .cov img,.strip .cov .ph{font-size:9px;padding:4px}
 .strip .cov .ct{font-size:11px}
 .cov{position:relative}
@@ -251,7 +253,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .bdg.off .e{filter:grayscale(1);opacity:.4}.bdg.off b{color:var(--muted)}
 .bdg .bar{height:5px;margin:6px 0 0}
 .ent{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.ent button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.ent button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;min-height:40px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
 .ent button small{color:var(--muted)}
 .qm button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;padding:13px 4px;cursor:pointer}
 .qm button:last-child{border-bottom:0}
@@ -260,12 +262,13 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .src{font-style:normal;font-size:10px;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:0 6px;margin-left:4px;white-space:nowrap}
 .src:empty{display:none}
 .form .need input,.form .need select{border-color:var(--warn);background:var(--warn-soft)}
-.fchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 8px}
 .fchips::-webkit-scrollbar{display:none}
-.fchips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
-.fchips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fchips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;min-height:40px;font:inherit;font-size:14px;cursor:pointer}
+.fchips button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .fchips button.x{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .fchips .sep{flex:none;width:1px;background:var(--line);margin:0 2px}
+@media (max-width:999px){.fchips .sep{display:none}}
 .about{font-size:14px;line-height:1.5;white-space:pre-line}
 .about.clip{max-height:7.4em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);cursor:pointer}
 .prevnext{display:flex;gap:8px;margin:12px 0}.prevnext .btn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-size:13px}
@@ -312,15 +315,14 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .mrow{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:13px 14px;cursor:pointer}.mrow:last-child{border-bottom:0}
 .mrow .g{flex:1;min-width:0;display:flex;flex-direction:column}.mrow small{color:var(--muted);font-size:12.5px}.mrow .chev{color:var(--muted);font-size:18px}
 .backme{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;padding:2px 0 10px;cursor:pointer}
-.tab.fab b{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;font-weight:400;line-height:1;margin:-20px auto 0;box-shadow:0 6px 16px -6px rgba(0,0,0,.45)}
+.tab.fab b{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent-fill);color:#fff;font-size:28px;font-weight:400;line-height:1;margin:-20px auto 0;box-shadow:0 6px 16px -6px rgba(0,0,0,.45)}
 .btn.sm{padding:5px 11px;font-size:13px}
-@media (min-width:1000px){.tab.fab{display:none}.hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.hgrid.one{grid-template-columns:minmax(0,760px)}.plaques{max-width:760px}}
+@media (min-width:1000px){.tab.fab{display:none}.hgrid:not(.one){display:block;column-count:2;column-gap:12px}.hgrid:not(.one)>*{break-inside:avoid;margin-bottom:12px}.hgrid.one{grid-template-columns:minmax(0,760px)}.plaques{max-width:760px}}
 .hello{font-size:22px;font-weight:700;margin:2px 0 0}.hsum{color:var(--muted);font-size:14px;margin:2px 0 12px}.hsum b{color:var(--ink)}.hsum b[data-list]{cursor:pointer;text-decoration:underline dotted}
 .home4>div>*{margin-bottom:14px}
 .lnk{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:0}.lnk.mu{color:var(--muted);font-weight:400;margin-left:10px}.lnk.w{color:#fff;opacity:.9;margin-top:6px;font-weight:500}
 .mshelf{background:var(--shelf-bg);border-radius:16px;padding:12px 12px 0}
-.mshelf .t{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--wood-dark);font-weight:600}.mshelf .t .lnk{color:var(--wood-dark);font-size:13px}
-@media (prefers-color-scheme:dark){.mshelf .t,.mshelf .t .lnk{color:#e4c9a6}}
+.mshelf .t{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--shelf-ink);font-weight:600}.mshelf .t .lnk{color:var(--shelf-ink);font-size:13px}
 .mshelf .sp{display:flex;align-items:flex-end;gap:3px;min-height:100px;margin-top:6px;padding:0 4px;overflow-x:auto;scrollbar-width:none}
 .mspine{position:relative;flex:none;border:0;border-radius:2px 2px 0 0;color:#fbf6ec;font:600 9px/1.1 inherit;font-family:inherit;padding:9px 1px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:1px 0 0 rgba(0,0,0,.18)}
 .mspine:not(.e)::before,.mspine:not(.e)::after{content:"";position:absolute;left:2px;right:2px;height:1.5px;background:rgba(255,226,170,.55)}
@@ -328,8 +330,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .mspine.part{color:var(--ink)}.mspine.part span{text-shadow:0 0 3px rgba(255,255,255,.9)}
 .mspine.e{width:26px;background:transparent;border:1.5px dashed #c9ad8c;color:#b39776;box-shadow:none;font-size:15px;align-items:center}
 .mshelf .board{height:10px;background:linear-gradient(var(--wood),var(--wood-dark));border-radius:0 0 6px 6px;margin:0 -12px}
-.desks{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.desks::-webkit-scrollbar{display:none}
-.desks .desk{flex:0 0 100%;scroll-snap-align:start}.desks .desk:not(:only-child){flex-basis:92%}
+.desks{display:flex;flex-direction:column;gap:10px}
 .desk{background:linear-gradient(160deg,#1f3d34,#2f5d50);color:#fff;border-radius:20px;padding:16px}
 .desk .lbl{font-size:12px;opacity:.75;text-transform:uppercase;letter-spacing:.06em}
 .desk .bk{width:88px;height:132px;border-radius:5px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;font-size:11px;text-align:center;box-shadow:4px 6px 14px rgba(0,0,0,.4);cursor:pointer;overflow:visible}
@@ -339,11 +340,11 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .desk .pg{font-size:30px;font-weight:700;margin-top:6px;line-height:1.1}.desk .pg small{font-size:14px;opacity:.7;font-weight:400}
 .desk .info{font-size:13px;opacity:.9;margin-top:3px}.desk p{color:#fff}
 .desk .btns{display:flex;gap:8px;margin-top:12px}.desk button.b1,.desk button.b2{flex:1;border:0;border-radius:12px;padding:10px;font:inherit;font-weight:600;cursor:pointer}
-.desk .b1{background:#fff;color:#4b3480}.desk .b2{background:rgba(255,255,255,.16);color:#fff}
+.desk .b1{background:#fff;color:#1f3d34}.desk .b2{background:rgba(255,255,255,.16);color:#fff}
 .desk .thumb,.desk .ph{width:48px;height:72px}
 .trow{margin-bottom:10px}.trow .tlab{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 5px 2px}
-.pills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.pills::-webkit-scrollbar{display:none}
-.pill{flex:none;border:0;background:var(--card);color:var(--ink);border-radius:12px;padding:8px 11px;font:inherit;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid var(--accent);cursor:pointer;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pills{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:2px}.pills::-webkit-scrollbar{display:none}
+.pill{flex:none;border:0;background:var(--card);color:var(--ink);border-radius:12px;padding:8px 11px;font:inherit;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid var(--accent);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pill.ok{border-left-color:var(--ok)}.pill.warn{border-left-color:#e0a011}.pill.bad{border-left-color:var(--bad)}
 .pile{display:flex;flex-direction:column;gap:3px;align-items:center;margin-top:10px}
 .ly{height:30px;border:0;border-radius:4px;color:#fff;font:inherit;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);cursor:pointer;min-width:0}
@@ -352,26 +353,27 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .tip{background:var(--accent-soft);border-radius:12px;padding:9px 11px;font-size:13px;margin-top:10px}.tip.ok{background:var(--ok-soft)}
 .tl{position:relative;margin-top:10px}.tl .days{display:grid;font-size:9px;color:var(--muted);text-align:center;margin-bottom:4px}
 .tl .grid{position:absolute;top:16px;bottom:0;left:0;right:0;display:grid;pointer-events:none}.tl .grid div{border-left:1px dashed var(--line)}
-.tl .ln{position:relative;height:22px;margin:4px 0}.tl .ln i{position:absolute;top:0;height:22px;border-radius:11px;color:#fff;font-size:11px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
+.tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#fff;font-size:11px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
 .tl .now{position:absolute;top:16px;bottom:0;width:2px;background:var(--accent)}
 .seg3{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent);color:#fff}
-.pick.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pick.scroll::-webkit-scrollbar{display:none}.pick.scroll button{flex:none}
+.seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent-fill);color:#fff}
+.pick.scroll button{flex:none}
 .tbtn{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;min-width:44px;min-height:40px;padding:0 12px;font:inherit;cursor:pointer;position:relative}.tbtn.on{border-color:var(--accent);color:var(--accent)}.tbtn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
 .selbar{position:sticky;bottom:16px;z-index:4;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:1px solid var(--accent);border-radius:16px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.15);margin-top:12px}.selbar[hidden]{display:none}
-.shops{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}.shops::-webkit-scrollbar{display:none}
+.shops{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 8px}.shops::-webkit-scrollbar{display:none}
 .shops button{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:8px 13px;font:inherit;cursor:pointer;text-align:left}
-.shops button b{font-size:15px}.shops button span{font-size:12px;color:var(--muted)}.shops button.on{background:var(--accent);border-color:var(--accent);color:#fff}.shops button.on span{color:rgba(255,255,255,.85)}
+.shops button b{font-size:15px}.shops button span{font-size:12px;color:var(--muted)}.shops button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}.shops button.on span{color:rgba(255,255,255,.85)}
 .dfilt{margin:2px 0 10px}.dfilt summary{cursor:pointer;color:var(--muted);font-size:14px;padding:4px 0}
 .ocard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
-.ohead{display:flex;align-items:flex-start;gap:10px}.ono{font-size:20px;font-weight:700;letter-spacing:.3px;font-variant-numeric:tabular-nums}
+.ohead{display:flex;align-items:flex-start;gap:10px}.ono{font-size:15px;font-weight:600;letter-spacing:.3px;font-variant-numeric:tabular-nums;margin-top:6px}
+.ost{display:inline-block;font-size:14px;font-weight:700;border-radius:999px;padding:4px 11px;background:var(--line);color:var(--ink)}.ost.ok{background:var(--ok-soft);color:var(--ok)}.ost.w{background:var(--warn-soft);color:var(--warn)}.ocard.ready{border-color:var(--ok)}
 .oline{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}.oline .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .oi-got.sm{min-width:58px;padding:6px 6px 4px;font-size:16px;line-height:1}.oi-got.sm span{font-size:10.5px}
 .btn.sm{padding:5px 11px;font-size:13px}.chip.add{border:1px dashed var(--accent);color:var(--accent);background:transparent;font:inherit;font-size:13px;cursor:pointer}
 .oi{align-items:center}.oi .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .oi-meta{font-size:13px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
 .oi-np{display:flex;align-items:baseline;gap:6px;font-size:12.5px;color:var(--warn);margin-top:3px}.oi-np i{flex:none;width:7px;height:7px;border-radius:50%;background:currentColor;transform:translateY(-1px)}.oi-np.ok{color:var(--ok)}
-.oi-got{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 8px 6px;min-width:64px;font:inherit;font-size:11px;cursor:pointer}.oi-got:hover{border-color:var(--accent);color:var(--accent)}.oi-got.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.oi-got{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 8px 6px;min-width:64px;font:inherit;font-size:11px;cursor:pointer}.oi-got:hover{border-color:var(--accent);color:var(--accent)}.oi-got.p{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .grp-h{margin:14px 0 6px;font-size:14px;display:flex;gap:6px;align-items:baseline}.grp-h .muted{font-weight:400}
 .pick .sep{width:1px;background:var(--line);margin:0 4px;align-self:stretch}
 .kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -386,7 +388,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .ach{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .ac{background:var(--card);border-radius:16px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}.ac.off{opacity:.75}.ac .e{font-size:28px}
 .ac .lv{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 6px}.ac .lv span{font-size:11px;border-radius:99px;padding:2px 7px;background:var(--line);color:var(--muted)}
-.ac .lv span.on{background:var(--accent);color:#fff}.ac .lv span.nx{border:1.5px dashed var(--accent);color:var(--accent);background:none}
+.ac .lv span.on{background:var(--accent-fill);color:#fff}.ac .lv span.nx{border:1.5px dashed var(--accent);color:var(--accent);background:none}
 .recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .rc{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer}.rc .thumb,.rc .ph{width:44px;height:66px}
 .rc .grow>*{display:block}.rc b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rc .v{font-weight:700;color:var(--accent)}
@@ -456,7 +458,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var WISH_ORDER = ['Хочу купити', 'Докупити серію', 'На майбутнє', 'Замовлено', 'Створено ТТН', 'Відправлено', 'Доставлено', 'В бібліотеці'];
   var ORDERED = ['Замовлено', 'Створено ТТН', 'Відправлено', 'В дорозі', 'Доставлено'];
   var GONE = ['подарована', 'продана'];
-  var PALETTE = ['#8e5bd8', '#d0517c', '#2f8a8a', '#c9772b', '#3f73c4', '#5c9a3a', '#a8463a', '#7b6a4e', '#c45cb5', '#3a8f63', '#b98a1d', '#5161a8'];
+  // кольори жанрів трохи темніші, щоб світлий напис на корінці читався (контраст від 4,5 : 1)
+  var PALETTE = ['#8857cf', '#bb486f', '#2a7c7c', '#a46123', '#3d70c0', '#4b7e2f', '#a8463a', '#7b6a4e', '#a84f9b', '#337d57', '#906b16', '#5161a8'];
   var WIDE = window.matchMedia('(min-width:1000px)').matches;
   var D = null, S = null;
   function setTheme(v) {
@@ -503,7 +506,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var t = tropeEd, known = allTropes().filter(function (x) { return t.list.indexOf(x) === -1; }).slice(0, 14);
     return '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">' +
       '<div class="chips">' + (t.list.length ? t.list.map(function (x) { return '<button type="button" class="chip a" style="font-size:13px;padding:6px 11px;cursor:pointer" data-action="trope-x" data-v="' + esc(x) + '">' + esc(x) + ' ✕</button>'; }).join('') : '<span class="muted small">Поки порожньо</span>') + '</div>' +
-      (known.length ? '<div class="muted small" style="margin-top:8px">Ваші тропи:</div><div class="chips">' + known.map(function (x) { return '<button type="button" class="chip" style="cursor:pointer" data-action="trope-add" data-v="' + esc(x) + '">+ ' + esc(x) + '</button>'; }).join('') + '</div>' : '') +
+      (known.length ? '<div class="muted small" style="margin-top:8px">Твої тропи:</div><div class="chips">' + known.map(function (x) { return '<button type="button" class="chip" style="cursor:pointer" data-action="trope-add" data-v="' + esc(x) + '">+ ' + esc(x) + '</button>'; }).join('') + '</div>' : '') +
       '<div class="row" style="margin-top:8px;gap:6px"><input id="trope-in" class="grow" placeholder="новий троп" style="min-width:0"><button class="btn" data-action="trope-add-in">Додати</button></div>' +
       '<div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn" data-action="trope-ai">' + (t.busy ? 'Думаю…' : '✨ Підказати (Gemini)') + '</button><button class="btn p" data-action="trope-save">Зберегти</button><button class="btn" data-action="trope-cancel">Скасувати</button></div></div>';
   }
@@ -550,12 +553,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var k = ORDERED.indexOf(s) !== -1 ? 'w' : s === 'В бібліотеці' ? 'ok' : s === 'Хочу купити' ? 'a' : '';
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
   }
-  function stars(r) { if (!r) return ''; var f = Math.floor(r), h = r - f >= .5; return '<span style="color:#f2b01e">' + '★'.repeat(f) + (h ? '½' : '') + '</span>'; }
+  function stars(r) { if (!r) return ''; var f = Math.floor(r), h = r - f >= .5; return '<span style="color:var(--star)">' + '★'.repeat(f) + (h ? '½' : '') + '</span>'; }
   function tile(val, label, list) {
     return list ? '<button class="tile" data-list="' + list + '"><b>' + val + '</b><span class="muted">' + label + '</span></button>'
       : '<div class="tile"><b>' + val + '</b><span class="muted">' + label + '</span></div>';
   }
-  function genreColor(g) { return (S && S.gcol[g]) || '#8a8178'; }
+  function genreColor(g) { return (S && S.gcol[g]) || '#766e67'; }
   function cover(x, cls) {
     if (x.cover) return '<img class="' + (cls || 'thumb') + '" loading="lazy" referrerpolicy="no-referrer" src="' + esc(x.cover) + '" alt="">';
     return '<div class="ph' + (cls === 'cover' ? '' : '') + '" style="background:' + genreColor(x.genre) + '">' + esc(x.title).slice(0, 60) + '</div>';
@@ -711,7 +714,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function refresh() {
     var y = window.scrollY;
-    document.getElementById('app').innerHTML = VIEWS[view.tab]();
+    document.getElementById('app').innerHTML = subTabs() + VIEWS[view.tab]();
     window.scrollTo(0, y);
     if (modalStack) { var m = modalStack; m.fn.apply(null, m.args); }
   }
@@ -971,7 +974,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (WIDE ? '<div class="pick" style="margin:0"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '<button class="tbtn" data-action="bmore-toggle" aria-label="Вигляд">⋯</button>') + '</div>' +
       (!WIDE && view.bookMoreOpen ? '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Вигляд:</span><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '');
     var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Роттердам'], ['place', 'Київ'], ['avail', 'позичена']]
-      .concat(topList(count(S.inLib, function (b) { return b.genre; }), 6).map(function (r) { return ['genre', r[0]]; }));
+      .concat(topList(count(S.inLib, function (b) { return b.genre; }), WIDE ? 6 : 3).map(function (r) { return ['genre', r[0]]; }));
     var chipKey = {}; chips.forEach(function (c) { chipKey[c[0] + '|' + c[1]] = 1; });
     var names = {}; FILTERS.forEach(function (f) { names[f[0]] = f[1]; });
     h += '<div class="fchips">' + chips.map(function (c, i) {
@@ -979,15 +982,16 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     }).join('') + Object.keys(view.f).filter(function (k) { return view.f[k] && !chipKey[k + '|' + view.f[k]]; }).map(function (k) {
       return '<button class="x" data-fc="' + esc(k + '|' + view.f[k]) + '">' + esc(names[k] + ': ' + view.f[k]) + ' ✕</button>';
     }).join('') + '</div>';
-    h += '<details' + (active || WIDE ? ' open' : '') + '><summary>Фільтри' + (active ? ' (' + active + ')' : '') + '</summary><div class="filters">' + FILTERS.filter(function (f) { return f[0] !== 'rating' || D.cols.rating; }).map(function (f) {
-      return '<select data-filter="' + f[0] + '"><option value="">' + f[1] + ': усі</option>' + filterOptions(f[0]).map(function (o) {
+    h += '<details' + (active ? ' open' : '') + '><summary>Фільтри' + (active ? ' (' + active + ')' : '') + '</summary><div class="filters">' + FILTERS.filter(function (f) { return f[0] !== 'rating' || D.cols.rating; }).map(function (f) {
+      return '<select data-filter="' + f[0] + '" aria-label="' + esc(f[1]) + '"><option value="">' + f[1] + ': усі</option>' + filterOptions(f[0]).map(function (o) {
         return '<option' + (view.f[f[0]] === o ? ' selected' : '') + ' value="' + esc(o) + '">' + esc(o) + '</option>';
       }).join('') + '</select>';
     }).join('') +
-      '<select data-sort>' + sortOpts.map(function (o) { return '<option value="' + o[0] + '"' + (view.sort === o[0] ? ' selected' : '') + '>Сортувати: ' + o[1] + '</option>'; }).join('') + '</select>' +
       '</div>' + (active ? '<button class="more" data-action="clear">Скинути фільтри</button>' : '') + '</details>';
-    h += '<p class="muted small">Знайдено: ' + list.length + (list.length ? ' · сторінок разом: ' + list.reduce(function (a, b) { return a + (b.pages || 0); }, 0).toLocaleString('uk-UA') : '') +
-      (gone ? ' · <a class="link" data-action="gone-toggle">ще ' + gone + ' продані й подаровані</a>' : view.showGone ? ' · <a class="link" data-action="gone-toggle">сховати продані</a>' : '') + '</p>';
+    // сортування окремо від фільтрів, щоб не шукати його в розгорнутому списку
+    h += '<div class="row" style="justify-content:space-between;margin:8px 0"><span class="muted small">Знайдено: ' + list.length + (list.length ? ' · сторінок разом: ' + list.reduce(function (a, b) { return a + (b.pages || 0); }, 0).toLocaleString('uk-UA') : '') +
+      (gone ? ' · <a class="link" data-action="gone-toggle">ще ' + gone + ' продані й подаровані</a>' : view.showGone ? ' · <a class="link" data-action="gone-toggle">сховати продані</a>' : '') + '</span>' +
+      '<select data-sort aria-label="Сортування" style="width:auto;padding:7px 10px;font-size:14px">' + sortOpts.map(function (o) { return '<option value="' + o[0] + '"' + (view.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>';
     var shown = list.slice(0, view.limit);
     h += view.bookMode === 'covers' ? '<div class="covers">' + shown.map(coverItem).join('') + '</div>' : '<div class="list grid">' + shown.map(bookItem).join('') + '</div>';
     if (list.length > view.limit) h += '<button class="more" data-action="more">Показати ще (' + (list.length - view.limit) + ')</button>';
@@ -1046,7 +1050,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (isSer ? '<div class="small" style="margin-top:2px">' + lk('series', b.series) + (b.num ? ' · #' + esc(numTxt(b.num)) : '') + '</div>' : '') +
       '<div class="shelf" style="font-size:18px">' + whereHtml(b) + '</div>' + (b.rating ? '<div>' + stars(b.rating) + '</div>' : '') +
       (b._m.length ? '<div class="chips">' + b._m.map(function (m) { return '<a class="chip a" data-go="' + esc('mood|' + m) + '">' + esc(m) + '</a>'; }).join('') + '</div>' : '') +
-      '<div class="small" style="margin-top:6px"><a class="link" style="opacity:.75" data-action="bug-menu">Знайшли помилку?</a><span id="bugm" style="display:none"> · <a class="link" data-action="edit-book" data-row="' + b.row + '">✎ Редагувати</a>' + (c.cover || c.isbn ? ' · <a class="link" data-action="vf-one" data-row="' + b.row + '">🔎 Звірити з книгарнями</a>' : '') + '</span></div>' +
+      '<div class="small" style="margin-top:6px"><a class="link" style="opacity:.75" data-action="bug-menu">Знайшла помилку?</a><span id="bugm" style="display:none"> · <a class="link" data-action="edit-book" data-row="' + b.row + '">✎ Редагувати</a>' + (c.cover || c.isbn ? ' · <a class="link" data-action="vf-one" data-row="' + b.row + '">🔎 Звірити з книгарнями</a>' : '') + '</span></div>' +
       '</div></div></div>';
     var si = isSer ? seriesInfo(b.series) : null, vols = si ? volumes(si) : [];
     if (vols.length > 1) {
@@ -1072,18 +1076,18 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     // --- Про книгу
     var pa = '<div class="card" id="aboutcard"' + (ABOUT[b.row] === '' ? ' style="display:none"' : '') + '><h3>Опис</h3><div class="about clip" data-about="' + b.row + '" data-action="about-toggle">' + (ABOUT[b.row] ? esc(ABOUT[b.row]) : '<span class="muted small">Шукаю опис…</span>') + '</div></div>';
     if (c.tropes && !NO_TROPES) pa += '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Тропи</h3>' + (tropeEd && tropeEd.row === b.row ? '' : '<button class="chip" style="cursor:pointer" data-action="trope-edit" data-row="' + b.row + '">' + (b._t.length ? '✎ змінити' : '+ додати') + '</button>') + '</div>' +
-      (tropeEd && tropeEd.row === b.row ? '' : b._t.length ? '<div class="chips" style="margin-top:8px">' + b._t.map(function (t) { return '<a class="chip" style="font-size:13px;padding:5px 10px" data-go="' + esc('trope|' + t) + '">' + esc(t) + '</a>'; }).join('') + '</div>' : ('<p class="muted small" style="margin:6px 0 0">Ще не вказані. Натисніть «+ додати», там є підказка від Gemini.</p>')) +
+      (tropeEd && tropeEd.row === b.row ? '' : b._t.length ? '<div class="chips" style="margin-top:8px">' + b._t.map(function (t) { return '<a class="chip" style="font-size:13px;padding:5px 10px" data-go="' + esc('trope|' + t) + '">' + esc(t) + '</a>'; }).join('') + '</div>' : ('<p class="muted small" style="margin:6px 0 0">Ще не вказані. Натисни «+ додати», там є підказка від Gemini.</p>')) +
       '<div id="tropeed">' + (tropeEd && tropeEd.row === b.row ? tropeEdHtml() : '') + '</div></div>';
     var ab = S.inLib.filter(function (x) { return x.author === b.author; });
     if (b.author) {
       var abRead = ab.filter(isRead).length, abWish = D.wish.filter(function (w) { return w.author === b.author && w.status !== 'В бібліотеці'; }).length;
       pa += '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Про автора: ' + esc(b.author) + '</h3><a class="link small" data-go="' + esc('author|' + b.author) + '">Усі книги ›</a></div>' +
-        '<div class="nums" style="margin-top:10px"><div data-go="' + esc('author|' + b.author) + '"><b>' + ab.length + '</b><span>' + bookWord(ab.length) + ' у вас</span></div><div><b>' + abRead + '</b><span>прочитано</span></div><div><b>' + abWish + '</b><span>у бажанках</span></div></div>' +
+        '<div class="nums" style="margin-top:10px"><div data-go="' + esc('author|' + b.author) + '"><b>' + ab.length + '</b><span>' + bookWord(ab.length) + ' у тебе</span></div><div><b>' + abRead + '</b><span>прочитано</span></div><div><b>' + abWish + '</b><span>у бажанках</span></div></div>' +
         (ab.length > 1 ? '<div class="strip" style="margin-top:10px">' + ab.filter(function (x) { return x !== b; }).slice(0, 12).map(function (x) { return covMini(x, bookSub(x)); }).join('') + '</div>' : '') + '</div>';
     }
     if (vols.length) pa += '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Серія: ' + vols.filter(function (v) { return v.book; }).length + ' з ' + vols.length + '</h3><a class="link small" data-go="' + esc('series|' + b.series) + '">Уся серія ›</a></div>' + trackHtml(vols) + '</div>';
     var sim = similar(b).filter(function (x) { return x.author !== b.author; });
-    if (sim.length) pa += '<div class="card"><h3>Схожі у вас</h3><div class="strip">' + sim.map(function (x) { return covMini(x, bookSub(x)); }).join('') + '</div></div>';
+    if (sim.length) pa += '<div class="card"><h3>Схожі у тебе</h3><div class="strip">' + sim.map(function (x) { return covMini(x, bookSub(x)); }).join('') + '</div></div>';
     h += pane('about', pa);
     // --- Щоденник
     if (hasDiary) {
@@ -1237,14 +1241,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = heads() + '<h2>✨ ISBN і обкладинки</h2>';
     if (!x) { openModal(h + '<p>Готово! Перевірено всі книги ' + (rv.list.length ? '(' + rv.list.length + ')' : '') + ' 🎉</p><p class="muted small">Для решти обкладинку можна знайти в Google і вставити посиланням.</p><button class="btn" data-action="cover-queue">🖼 Без обкладинки</button>', true); return; }
     var r = rv.res[x.row] || { loading: true };
-    h += '<p class="muted small">' + (rv.i + 1) + ' з ' + rv.list.length + '. Порівняйте знахідку зі своєю книгою: та сама назва й автор, українське видання.</p>';
-    h += '<div class="rv"><div class="rvc"><div class="lbl">Ваша книга</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
+    h += '<p class="muted small">' + (rv.i + 1) + ' з ' + rv.list.length + '. Порівняй знахідку зі своєю книгою: та сама назва й автор, українське видання.</p>';
+    h += '<div class="rv"><div class="rvc"><div class="lbl">Твоя книга</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
       '<b>' + esc(x.title) + '</b><span>' + esc(x.author) + '</span><span class="muted">' + esc([x.pub, x.pages ? x.pages + ' стор.' : ''].filter(Boolean).join(' · ')) + '</span>' +
       '<span class="chip" role="button" style="align-self:flex-start;margin-top:4px;cursor:pointer" data-book="' + x.row + '">Відкрити книгу ›</span></div>';
     // своє посилання на обкладинку (і ISBN), якщо знайшли самі
-    var own = '<div class="rvown"><div class="lbl">Знайшли самі?</div><div class="row"><input class="grow" id="rv-url" placeholder="Посилання на картинку https://…" autocomplete="off">' +
+    var own = '<div class="rvown"><div class="lbl">Знайшла сама?</div><div class="row"><input class="grow" id="rv-url" placeholder="Посилання на картинку https://…" autocomplete="off">' +
       (!x.isbn && D.cols.isbn ? '<input id="rv-isbn" inputmode="numeric" placeholder="ISBN" style="width:150px">' : '') + '<button class="btn" data-action="rv-url">Зберегти</button></div>' +
-      '<p class="muted small">У Google Картинках відкрийте картинку, натисніть на неї правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і вставте сюди.</p></div>';
+      '<p class="muted small">У Google Картинках відкрий картинку, натисни на неї правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і встав сюди.</p></div>';
     if (r.loading) h += '<div class="rvc"><div class="lbl">Знайдено</div><div class="ph wait">Шукаю…</div></div></div>';
     else if (r.notFound || !(r.isbn || r.cover)) h += '<div class="rvc"><div class="lbl">Знайдено</div><div class="ph wait">Нічого не знайшлось</div></div></div>' +
       own + '<div class="row" style="margin-top:12px;flex-wrap:wrap"><a class="btn" target="_blank" rel="noopener" href="' + googleImg(x) + '">🔎 Google Картинки ↗</a><button class="btn p" data-action="rv-skip">Далі ›</button></div>';
@@ -1325,8 +1329,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!x && vf.mode === 'one') { var ob = vf.list[0]; vf = null; nav = []; return showBook(ob.row); }
     if (!x) { openModal(h + '<p>Готово, усе переглянуто 🎉</p><p class="muted small">Переглянуті книги більше не показуються. Нові з\'являться в звірці автоматично.</p>', true); return; }
     var r = vf.res[x.row] || { loading: true };
-    h += '<p class="muted small">' + (vf.mode === 'one' ? '' : (vf.i + 1) + ' з ' + vf.list.length + '. ') + 'Позначте, що взяти з офіційних даних. Решта лишиться як у вас.</p>';
-    var mine = '<div class="rvc"><div class="lbl">У вас</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
+    h += '<p class="muted small">' + (vf.mode === 'one' ? '' : (vf.i + 1) + ' з ' + vf.list.length + '. ') + 'Познач, що взяти з офіційних даних. Решта лишиться як у тебе.</p>';
+    var mine = '<div class="rvc"><div class="lbl">У тебе</div>' + (x.cover ? '<img referrerpolicy="no-referrer" src="' + esc(x.cover) + '">' : '<div class="ph" style="' + spineBg(x) + '">' + esc(x.title) + '</div>') +
       '<b>' + esc(x.title) + '</b><span>' + esc(x.author) + '</span><span class="muted">' + esc([x.pub, x.pages ? x.pages + ' стор.' : '', x.isbn ? 'ISBN ' + x.isbn : ''].filter(Boolean).join(' · ')) + '</span>' +
       '<span class="chip" role="button" style="align-self:flex-start;margin-top:4px;cursor:pointer" ' + (lib ? 'data-book="' : 'data-wish="') + x.row + '">Відкрити ›</span></div>';
     if (r.loading) { openModal(h + '<div class="rv">' + mine + '<div class="rvc"><div class="lbl">MEGOGO Books / Книгарня Є</div><div class="ph wait">Шукаю…</div></div></div><div class="row" style="margin-top:12px"><button class="btn" data-action="vf-skip">Пропустити ›</button></div>', true); return; }
@@ -1344,8 +1348,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!rows.length) {
       h += '<p class="ok" style="margin-top:12px">✓ Усе збігається з офіційними даними.</p><div class="row"><button class="btn p" data-action="vf-no">Далі ›</button></div>';
     } else {
-      if (rows.other) h += '<p class="small" style="margin:10px 0 0;color:var(--warn)">⚠ Схоже, це інше видання (інший ISBN або видавництво). Позначте лише те, у чому впевнені, або натисніть «Не те видання».</p>';
-      h += '<table class="vft"><tr><th></th><th>У вас</th><th>' + esc(r.source || 'Книгарня Є') + '</th></tr>' + rows.map(function (rw, i) {
+      if (rows.other) h += '<p class="small" style="margin:10px 0 0;color:var(--warn)">⚠ Схоже, це інше видання (інший ISBN або видавництво). Познач лише те, у чому впевнені, або натисни «Не те видання».</p>';
+      h += '<table class="vft"><tr><th></th><th>У тебе</th><th>' + esc(r.source || 'Книгарня Є') + '</th></tr>' + rows.map(function (rw, i) {
         var th = rw.f === 'cover' ? '<img referrerpolicy="no-referrer" src="' + esc(rw.theirs) + '" style="width:44px;height:66px;object-fit:cover;border-radius:3px">' : esc(rw.theirs);
         return '<tr><td><label><input type="checkbox" data-vf="' + i + '"' + (rw.on ? ' checked' : '') + '> ' + esc(rw.label) + '</label></td><td class="muted">' + (esc(rw.mine) || '—') + '</td><td><b>' + th + '</b></td></tr>';
       }).join('') + '</table>';
@@ -1359,7 +1363,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function vfOwn(x) {
     return '<div class="rvown"><div class="lbl">Знайшли самі (наприклад, на MEGOGO Books)?</div><div class="row"><input class="grow" id="rv-url" placeholder="Посилання на обкладинку https://…" autocomplete="off">' +
       (vf.kind === 'library' && !x.isbn && D.cols.isbn ? '<input id="rv-isbn" inputmode="numeric" placeholder="ISBN" style="width:150px">' : '') + '<button class="btn" data-action="vf-url">Зберегти</button></div>' +
-      '<p class="muted small">Відкрийте книгу на MEGOGO Books, натисніть на обкладинку правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і вставте сюди.</p></div>';
+      '<p class="muted small">Відкрий книгу на MEGOGO Books, натисни на обкладинку правою кнопкою (на телефоні — довге натискання) → «Копіювати адресу зображення» і встав сюди.</p></div>';
   }
   function vfNext(mark) { var x = vf.list[vf.i]; if (mark && x && vf.mode !== 'one') vfMark(vf.kind, x); vf.i++; vfFetch(); vfDialog(); }
   function findCover(b) {
@@ -1372,7 +1376,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (r.cover) h += '<div class="row" style="margin-top:10px"><img class="thumb" style="width:70px;height:105px" referrerpolicy="no-referrer" src="' + esc(r.cover) + '"><div class="grow small">' + esc(r.title || '') + '<br><span class="muted">' + esc(r.author || '') + (r.pages ? ' · ' + r.pages + ' стор.' : '') + ' · ' + esc((r.sources || []).join(', ')) + '</span><br>' +
         '<button class="btn p" style="margin-top:6px" data-action="cover-save" data-row="' + b.row + '" data-url="' + esc(r.cover) + '" data-isbn="' + esc(r.isbn || '') + '">Зберегти обкладинку</button></div></div>';
       else h += '<p class="muted small">Обкладинку не знайдено' + (r.sources && r.sources.length ? ' (' + esc(r.sources.join(', ')) + ')' : '') + '.</p>';
-      if (D.cols.cover) h += '<div class="row" style="margin-top:8px"><input class="grow" id="cover-url" placeholder="або вставте посилання на картинку https://…"><button class="btn" data-action="cover-url" data-row="' + b.row + '">Зберегти</button></div>';
+      if (D.cols.cover) h += '<div class="row" style="margin-top:8px"><input class="grow" id="cover-url" placeholder="або встав посилання на картинку https://…"><button class="btn" data-action="cover-url" data-row="' + b.row + '">Зберегти</button></div>';
       box2.innerHTML = h;
     }).catch(function (err) { var box3 = document.getElementById('coverres'); if (box3) box3.innerHTML = '<p class="msg small">' + esc(err.message) + '</p>'; });
   }
@@ -1413,8 +1417,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var noTr = S.inLib.filter(function (x) { return !(x._t || []).length; }).length;
       h += '<div class="chips" style="margin:0 0 10px">' + (mv ? '' : '<button class="chip" data-action="move-open">⇄ Перестановка</button>') + (window.LB_DB ? '' : '<button class="chip" data-action="auto-fill">⚡ Автозвірка у фоні</button>') + (noTr && !NO_TROPES ? '<button class="chip" data-action="mt-open">🏷 Без тропів: ' + noTr + ' — підказати</button>' : '') + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
     }
-    h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисніть на книгу, щоб відкрити її.</p>';
-    if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#8a8178"></i>інші</span></div>';
+    h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисни на книгу, щоб відкрити її.</p>';
+    if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#766e67"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
     var cases = { 'Відкрита шафа': keys.filter(function (k) { return !isClosed(k); }), 'Закрита шафа': keys.filter(function (k) { return isClosed(k); }) };
     Object.keys(cases).forEach(function (cname) {
@@ -1457,7 +1461,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return true;
     }).sort(function (a, b) { return (b.ownedCount / b.expected) - (a.ownedCount / a.expected) || a.name.localeCompare(b.name, 'uk'); });
     var done = all.filter(function (x) { return !x.missing.length; }).length;
-    var h = '<div class="tiles">' + tile(all.length, 'серій у бібліотеці') + tile(done, 'зібрано повністю') + tile(all.filter(function (x) { return x.missing.length === 1; }).length, 'бракує 1 книги') + '</div>';
+    var h = '<div class="tiles sm">' + tile(all.length, 'серій у бібліотеці') + tile(done, 'зібрано повністю') + tile(all.filter(function (x) { return x.missing.length === 1; }).length, 'бракує 1 книги') + '</div>';
     h += '<div class="pick">' + modes.map(function (m) { return '<button data-smode="' + m[0] + '" class="' + (view.seriesMode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div>';
     h += '<div class="cols">' + (list.map(function (x) {
       return '<div class="card"><div class="row" data-go="' + esc('series|' + x.name) + '" style="cursor:pointer"><div class="grow"><div style="font-weight:600">' + esc(x.name) + ' <span class="muted">›</span></div><div class="muted small">' + esc(x.author) + (x.pub ? ' · ' + esc(x.pub) : '') + '</div></div><b class="num">' + x.ownedCount + ' / ' + x.expected + '</b></div>' + seriesBody(x) + '</div>';
@@ -1466,12 +1470,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   };
 
   /* ---------- Бажанки ---------- */
-  function wishItem(w) {
+  // картка бажанки: кольорові плашки лише для важливого, решта одним рядком тексту
+  function wishItem(w, inCol) {
     var ser = w.series && w.series !== 'нонфік' ? esc(w.series) + (w.part ? ' #' + esc(w.part) : '') : '';
-    return '<div class="item" data-wish="' + w.row + '">' + cover(w) + '<div class="body"><div class="t">' + esc(w.title) + '</div><div class="muted small">' + esc(w.author) + (ser ? ' · ' + ser : '') + (w.pub ? ' · ' + esc(w.pub) : '') + '</div><div class="chips">' +
-      wishChip(w.status) + (w.release ? '<span class="chip ' + (w.release >= D.today ? 'a' : '') + '">реліз ' + dmy(w.release) + '</span>' : w.releaseText ? '<span class="chip">реліз: ' + esc(w.releaseText) + '</span>' : '') +
-      (w.avail ? '<span class="chip">' + esc(w.avail) + '</span>' : '') + (w.price != null ? '<span class="chip">' + money(w.price) + '</span>' : '') + (w.np ? '<span class="chip w">НП: ' + esc(w.np) + '</span>' : '') +
-      (w._lib ? '<span class="chip b">📚 вже є в бібліотеці</span>' : '') + '</div></div></div>';
+    var soon = w.release && w.release >= D.today, sale = w.avail === 'Є у продажу';
+    var meta = [sale ? '' : esc(w.avail || ''), !soon && w.release && !sale ? 'реліз ' + dmy(w.release) : '', !w.release && w.releaseText ? 'реліз: ' + esc(w.releaseText) : '', w.price != null ? money(w.price) : ''].filter(Boolean).join(' · ');
+    var chips = (inCol === true || view.wishStatus === w.status ? '' : wishChip(w.status)) + (soon ? '<span class="chip a">реліз ' + dmy(w.release) + '</span>' : '') + (sale ? '<span class="chip ok">Є у продажу</span>' : '') +
+      (w.np ? '<span class="chip w">НП: ' + esc(w.np) + '</span>' : '') + (w._lib ? '<span class="chip b">📚 вже є в бібліотеці</span>' : '');
+    return '<div class="item" data-wish="' + w.row + '">' + cover(w) + '<div class="body"><div class="t">' + esc(w.title) + '</div><div class="muted small">' + esc(w.author) + (ser ? ' · ' + ser : '') + (w.pub ? ' · ' + esc(w.pub) : '') + '</div>' +
+      (meta ? '<div class="small" style="margin-top:2px">' + meta + '</div>' : '') + (chips ? '<div class="chips">' + chips + '</div>' : '') + '</div></div>';
   }
   function npShort(t) {
     t = String(t || '');
@@ -1540,7 +1547,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     });
     return out;
   }
-  /* ---------- масові тропи: Gemini підказує, ви ставите галочки й зберігаєте ---------- */
+  /* ---------- масові тропи: Gemini підказує, ви ставиш галочки й зберігаєш ---------- */
   var mt = null;
   function mtSkips() { try { return JSON.parse(localStorage.getItem('lb.mtskip') || '{}'); } catch (e) { return {}; } }
   function mtOpen() {
@@ -1555,7 +1562,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     modalStack = { fn: mtRender, args: [] };
     var done = mt.list.filter(function (b) { return mt.res[b.row]; });
     var h = '<button class="close" data-action="close">×</button><h2>🏷 Тропи для книг без тропів</h2>';
-    h += '<p class="muted small">Gemini підказує тропи, і вони одразу позначені ✓. Натисніть на зайві, щоб зняти позначку, а × прибирає книгу зі списку. Нічого не зберігається без кнопки «Зберегти». ' +
+    h += '<p class="muted small">Gemini підказує тропи, і вони одразу позначені ✓. Натисни на зайві, щоб зняти позначку, а × прибирає книгу зі списку. Нічого не зберігається без кнопки «Зберегти». ' +
       'Безкоштовний Gemini працює повільно: приблизно одна книга на 6 секунд, тож можна йти порціями й закривати вікно.</p>';
     h += '<div class="row" style="margin:8px 0">' + (mt.busy ? '<button class="btn" data-action="mt-stop">⏸ Пауза</button><span class="muted small">Думаю над «' + esc((mt.list[mt.i] || {}).title || '') + '» (' + (mt.i + 1) + ' з ' + mt.list.length + ')…</span>' :
       (mt.i < mt.list.length ? '<button class="btn p" data-action="mt-run">✨ ' + (mt.i ? 'Продовжити' : 'Почати') + ' (' + (mt.list.length - mt.i) + ' книг)</button>' : '<span class="muted small">Усі книги переглянуто.</span>')) + '</div>';
@@ -1609,7 +1616,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     navTo(serCheckRender, [], 'Перевірка серій');
     var items = st.items.filter(function (x) { return !st.done[x.kind + x.w.row]; });
     var checks = items.filter(function (x) { return x.kind === 'check'; });
-    var h = heads() + '<h2>🔗 Перевірка серій і авторів</h2><p class="muted small">Бажанки, які схожі на ваші серії чи авторів у бібліотеці, але не пов\'язані з ними. Нічого не змінюю без вашої кнопки.</p>';
+    var h = heads() + '<h2>🔗 Перевірка серій і авторів</h2><p class="muted small">Бажанки, які схожі на твої серії чи авторів у бібліотеці, але не пов\'язані з ними. Нічого не змінюю без твоєї кнопки.</p>';
     if (!items.length) h += '<p>Усе пов\'язано ✓</p>';
     var row = function (x, extra) {
       return '<div class="item" style="align-items:flex-start">' + cover(x.w) + '<div class="body"><div class="t">' + esc(x.w.title) + '</div><div class="muted small">' + esc(x.w.author) + (x.w.series ? ' · ' + esc(x.w.series) : '') + ' · ' + esc(x.w.status) + '</div>' +
@@ -1627,7 +1634,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
           var name = tgt ? tgt.series : r.series;
           extra = '<div class="small" style="margin-top:4px">MEGOGO: серія «' + esc(r.series) + '»' + (r.part ? ', том ' + esc(r.part) : '') + (r.url ? ' · ' + srcLink(r.url) : '') + '</div>' +
             '<div class="row" style="margin-top:6px;gap:6px"><button class="btn p" style="padding:5px 12px" data-action="sc-link" data-row="' + x.w.row + '" data-s="' + esc(name) + '" data-n="' + esc(r.part || '') + '" data-t="' + esc(tgt ? tgt.total || '' : '') + '">Прив\'язати: «' + esc(name) + '»' + (r.part ? ' #' + esc(r.part) : '') + '</button><button class="btn" style="padding:5px 12px" data-action="sc-skip" data-k="check" data-row="' + x.w.row + '">Ні</button></div>';
-        } else if (r && r.skipped) extra = '<div class="muted small" style="margin-top:4px">Не встигла — натисніть «Перевірити» ще раз.</div>';
+        } else if (r && r.skipped) extra = '<div class="muted small" style="margin-top:4px">Не встигла — натисни «Перевірити» ще раз.</div>';
         else if (r) extra = '<div class="muted small" style="margin-top:4px">MEGOGO не знає серії для цієї книги.</div><div class="row" style="margin-top:6px"><button class="btn" style="padding:5px 12px" data-action="sc-skip" data-k="check" data-row="' + x.w.row + '">Сховати</button></div>';
         return row(x, extra);
       }).join('') + '</div></div>';
@@ -1658,7 +1665,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function newsHtml() {
     var list = (D.news || []).filter(newsWish);
     if (!list.length) return '';
-    return '<div class="card news"><h3 style="margin:0 0 4px">📰 Новини серій <span class="muted">· ' + list.length + '</span></h3><p class="muted small" style="margin:0 0 8px">Знайдено на MEGOGO Books або через Gemini. Перевірте за посиланням і натисніть «Оновити» — зміни запишуться в бажанку.</p><div class="list">' +
+    return '<div class="card news"><h3 style="margin:0 0 4px">📰 Новини серій <span class="muted">· ' + list.length + '</span></h3><p class="muted small" style="margin:0 0 8px">Знайдено на MEGOGO Books або через Gemini. Перевір за посиланням і натисни «Оновити» — зміни запишуться в бажанку.</p><div class="list">' +
       list.map(function (it) {
         var w = newsWish(it);
         return '<div class="item oi" data-wish="' + w.row + '">' + cover(w) + '<div class="body"><div class="t">' + esc(it.ch.title || w.title) + '</div><div class="muted small">' + esc(w.author) + (w.series ? ' · ' + esc(w.series) + (w.part ? ' #' + esc(w.part) : '') : '') + '</div>' +
@@ -1705,7 +1712,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       h += '<div class="board">' + statuses.map(function (s) {
         var col = list.filter(function (w) { return w.status === s; });
         var sum = col.reduce(function (a, w) { return a + (w.price || 0); }, 0);
-        return '<div class="col"><h4><span>' + esc(s) + ' · ' + col.length + '</span><span class="muted">' + (sum ? money(sum) : '') + '</span></h4><div class="list">' + col.map(wishItem).join('') + '</div></div>';
+        return '<div class="col"><h4><span>' + esc(s) + ' · ' + col.length + '</span><span class="muted">' + (sum ? money(sum) : '') + '</span></h4><div class="list">' + col.map(function (w) { return wishItem(w, true); }).join('') + '</div></div>';
       }).join('') + '</div>';
     } else {
       h += '<div class="list grid">' + list.slice(0, view.limit).map(wishItem).join('') + '</div>';
@@ -1744,9 +1751,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var items = g.items.slice().sort(function (x, y) { return stageOf(x) - stageOf(y); });
     var ttns = uniq(items.map(function (w) { return w.ttn; }).filter(Boolean)), t = items.filter(function (w) { return w.ttn; })[0];
     var rows = items.map(function (w) { return w.row; }).join(',');
-    var stTxt = uniq(items.map(function (w) { return w.status; })).join(' / ');
-    return '<div class="ocard"><div class="ohead"><div class="grow"><div class="ono">' + (items[0].order ? '№ ' + esc(items[0].order) : ttns.length ? 'ТТН ' + esc(ttns[0]) : 'Без номера') + '</div>' +
-      '<div class="muted small">' + [showShop ? esc(g.site) : '', g.date ? 'замовлено ' + dmy(g.date) : '', items.length + ' кн. · ' + money(g.sum), esc(stTxt)].filter(Boolean).join(' · ') + '</div></div>' +
+    var st = stageOf(items[0]);
+    var stLbl = [['ok', items.length > 1 && items.some(function (w) { return !arrived(w); }) ? 'Частину можна забирати' : 'Можна забирати'], ['w', 'В дорозі'], ['w', 'Створено ТТН'], ['', 'Замовлено']][st];
+    return '<div class="ocard' + (st === 0 ? ' ready' : '') + '"><div class="ohead"><div class="grow"><span class="ost ' + stLbl[0] + '">' + stLbl[1] + '</span><div class="ono">' + (items[0].order ? '№ ' + esc(items[0].order) : ttns.length ? 'ТТН ' + esc(ttns[0]) : 'Без номера') + '</div>' +
+      '<div class="muted small">' + [showShop ? esc(g.site) : '', g.date ? 'замовлено ' + dmy(g.date) : '', items.length + ' кн. · ' + money(g.sum)].filter(Boolean).join(' · ') + '</div></div>' +
       (items.length > 1 ? '<button class="btn p sm" data-action="got-order" data-rows="' + rows + '">Отримала все</button>' : '') + '</div>' +
       '<div class="chips" style="margin:6px 0 2px;align-items:center">' + ttns.map(function (n) { return '<span class="chip">🚚 ТТН ' + esc(n) + '</span>'; }).join('') +
       (t && t.np ? '<span class="chip ' + (arrived(t) ? 'ok' : 'w') + '" title="' + esc(t.np) + '">НП: ' + esc(npShort(t.np)) + '</span>' : '') + (t && t.npErr ? '<span class="chip b">' + esc(t.npErr) + '</span>' : '') +
@@ -1770,12 +1778,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return norm(w.title + ' ' + w.author + ' ' + (w.series || '') + ' ' + site(w) + ' ' + (w.order || '')).indexOf(q) !== -1;
     });
     var gs = orderGroups(rows).sort(function (a, b) {
+      // спершу те, що можна забирати, далі в дорозі, далі просто замовлене
+      var sa = Math.min.apply(null, a.items.map(stageOf)), sb = Math.min.apply(null, b.items.map(stageOf));
+      if (sa !== sb) return sa - sb;
       if (view.dsort) { if (!a.date !== !b.date) return a.date ? -1 : 1; return (view.dsort === 'old' ? 1 : -1) * (a.date < b.date ? -1 : a.date > b.date ? 1 : 0); }
       return (a.site < b.site ? -1 : a.site > b.site ? 1 : 0) || (a.date < b.date ? 1 : -1);
     });
     var sum = sumPrice(all), ready = all.filter(arrived), ns = notSent();
-    var h = '<div class="row" style="flex-wrap:nowrap;margin-bottom:8px">' + sbox('<input type="search" data-input="dq" placeholder="№ замовлення, ТТН або назва" value="' + esc(view.dq || '') + '">', 'grow') +
-      '<button class="btn p" data-action="order-open" title="Додати замовлення">🧾 ＋</button></div>';
+    var h = '<div class="row" style="flex-wrap:nowrap;margin-bottom:8px">' + sbox('<input type="search" data-input="dq" placeholder="Пошук замовлення" value="' + esc(view.dq || '') + '">', 'grow') +
+      '<button class="btn p" data-action="order-open" style="white-space:nowrap">＋ Замовлення</button></div>';
     h += '<p class="muted small" style="margin:0 0 8px">' + orderGroups(all).length + ' замовлень · ' + all.length + ' кн. · ' + money(sum) +
       (ready.length ? ' · <b style="color:var(--ok)">можна забирати: ' + ready.length + '</b>' : '') + (ns.length ? ' · <a class="link" data-list="notsent">не відправлені: ' + ns.length + '</a>' : '') + '</p>';
     h += '<div class="shops">' + '<button data-action="dshop" data-v="" class="' + (!view.dshop ? 'on' : '') + '"><b>Усі</b><span>' + orderGroups(base).length + '</span></button>' +
@@ -1784,7 +1795,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       '<div class="pick scroll"><button data-action="dstat" data-ds="" class="' + (!view.dstat ? 'on' : '') + '">Усі · ' + all.length + '</button>' + STAGES.map(function (n, i) { return stg[i].length ? '<button data-action="dstat" data-ds="' + i + '" class="' + (view.dstat === String(i) ? 'on' : '') + '">' + n + ' · ' + stg[i].length + '</button>' : ''; }).join('') + '</div>' +
       (D.cols.wishOrdered ? '<div class="pick scroll"><span class="muted small" style="align-self:center">Замовлено:</span>' + DPER.map(function (x) { return '<button data-action="dper" data-v="' + x[0] + '" class="' + ((view.dper || '') === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
         '<div class="pick scroll"><span class="muted small" style="align-self:center">Порядок:</span>' + [['', 'за магазином'], ['new', 'нові спершу'], ['old', 'давні спершу']].map(function (x) { return '<button data-action="dsort" data-v="' + x[0] + '" class="' + ((view.dsort || '') === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' : '') +
-      '<p class="muted small">Статус Нової пошти оновлюється сам щогодини. Коли книга у вас — «Отримала», і вона піде в бібліотеку.</p></details>';
+      '<p class="muted small">Статус Нової пошти оновлюється сам щогодини. Коли книга у тебе — «Отримала», і вона піде в бібліотеку.</p></details>';
     var showShop = !view.dshop;
     h += gs.length ? '<div class="cols">' + gs.map(function (g) { return orderCard(g, showShop); }).join('') + '</div>' : '<p class="muted">' + (q ? 'Нічого не знайшла за «' + esc(view.dq) + '».' : 'Активних замовлень немає.') + '</p>';
     return h;
@@ -1866,12 +1877,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var c = D.cols;
     var inList = k.filter(function (b) { return b.parcel === 'в списку'; }), onWay = k.filter(function (b) { return b.parcel === 'в дорозі'; });
     var rest = k.filter(function (b) { return !b.parcel; });
-    var h = '<div class="tiles">' + tile(k.length, 'книг у Києві', 'kyiv') + tile(k.filter(function (b) { return b.prio; }).length, 'з пріоритетом') +
-      (c.parcel ? tile(inList.length + onWay.length, 'у посилці') : '') + '</div>';
+    var nPrio = k.filter(function (b) { return b.prio; }).length;
+    // плитки з нулем не показуємо
+    var h = '<div class="tiles sm">' + tile(k.length, 'книг у Києві', 'kyiv') + (nPrio ? tile(nPrio, 'з пріоритетом') : '') +
+      (c.parcel && inList.length + onWay.length ? tile(inList.length + onWay.length, 'у посилці') : '') + '</div>';
     if (!c.parcel) h += '<div class="note">Щоб збирати посилку (список → в дорозі → отримала), потрібна колонка «Посилка з Києва». Поки можна міняти пріоритет і відмічати «Отримала» в картці книги.</div>';
     if (c.parcel) {
       h += '<div class="card"><h3>✈️ Посилка</h3>';
-      if (!inList.length && !onWay.length) h += '<p class="muted small">Порожньо. Позначте книги нижче й натисніть «Додати в посилку».</p>';
+      if (!inList.length && !onWay.length) h += '<p class="muted small">Порожньо. Познач книги нижче й натисни «Додати в посилку».</p>';
       if (inList.length) h += '<h4 style="margin:8px 0 4px">Збираю (' + inList.length + ')</h4><div class="list grid">' + inList.map(function (b) { return parcelItem(b, true); }).join('') + '</div>' +
         '<div class="row" style="margin-top:8px"><button class="btn p" data-action="parcel-sent">Відправили</button></div>';
       if (onWay.length) h += '<h4 style="margin:12px 0 4px">В дорозі (' + onWay.length + ')</h4><div class="list grid">' + onWay.map(function (b) { return parcelItem(b, true); }).join('') + '</div>' +
@@ -1884,7 +1897,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     h += '<div class="cols">' + keys.map(function (p) {
       return '<div class="card"><h3>' + (p === '—' ? 'Без пріоритету' : 'Пріоритет ' + esc(p)) + ' <span class="muted">· ' + groups[p].length + '</span> <span class="chip" role="button" data-action="sel-group" data-grp="' + esc(p) + '" style="float:right;font-size:12px;cursor:pointer">✓ вибрати всі</span></h3><div class="list">' + groups[p].sort(function (a, b) { return a.author.localeCompare(b.author, 'uk'); }).map(function (b) { return parcelItem(b, false); }).join('') + '</div></div>';
     }).join('') + '</div>';
-    if (rest.length) h += '<p class="muted small">Поставте галочки біля книг — знизу з’явиться панель: додати в посилку або змінити пріоритет.</p>' +
+    if (rest.length) h += '<p class="muted small">Постав галочки біля книг — знизу з’явиться панель: додати в посилку або змінити пріоритет.</p>' +
       '<div class="selbar" id="selbar" hidden><b id="selcount"></b>' +
       (c.parcel ? '<button class="btn p" data-action="parcel-add">✈️ В посилку</button>' : '') +
       '<select id="bulk-prio" style="width:auto"><option value="">пріоритет…</option>' + opts('library', 'prio').map(function (o) { return '<option value="' + esc(o) + '">пріоритет ' + esc(o) + '</option>'; }).join('') + '<option value="__none">без пріоритету</option></select>' +
@@ -1923,14 +1936,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var ser = bySeries[norm(b.series)] || {};
         var prev = ser[n - 1];
         if (n > 1 && prev && low(prev.status) === 'прочитано') { sc += 100; why.push('наступна в серії «' + b.series + '» після #' + (n - 1)); }
-        else if (n > 1 && prev && low(prev.status) === 'читаю') { sc += 60; why.push('продовження того, що читаєте зараз'); }
+        else if (n > 1 && prev && low(prev.status) === 'читаю') { sc += 60; why.push('продовження того, що читаєш зараз'); }
         else if (n > 1) sc -= 60;
         else if (n === 1) { sc += 8; why.push('перша в серії'); }
       } else sc += 10;
       var al = authorLove[b.author];
-      if (al) { var avg = al.rn ? al.r / al.rn : 0; sc += 20 + (avg >= 4 ? 25 : 0); why.push('ви читали цього автора' + (avg ? ' (середня ' + avg.toFixed(1) + '★)' : '') + ''); }
+      if (al) { var avg = al.rn ? al.r / al.rn : 0; sc += 20 + (avg >= 4 ? 25 : 0); why.push('ти читала цього автора' + (avg ? ' (середня ' + avg.toFixed(1) + '★)' : '') + ''); }
       var gs = genreScore[b.genre] || 0;
-      if (gs > .12) { sc += Math.round(gs * 60); why.push('ваш частий жанр: ' + b.genre); }
+      if (gs > .12) { sc += Math.round(gs * 60); why.push('твій частий жанр: ' + b.genre); }
       if (gRate[b.genre] && gRate[b.genre][1] >= 3) { var ga = gRate[b.genre][0] / gRate[b.genre][1]; if (ga >= 4.2) { sc += 15; } }
       if (b.bought && daysBetween(b.bought, D.today) <= 60) { sc += 12; why.push('нещодавно купили'); }
       if (b.pages && b.pages < 350) sc += 4;
@@ -2017,8 +2030,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (homeOnly) list = list.filter(function (u) { return u.b && atHome(u.b) && low(u.b.status) === 'не читала'; });
     if (!list.length) return '';
     var segs = function (u) { var h = ''; for (var i = 0; i < Math.min(u.total, 12); i++) h += '<i style="flex:1;height:6px;border-radius:3px;background:' + (i < u.read ? 'var(--accent)' : 'var(--line)') + '"></i>'; return '<div style="display:flex;gap:3px;margin:4px 0">' + h + '</div>'; };
-    return '<div class="card"><h3>' + (homeOnly ? 'Можна продовжити зараз' : 'Недочитані серії') + ' <span class="muted">· ' + list.length + '</span></h3>' + (homeOnly ? '<p class="muted small" style="margin:-4px 0 8px">Серії, де наступний том уже у вас на полиці.</p>' : '') + '<div class="list">' + list.slice(0, limit || 50).map(function (u) {
-      var where = u.b ? (atHome(u.b) ? '<span style="color:var(--ok)">у вас' + (u.b.shelf ? ', ' + esc(u.b.shelf) : '') + '</span>' : inKyiv(u.b) ? '<span style="color:var(--warn)">у Києві</span>' : esc(u.b.avail || ''))
+    return '<div class="card"><h3>' + (homeOnly ? 'Можна продовжити зараз' : 'Недочитані серії') + ' <span class="muted">· ' + list.length + '</span></h3>' + (homeOnly ? '<p class="muted small" style="margin:-4px 0 8px">Серії, де наступний том уже у тебе на полиці.</p>' : '') + '<div class="list">' + list.slice(0, limit || 50).map(function (u) {
+      var where = u.b ? (atHome(u.b) ? '<span style="color:var(--ok)">у тебе' + (u.b.shelf ? ', ' + esc(u.b.shelf) : '') + '</span>' : inKyiv(u.b) ? '<span style="color:var(--warn)">у Києві</span>' : esc(u.b.avail || ''))
         : u.w ? '<span style="color:var(--accent)">у бажанках · ' + esc(u.w.status) + '</span>' : '<span class="muted">немає</span>';
       var nextT = u.b ? u.b.title : u.w ? u.w.title : '#' + u.n;
       return '<div class="item"' + (u.b ? ' data-book="' + u.b.row + '"' : u.w ? ' data-wish="' + u.w.row + '"' : '') + '>' + (u.b ? cover(u.b) : '') + '<div class="body"><b data-go="series|' + esc(u.x.name) + '">' + esc(u.x.name) + '</b>' + segs(u) +
@@ -2034,7 +2047,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<button class="close" data-action="close">×</button><h2>Що почитати?</h2>';
     if (a.step < 4) {
       h += '<div style="display:flex;gap:4px;margin:4px 0 8px">' + steps.map(function (x, i) { return '<i style="flex:1;height:4px;border-radius:2px;background:' + (i <= a.step ? 'var(--accent)' : 'var(--line)') + '"></i>'; }).join('') + '</div>';
-      h += '<p class="muted small">Питання ' + (a.step + 1) + ' з 4 · підходить книг: <b>' + pool.length + '</b> (непрочитані, у вас удома)</p>';
+      h += '<p class="muted small">Питання ' + (a.step + 1) + ' з 4 · підходить книг: <b>' + pool.length + '</b> (непрочитані, у тебе удома)</p>';
       var opt = function (key, val, label, n, on) { return '<button class="btn' + (on ? ' p' : '') + '" style="flex-direction:column;min-height:64px" data-action="ask-pick" data-k="' + key + '" data-v="' + esc(val) + '">' + esc(label) + (n != null ? '<div class="small" style="opacity:.8;font-weight:400">' + n + ' кн.</div>' : '') + '</button>'; };
       var cnt = function (patch) { var t = {}; Object.keys(a).forEach(function (k) { t[k] = a[k]; }); Object.keys(patch).forEach(function (k) { t[k] = patch[k]; }); return askPool(t).length; };
       var grid = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">';
@@ -2043,19 +2056,19 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var base = askPool({ kind: a.kind, genres: [], lang: '', size: '' });
         var gc = {}; base.forEach(function (b) { b._g.forEach(function (g) { if (g) gc[g] = (gc[g] || 0) + 1; }); });
         h += '<h3>Жанр? <span class="muted small">можна кілька</span></h3><div class="chips">' + Object.keys(gc).sort(function (x, y) { return gc[y] - gc[x]; }).map(function (g) {
-          return '<button class="chip' + (a.genres.indexOf(g) !== -1 ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (a.genres.indexOf(g) !== -1 ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-genre" data-v="' + esc(g) + '">' + esc(g) + ' · ' + gc[g] + '</button>';
+          return '<button class="chip' + (a.genres.indexOf(g) !== -1 ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (a.genres.indexOf(g) !== -1 ? ';background:var(--accent-fill);color:#fff' : '') + '" data-action="ask-genre" data-v="' + esc(g) + '">' + esc(g) + ' · ' + gc[g] + '</button>';
         }).join('') + '</div>';
         var tc = {}; base.forEach(function (b) { b._t.forEach(function (t) { tc[t] = (tc[t] || 0) + 1; }); });
         var tk = Object.keys(tc).sort(function (x, y) { return tc[y] - tc[x]; }).slice(0, 30);
         if (tk.length && !NO_TROPES) h += '<h3 style="margin-top:14px">Тропи? <span class="muted small">можна кілька</span></h3><div class="chips">' + tk.map(function (t) {
           var on = (a.tropes || []).indexOf(t) !== -1;
-          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-trope" data-v="' + esc(t) + '">' + esc(t) + ' <small>' + tc[t] + '</small></button>';
+          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent-fill);color:#fff' : '') + '" data-action="ask-trope" data-v="' + esc(t) + '">' + esc(t) + ' <small>' + tc[t] + '</small></button>';
         }).join('') + '</div>';
         var mc = {}; D.books.forEach(function (b) { b._m.forEach(function (m) { mc[m] = (mc[m] || 0) + 1; }); });
         var mk = MOODS.filter(function (m) { return mc[m]; });
-        if (mk.length) h += '<h3 style="margin-top:14px">Настрій? <span class="muted small">як книги, що вам…</span></h3><div class="chips">' + mk.map(function (m) {
+        if (mk.length) h += '<h3 style="margin-top:14px">Настрій? <span class="muted small">як книги, що тобі…</span></h3><div class="chips">' + mk.map(function (m) {
           var on = a.mood === m;
-          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-mood" data-v="' + esc(m) + '">' + esc(m) + '</button>';
+          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent-fill);color:#fff' : '') + '" data-action="ask-mood" data-v="' + esc(m) + '">' + esc(m) + '</button>';
         }).join('') + '</div>';
         h += '<div class="row" style="margin-top:12px"><button class="btn p" data-action="ask-next">' + (a.genres.length || (a.tropes || []).length || a.mood ? 'Далі' : 'Будь-що') + '</button></div>';
       }
@@ -2066,7 +2079,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     } else {
       var lab = { single: 'одна історія', newser: 'нова серія', cont: 'продовження серії', any: '' }[a.kind] || '';
       h += '<p class="muted small">' + [lab, a.genres.join(', '), (a.tropes || []).join(', '), a.mood ? 'настрій: ' + a.mood : '', a.lang === 'uk' ? 'українською' : a.lang === 'other' ? 'не українською' : '', { thin: 'тоненька', mid: 'середня', thick: 'товста' }[a.size] || ''].filter(Boolean).join(' · ') + ' — ' + pool.length + ' кн.</p>';
-      if (!pool.length) h += '<p>Нічого не підійшло. Спробуйте зняти якусь умову.</p>';
+      if (!pool.length) h += '<p>Нічого не підійшло. Спробуй зняти якусь умову.</p>';
       var top = pool.slice(0, 12);
       if (a.shuffle) { var off = (a.shuffle * 3) % Math.max(top.length, 1); top = top.slice(off).concat(top.slice(0, off)); }
       h += '<div class="covers" style="grid-template-columns:repeat(3,minmax(0,1fr))">' + top.slice(0, 3).map(function (b) { return covMini(b, esc([b.pages ? b.pages + ' с.' : '', b._why[0] || ''].filter(Boolean).join(' · '))); }).join('') + '</div>';
@@ -2101,7 +2114,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function askHomeCard() {
     var u = unfinishedSeries().length;
-    return '<button class="card" data-action="ask-open" style="display:flex;width:100%;align-items:center;gap:12px;background:var(--accent);color:#fff;border:0;font:inherit;text-align:left;cursor:pointer">' +
+    return '<button class="card" data-action="ask-open" style="display:flex;width:100%;align-items:center;gap:12px;background:var(--accent-fill);color:#fff;border:0;font:inherit;text-align:left;cursor:pointer">' +
       '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 013 3v12a2 2 0 00-2-2H2zM22 5h-7a3 3 0 00-3 3v12a2 2 0 012-2h8z"/></svg>' +
       '<span style="flex:1"><b style="font-size:16px">Що почитати?</b><br><span class="small" style="opacity:.9">4 питання' + (u ? ' · недочитаних серій: ' + u : '') + '</span></span><span style="font-size:20px">›</span></button>';
   }
@@ -2120,7 +2133,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var rec = recommend();
     var h = askHomeCard() + unfinishedHtml(6);
     h += '<div>';
-    h += '<div class="card rec"><h3>Що почитати далі</h3><p class="muted small">З непрочитаних книг, які у вас удома. Враховано серії (наступна після прочитаної), авторів і жанри, які ви читаєте найчастіше' + (c.rating ? ', і ваші оцінки' : '') + '.</p>' +
+    h += '<div class="card rec"><h3>Що почитати далі</h3><p class="muted small">З непрочитаних книг, які у тебе удома. Враховано серії (наступна після прочитаної), авторів і жанри, які ти читаєш найчастіше' + (c.rating ? ', і твої оцінки' : '') + '.</p>' +
       (rec.length ? '<div class="list">' + rec.slice(0, 8).map(recItem).join('') + '</div>' : '<p class="muted">Немає непрочитаних книг удома.</p>') + '</div>';
     h += '</div>';
     if (c.readOn) {
@@ -2154,7 +2167,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- Фінанси: списки з ціною біля кожної книги ---------- */
   var PRICED = { value: 1, rec: 1, sercost: 1, serall: 1, orders: 1 };
   view.pdir = {};
-  // витрати на серії: лише книги, що зараз у вас (без проданих і подарованих)
+  // витрати на серії: лише книги, що зараз у тебе (без проданих і подарованих)
   function seriesSpend() {
     var m = {};
     S.inLib.forEach(function (b) {
@@ -2220,7 +2233,20 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var seriesNeed = S.series.filter(function (x) { return x.missing.length; }).map(function (x) { return [x.name, x.missing.length * (x.pubAvg || 0), x.missing.length]; }).sort(function (a, b) { return b[1] - a[1]; });
     var seriesTotal = seriesNeed.reduce(function (a, r) { return a + r[1]; }, 0), seriesBooks = seriesNeed.reduce(function (a, r) { return a + r[2]; }, 0);
 
-    var h = '<div class="tiles">' + tile(money(sum(lib)), 'вартість бібліотеки', 'value') + tile(money(S.avg), 'середня ціна книги') +
+    // спершу те, що цікавить найчастіше: скільки витрачено цього місяця й року, і графік по місяцях
+    var ym0 = curYm(), y0 = D.today.slice(0, 4);
+    var h = '<div class="plaques">' +
+      '<button class="plq" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym0)] + '</small><b>' + money(sumPrice(spentIn(ym0))) + '</b></button>' +
+      '<button class="plq" data-list="orders|y"><small>Витрачено за ' + y0 + '</small><b>' + money(sumPrice(spentIn(y0))) + '</b></button>' +
+      '<button class="plq" data-tab="delivery"><small>Замовлено, ще в дорозі</small><b>' + money(sum(ordered)) + '</b></button></div>';
+    var mk = [];
+    for (var mi = 11; mi >= 0; mi--) mk.push(addMonths(ym0, -mi));
+    var mv = mk.map(function (m) { return Math.round(sumPrice(spentIn(m))); }), mmax = Math.max.apply(null, mv.concat([1]));
+    h += '<div class="card"><h3>Витрати по місяцях</h3><div class="vb">' + mk.map(function (m, i) {
+      var v = mv[i], lbl = v >= 1000 ? String(Math.round(v / 100) / 10).replace('.', ',') + 'k' : v ? String(v) : '';
+      return '<div class="c"' + (m === ym0 ? ' data-list="orders|m" style="cursor:pointer"' : m === addMonths(ym0, -1) ? ' data-list="orders|pm" style="cursor:pointer"' : '') + ' title="' + esc(MONTHS_FULL[mIdx(m)] + ': ' + money(v)) + '"><span class="v">' + lbl + '</span><i style="height:' + Math.max(2, v / mmax * 100) + '%"></i><span class="l">' + MONTHS_SHORT[mIdx(m)] + '</span></div>';
+    }).join('') + '</div><p class="muted small">Замовлення за датою замовлення і книги за датою покупки, як «Витрачено» на Головній.</p></div>';
+    h += '<div class="tiles">' + tile(money(sum(lib)), 'вартість бібліотеки', 'value') + tile(money(S.avg), 'середня ціна книги') +
       tile(money(sum(unread)), 'непрочитаних (' + unread.length + ' ' + bookWord(unread.length) + ')', 'unread') + tile(money(sum(ordered)), 'замовлено, ще не приїхало (' + ordered.length + ')', 'ordered') +
       tile(money(sum(wantPriced)), '«Хочу купити» з ціною (' + wantPriced.length + ' з ' + want.length + ')', 'want') + tile('≈ ' + money(seriesTotal), 'дозібрати серії (' + seriesBooks + ' томів)') + '</div>';
     h += moneyRecords();
@@ -2244,18 +2270,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var byVal = function (m) { return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b[1] - a[1]; }); };
     h += '<div class="card"><h3>Вартість: де фізично</h3>' + hbars(byVal(wheres), money, 'where') + '<h3 style="margin-top:12px">Вартість за статусом</h3>' + hbars(byVal(places), money, 'place') + '</div>';
     var serSpend = seriesSpend();
-    if (serSpend.length) h += '<div class="card"><h3>Серії за витратами</h3><p class="muted small">Скільки ви вже витратили на кожну серію. Натисніть — побачите книги й суму.</p>' +
+    if (serSpend.length) h += '<div class="card"><h3>Серії за витратами</h3><p class="muted small">Скільки ти вже витратила на кожну серію. Натисни — побачиш книги й суму.</p>' +
       hbars(serSpend.slice(0, 12).map(function (r) { return [r.name, r.sum, r.n]; }), function (v, r) { return money(v) + ' · ' + r[2] + ' кн.'; }, 'sercost') +
       (serSpend.length > 12 ? '<button class="more" data-list="serall">Усі серії (' + serSpend.length + ')</button>' : '') + '</div>';
-    if (seriesNeed.length) h += '<div class="card"><h3>Скільки приблизно коштує дозібрати серії</h3><p class="muted small">Кількість відсутніх томів × середня ціна книги цього видавництва у вашій бібліотеці.</p>' + hbars(seriesNeed.slice(0, 15), function (v, r) { return '≈ ' + money(v) + ' · ' + r[2] + ' т.'; }) + '</div>';
-    if (D.cols.bought) {
-      var dated = lib.filter(function (b) { return b.bought && b.price != null; });
-      var months = {};
-      dated.forEach(function (b) { var k = b.bought.slice(0, 7); months[k] = (months[k] || 0) + b.price; });
-      var keys = Object.keys(months).sort().slice(-12);
-      h += '<div class="card"><h3>Витрати по місяцях</h3>' + (keys.length ? hbars(keys.map(function (k) { return [k.slice(5) + '.' + k.slice(0, 4), months[k]]; }), money) : '<p class="muted">Ще немає книг із датою покупки. Вона ставиться сама, коли додаєте книгу через «Додати книгу».</p>') +
-        '<p class="muted small">Без дати покупки: ' + (lib.length - dated.length) + ' книг (рахуються у вартості, але не тут).</p></div>';
-    }
+    if (seriesNeed.length) h += '<div class="card"><h3>Скільки приблизно коштує дозібрати серії</h3><p class="muted small">Кількість відсутніх томів × середня ціна книги цього видавництва у твоїй бібліотеці.</p>' + hbars(seriesNeed.slice(0, 15), function (v, r) { return '≈ ' + money(v) + ' · ' + r[2] + ' т.'; }) + '</div>';
     if (D.hasSale) {
       var withPrice = D.sold.filter(function (x) { return x.price != null; });
       h += '<div class="card"><h3>Продажі</h3><p>Продано книг: <b>' + D.sold.length + '</b>, з ціною продажу: ' + withPrice.length + ', отримано <b>' + money(sum(withPrice)) + '</b>.</p></div>';
@@ -2275,7 +2293,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var authors = uniq(D.books.map(function (x) { return x.author; })), pubs = uniq(D.books.map(function (x) { return x.pub; }).concat(D.wish.map(function (x) { return x.pub; }))), sers = uniq(D.series.map(function (x) { return x.name; }));
     var inp = function (id, label, val, extra, cls) { return '<label class="' + (cls || '') + '"><span>' + label + '</span><input id="' + id + '" value="' + esc(val == null ? '' : val) + '" ' + (extra || '') + '></label>'; };
     var h = '<button class="close" data-action="close">×</button><h2>📚 ' + (addState.wish ? 'Отримала → у бібліотеку' : 'Додати книгу') + '</h2>';
-    if (addState.wish) h += '<p class="muted small">З бажанок: ' + esc(addState.wish.author) + ' — ' + esc(addState.wish.title) + '. Заповніть, чого бракує, і виберіть, де книга.</p>';
+    if (addState.wish) h += '<p class="muted small">З бажанок: ' + esc(addState.wish.author) + ' — ' + esc(addState.wish.title) + '. Заповни, чого бракує, і вибери, де книга.</p>';
     h += '<div class="form">';
     h += '<div class="full"><div class="row"><input id="f-isbn" class="grow" inputmode="numeric" placeholder="ISBN (штрихкод на звороті)" value="' + esc(b.isbn || '') + '"><button class="btn" data-action="paste" data-for="f-isbn" title="Вставити скопійований ISBN">📋</button><button class="btn" data-action="scan-add" title="Сканувати">📷</button><button class="btn" data-action="lookup">🔍 Підтягнути</button></div><div id="f-look" class="small muted" style="margin-top:6px"></div></div>';
     h += inp('f-author', 'Автор *', b.author, 'list="dl-authors" autocomplete="off"') + inp('f-title', 'Назва *', b.title);
@@ -2298,8 +2316,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (b.cover) showLookPreview({ cover: b.cover });
     if (addState.wish) {
       ['f-author', 'f-title', 'f-pub', 'f-price', 'f-series', 'f-num', 'f-total', 'f-cover'].forEach(function (id) { if (fval(id)) srcMark(id, 'бажанки'); });
-      if (b.genre) { srcMark('f-genre', 'ваша серія'); srcMark('f-lang', 'ваша серія'); }
-      if (b.shelf) srcMark('f-shelf', 'ваша серія');
+      if (b.genre) { srcMark('f-genre', 'твоя серія'); srcMark('f-lang', 'твоя серія'); }
+      if (b.shelf) srcMark('f-shelf', 'твоя серія');
     }
     if (fval('f-series')) applySeriesDefaults();
     if (fval('f-author')) applyAuthorDefaults();
@@ -2346,12 +2364,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function doLookup(silent) {
     var isbn = fval('f-isbn').replace(/[^0-9Xx]/g, ''), title = fval('f-title'), author = fval('f-author');
-    if (!isbn && !title) return showLookPreview({ msg: 'Впишіть ISBN або назву.' });
+    if (!isbn && !title) return showLookPreview({ msg: 'Впиши ISBN або назву.' });
     var dupe = isbn && D.books.filter(function (x) { return x.isbn === isbn; })[0];
     showLookPreview({ msg: silent ? 'Підтягую дані з інтернету…' : 'Шукаю…' });
     api('lbApiLookup', { isbn: isbn, title: title, author: author }).then(function (r) {
       if (!document.getElementById('f-title')) return;
-      if (r.notFound) { showLookPreview({ msg: silent ? 'В інтернеті даних не знайшлося, решту заповніть вручну (поля з рамкою).' : 'Нічого не знайшла' + (r.sources && r.sources.length ? ' (' + r.sources.join(', ') + ')' : '') + '. Заповніть вручну.' }); return; }
+      if (r.notFound) { showLookPreview({ msg: silent ? 'В інтернеті даних не знайшлося, решту заповни вручну (поля з рамкою).' : 'Нічого не знайшла' + (r.sources && r.sources.length ? ' (' + r.sources.join(', ') + ')' : '') + '. Заповни вручну.' }); return; }
       applyLookup(r);
       addState.cover = r.cover || addState.cover;
       showLookPreview(r);
@@ -2369,10 +2387,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       avail: HOME_ST, place: where === 'kyiv' ? 'Київ' : 'Роттердам', shelf: where === 'home' ? fval('f-shelf') : '', prio: where === 'kyiv' ? fval('f-prio') : ''
     };
     if (book.bought) book.bought = dmy(book.bought);
-    if (!book.author || !book.title) { err.innerHTML = '<p class="msg small">Заповніть автора і назву.</p>'; return; }
-    if (book.type === 'Серія' && !book.series) { err.innerHTML = '<p class="msg small">Для серії вкажіть назву серії.</p>'; return; }
+    if (!book.author || !book.title) { err.innerHTML = '<p class="msg small">Заповни автора і назву.</p>'; return; }
+    if (book.type === 'Серія' && !book.series) { err.innerHTML = '<p class="msg small">Для серії вкажи назву серії.</p>'; return; }
     var btn = document.querySelector('[data-action="add-save"]'); if (btn) btn.disabled = true;
-    err.innerHTML = '<p class="muted small">Додаю і впорядковую таблицю… це може зайняти до півхвилини.</p>';
+    err.innerHTML = '<p class="muted small">Додаю книгу… це може зайняти до півхвилини.</p>';
     var req = { book: book, wish: addState.wish ? { row: addState.wish.row, author: addState.wish.author, title: addState.wish.title } : null, removeWish: !!(document.getElementById('f-rmwish') || {}).checked, force: !!force };
     api('lbApiAddBook', req).then(function (r) {
       if (r.duplicate) {
@@ -2440,13 +2458,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         if (have.length) { view.q = ''; showBook(have[0].row); return; }
         api('lbApiLookup', { isbn: code }).then(function (r) {
           view.q = r.title || code; render();
-          if (!r.title) toast('За ISBN нічого не знайшла. Спробуйте ввести назву.', true);
+          if (!r.title) toast('За ISBN нічого не знайшла. Спробуй ввести назву.', true);
         }).catch(function (e) { toast(e.message, true); });
       } else {
         var i = document.getElementById('f-isbn');
         if (i) { i.value = code; doLookup(); }
       }
-    }).catch(function () { toast('Не бачу штрихкод. Сфотографуйте ближче, рівно і при світлі, або впишіть ISBN цифрами.', true); });
+    }).catch(function () { toast('Не бачу штрихкод. Сфотографуй ближче, рівно і при світлі, або впиши ISBN цифрами.', true); });
   });
 
   /* ---------- 🧾 Замовлення зі скриншота або тексту ---------- */
@@ -2467,7 +2485,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function shopFromText(text) {
     var low = String(text).toLowerCase();
     for (var i = 0; i < RETAIL.length; i++) if (RETAIL[i].keys.some(function (k) { return low.indexOf(k) !== -1; })) return { where: RETAIL[i].where, site: RETAIL[i].site, pub: '' };
-    // сайти з ваших попередніх замовлень
+    // сайти з твоїх попередніх замовлень
     var known = {};
     D.wish.forEach(function (w) { var h = hostOf(w.site); if (h && h.indexOf('.') > 0 && w.pub) known[h] = known[h] || { pub: w.pub, site: w.site }; });
     for (var h in known) if (low.indexOf(h) !== -1 || (function (c) { return c.length >= 6 && low.indexOf(c.slice(1)) !== -1; })(h.split('.')[0])) return { where: 'Сайт видавництва', site: known[h].site, pub: known[h].pub };
@@ -2497,7 +2515,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var tm = full.match(/(?:всього|разом|сума|до сплати|total)\s*:?\s*(?:\n\s*)?(\d[\d\s]{0,6}(?:[.,]\d{1,2})?)/i);
     if (tm) out.total = Number(tm[1].replace(/\s/g, '').replace(',', '.'));
     var nt = ' ' + norm(full) + ' ';
-    // 1) книги з ваших бажанок, які є в тексті
+    // 1) книги з твоїх бажанок, які є в тексті
     var hits = D.wish.filter(function (w) {
       var k = norm(w.title);
       if (w.status === 'В бібліотеці' || k.length < 4 || /не оголошено|^(книга|частина|том) \d+$/.test(k)) return false;
@@ -2565,11 +2583,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var o = orderState;
     var isW = o.mode === 'wish';
     var h = '<button class="close" data-action="close">×</button><h2>' + (isW ? '＋ Нова бажанка' : '🧾 Замовлення') + '</h2>';
-    h += '<p class="muted small">' + (isW ? 'Вставте скриншот анонсу або сторінки книги, посилання на неї (MEGOGO, Книгарня Є, сайт видавництва) або текст. Я знайду назву, автора, серію, ціну й дату виходу, а ви перевірите перед збереженням. Можна й просто вписати книгу вручну.' :
-      'Вставте скриншот сторінки замовлення або чека (можна кілька), або скопійований текст листа. Я знайду книги, ціни, номер замовлення й магазин, а ви перевірите перед збереженням.') + '</p>';
+    h += '<p class="muted small">' + (isW ? 'Встав скриншот анонсу або сторінки книги, посилання на неї (MEGOGO, Книгарня Є, сайт видавництва) або текст. Я знайду назву, автора, серію, ціну й дату виходу, а ти перевіриш перед збереженням. Можна й просто вписати книгу вручну.' :
+      'Встав скриншот сторінки замовлення або чека (можна кілька), або скопійований текст листа. Я знайду книги, ціни, номер замовлення й магазин, а ти перевіриш перед збереженням.') + '</p>';
     h += '<div class="row" style="margin:10px 0"><button class="btn p" data-action="ord-shot">📷 Скриншот</button><button class="btn" data-action="ord-parse">🔎 Розпізнати текст</button>' +
       (o.busy ? '<span class="muted small">' + esc(o.busy) + '</span>' : '') + '</div>';
-    h += '<textarea id="ord-text" class="ordtext" placeholder="…або вставте сюди ' + (isW ? 'текст анонсу чи посилання' : 'текст замовлення') + '">' + esc(o.text) + '</textarea>';
+    h += '<textarea id="ord-text" class="ordtext" placeholder="…або встав сюди ' + (isW ? 'текст анонсу чи посилання' : 'текст замовлення') + '">' + esc(o.text) + '</textarea>';
     if (isW && !o.done) h += '<div class="row" style="margin-top:8px"><button class="btn" data-action="ord-add">＋ Вписати вручну</button></div>';
     if (o.done) {
       if (isW) h += '<div style="display:none">';
@@ -2579,18 +2597,18 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         '<label><span>№ замовлення</span><input id="ord-num" inputmode="numeric" value="' + esc(o.num) + '"></label>' +
         (D.cols.wishOrdered ? '<label><span>Дата замовлення</span><input type="date" id="ord-date" value="' + esc(o.date || D.today) + '"></label>' : '') + '</div>';
       if (isW) h += '</div>';
-      if (!o.items.length) h += '<p class="muted">Книг у тексті не знайшла. Додайте вручну або спробуйте інший скриншот.</p>';
+      if (!o.items.length) h += '<p class="muted">Книг у тексті не знайшла. Додай вручну або спробуй інший скриншот.</p>';
       h += o.items.map(function (x, i) {
         var badge = x.row ? (x.ordered ? '<span class="ob warn">уже замовлено · ' + esc(x.ordered) + '</span>' : '<span class="ob ok">є в бажанках · ' + esc(x.wishStatus || '') + '</span>') :
           '<span class="ob new">нова' + (x.looking ? ' · шукаю автора…' : x.src ? ' · дані: ' + esc(x.src) : '') + '</span>';
         if (x.dup) badge += ' <span class="ob warn">📚 уже є в бібліотеці (за ' + esc(x.dup.by) + ')</span>';
         return '<div class="oitem">' + badge + '<button class="ox" data-action="ord-del" data-i="' + i + '" aria-label="Прибрати">×</button>' +
           '<div class="form"><label><span>Назва</span><input id="oi-title-' + i + '" value="' + esc(x.title) + '"></label>' +
-          '<label' + (!x.author ? ' class="need"' : '') + '><span>Автор' + (!x.author ? ' — впишіть' : '') + '</span><input id="oi-author-' + i + '" list="ord-al" value="' + esc(x.author) + '"></label>' +
+          '<label' + (!x.author ? ' class="need"' : '') + '><span>Автор' + (!x.author ? ' — впиши' : '') + '</span><input id="oi-author-' + i + '" list="ord-al" value="' + esc(x.author) + '"></label>' +
           '<label><span>Ціна, грн' + (x.qty > 1 ? ' (×' + x.qty + ')' : '') + '</span><input id="oi-price-' + i + '" inputmode="decimal" value="' + (x.price == null ? '' : esc(x.price)) + '"></label>' +
           '<label' + (isW && !x.release ? ' class="need"' : '') + '><span>Вихід (місяць)' + (isW && !x.release ? ' — не знайшла' : '') + '</span><input type="month" id="oi-rel-' + i + '" value="' + esc(String(x.release || '').slice(0, 7)) + '"></label>' +
           '<label><span>Наявність</span><select id="oi-avail-' + i + '">' + ['', 'Передзамовлення', 'Є у продажу', 'Анонс'].map(function (a) { return '<option' + ((x.avail || '') === a ? ' selected' : '') + '>' + esc(a) + '</option>'; }).join('') + '</select></label>' +
-          (x.series ? '<label' + (!x.part ? ' class="need"' : '') + '><span>№ у серії «' + esc(x.series) + '»' + (x.serWas ? ' (як у вашій таблиці)' : '') + (!x.part ? ' — який том?' : '') + '</span><input id="oi-part-' + i + '" inputmode="decimal" value="' + esc(x.part || '') + '"></label>' : '') +
+          (x.series ? '<label' + (!x.part ? ' class="need"' : '') + '><span>№ у серії «' + esc(x.series) + '»' + (x.serWas ? ' (як у твоїй бібліотеці)' : '') + (!x.part ? ' — який том?' : '') + '</span><input id="oi-part-' + i + '" inputmode="decimal" value="' + esc(x.part || '') + '"></label>' : '') +
           (x.link || x.orig ? '<p class="muted small">' + (x.orig ? 'Оригінал: ' + esc(x.orig) + ' ' : '') + (x.link ? srcLink(x.link) : '') + '</p>' : '') + '</div></div>';
       }).join('');
       h += '<datalist id="ord-al">' + uniq(D.books.map(function (b) { return b.author; }).concat(D.wish.map(function (w) { return w.author; }))).filter(Boolean).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>';
@@ -2618,10 +2636,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function ordLookup(x) {
     x.looked = true;
-    // спершу ваші дані: каталог, бібліотека
+    // спершу твої дані: каталог, бібліотека
     var k = norm(x.title);
     var mine = D.books.concat(D.catalog || []).filter(function (b) { return norm(b.title) === k && b.author; })[0];
-    if (mine) { x.author = mine.author; x.src = 'ваша таблиця'; return; }
+    if (mine) { x.author = mine.author; x.src = 'твоя бібліотека'; return; }
     x.looking = true; ordSync(); orderDialog();
     api('lbApiLookup', { title: x.title }).then(function (r) {
       x.looking = false;
@@ -2690,7 +2708,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       o.items.push(it);
     });
     o.done = true; o.busy = '';
-    if (!o.items.length) toast('На скриншоті не знайшла книг. Спробуйте інший або впишіть вручну.', true);
+    if (!o.items.length) toast('На скриншоті не знайшла книг. Спробуй інший або впиши вручну.', true);
     orderDialog();
   }
   function ordOcr(files) {
@@ -2787,8 +2805,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var nx = si.isSeries ? nextToRead(vols) : null;
     if (nx) {
       var nb = nx.v.book, days = paceDays(nb);
-      h += '<div class="card"><h3>' + (nx.now ? 'Читаєте зараз' : 'Читати далі') + '</h3><div class="nextc" data-book="' + nb.row + '">' + cover(nb) + '<div class="grow"><b>#' + esc(numTxt(nx.v.n)) + ' ' + esc(nb.title) + '</b><div class="muted small">' +
-        [nb.pages ? nb.pages + ' стор.' : '', nb.shelf || (atHome(nb) ? '' : nb.avail), days ? '~' + days + ' дн. у вашому темпі' : ''].filter(Boolean).map(esc).join(' · ') + '</div>' +
+      h += '<div class="card"><h3>' + (nx.now ? 'Читаєш зараз' : 'Читати далі') + '</h3><div class="nextc" data-book="' + nb.row + '">' + cover(nb) + '<div class="grow"><b>#' + esc(numTxt(nx.v.n)) + ' ' + esc(nb.title) + '</b><div class="muted small">' +
+        [nb.pages ? nb.pages + ' стор.' : '', nb.shelf || (atHome(nb) ? '' : nb.avail), days ? '~' + days + ' дн. у твоєму темпі' : ''].filter(Boolean).map(esc).join(' · ') + '</div>' +
         (nx.now ? '' : '<button class="btn p" style="margin-top:6px" data-action="qm-start" data-row="' + nb.row + '">Почати читати</button>') + '</div></div></div>';
     }
     if (books.length) h += '<div class="card"><h3>Маю · ' + books.length + '</h3><div class="covers">' + books.map(function (b) { return covMini(b, bookSub(b)); }).join('') + '</div></div>';
@@ -2924,7 +2942,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     openModal(h, true);
   }
 
-  /* ---------- схожі у вас ---------- */
+  /* ---------- схожі у тебе ---------- */
   function similar(b) {
     var g = b._g;
     return S.inLib.filter(function (x) { return x !== b && !(x.series && x.series !== '-' && norm(x.series) === norm(b.series)); }).map(function (x) {
@@ -3144,7 +3162,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function applySeriesDefaults() {
     var d = seriesDefaults(fval('f-series'));
     if (!d) return;
-    var src = 'ваша серія';
+    var src = 'твоя серія';
     setAuto('f-total', d.total, src); setAuto('f-pub', d.pub, src); setAuto('f-author', d.author, src); setAuto('f-genre', d.genre, src);
     setAuto('f-genres', d.genres, src); setAuto('f-shelf', d.shelf, src); setAuto('f-num', d.num, 'наступний');
     var l = document.getElementById('f-lang'); if (l && d.lang && l.value !== d.lang && l.getAttribute('data-touched') !== '1') { l.value = d.lang; srcMark('f-lang', src); }
@@ -3303,7 +3321,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var now = readingNow();
     if (!now.length) {
       var next = pileFor(curYm())[0] || (recommend()[0] || {}).b;
-      return '<div class="desk"><div class="lbl">Зараз читаю</div><p style="margin:8px 0 0">Зараз нічого не читаєте.</p>' + (next ? '<div class="row" style="margin-top:10px;gap:12px" data-book="' + next.row + '">' + cover(next) + '<div class="grow"><b>' + esc(next.title) + '</b><div class="a">' + esc(next.author) + '</div><button class="b1" style="margin-top:8px;padding:8px 14px" data-action="qm-start" data-row="' + next.row + '">Почати читати</button></div></div>' : '') + '</div>';
+      return '<div class="desk"><div class="lbl">Зараз читаю</div><p style="margin:8px 0 0">Зараз нічого не читаєш.</p>' + (next ? '<div class="row" style="margin-top:10px;gap:12px" data-book="' + next.row + '">' + cover(next) + '<div class="grow"><b>' + esc(next.title) + '</b><div class="a">' + esc(next.author) + '</div><button class="b1" style="margin-top:8px;padding:8px 14px" data-action="qm-start" data-row="' + next.row + '">Почати читати</button></div></div>' : '') + '</div>';
     }
     return '<div class="desks">' + now.map(function (b, i) {
       var pct = b.pages && b.page ? Math.min(100, Math.round(b.page / b.pages * 100)) : 0;
@@ -3312,12 +3330,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var cv = b.cover ? '<img src="' + esc(b.cover) + '" referrerpolicy="no-referrer" alt="">' : '<span>' + esc(b.title) + '</span>';
       var info = [];
       if (day) info.push(day + '-й день');
-      if (b.page && b.pages) info.push('ще ~' + left + ' стор., ' + (ndays <= 1 ? 'це один вечір' : 'це ~' + ndays + ' ' + dayWord(ndays)));
-      return '<div class="desk"><div class="lbl">Зараз читаю' + (now.length > 1 ? ' · ' + (i + 1) + ' з ' + now.length : '') + '</div><div class="row" style="align-items:flex-start;gap:14px;margin-top:8px">' +
+      if (b.page && b.pages && b.page < b.pages) info.push('ще ~' + left + ' стор., ' + (ndays <= 1 ? 'це один вечір' : 'це ~' + ndays + ' ' + dayWord(ndays)));
+      return '<div class="desk"><div class="lbl">Зараз читаю' + (now.length > 1 ? ' · ' + (i + 1) + '/' + now.length : '') + '</div><div class="row" style="align-items:flex-start;gap:14px;margin-top:8px">' +
         '<div class="bk" data-book="' + b.row + '" style="background:' + genreColor(b.genre) + '">' + cv + '<i class="rib" style="height:' + Math.max(12, pct) + '%"></i></div>' +
         '<div class="grow" style="min-width:0"><h3 data-book="' + b.row + '">' + esc(b.title) + '</h3><div class="a">' + esc(b.author) + (b.type === 'Серія' && b.num ? ' · #' + esc(numTxt(b.num)) : '') + '</div>' +
-        (b.page ? '<div class="pg">' + b.page + (b.pages ? ' <small>/ ' + b.pages + ' стор.</small>' : '') + '</div>' : '<div class="pg" style="font-size:16px;margin-top:10px">' + (b.pages ? b.pages + ' стор.' : '') + '<br><small>позначте сторінку закладкою</small></div>') +
-        '<div class="info">' + esc(info.join(' · ')) + '</div>' + (b.started ? '<div class="info">дочитаєте ~' + dmy(addDays(D.today, ndays - 1)).slice(0, 5) + '</div>' : '<button class="lnk w" data-action="start-date" data-row="' + b.row + '">Коли почали? ›</button>') + '</div></div>' +
+        (b.page ? '<div class="pg">' + b.page + (b.pages ? ' <small>/ ' + b.pages + ' стор.</small>' : '') + '</div>' + (b.pages && b.page >= b.pages ? '<div class="info">Закладка на останній сторінці. <button class="lnk w" style="margin:0" data-action="finish" data-row="' + b.row + '">Дочитала?</button> Або <button class="lnk w" style="margin:0" data-action="page-dlg" data-row="' + b.row + '">виправ сторінку</button>.</div>' : '') : '<div class="pg" style="font-size:16px;margin-top:10px">' + (b.pages ? b.pages + ' стор.' : '') + '<br><small>познач сторінку закладкою</small></div>') +
+        '<div class="info">' + esc(info.join(' · ')) + '</div>' + (b.started ? (b.pages && b.page >= b.pages ? '' : '<div class="info">дочитаєш ~' + dmy(addDays(D.today, ndays - 1)).slice(0, 5) + '</div>') : '<button class="lnk w" data-action="start-date" data-row="' + b.row + '">Коли почала? ›</button>') + '</div></div>' +
         '<div class="btns"><button class="b1" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка</button><button class="b2" data-action="finish" data-row="' + b.row + '">✅ Дочитала</button></div></div>';
     }).join('') + '</div>';
   }
@@ -3343,7 +3361,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var f = planForecast(ym), pile = f.pile;
     var done = D.books.filter(function (b) { return b.plan === ym && isRead(b); });
     var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Стос на ' + MONTHS_ON[mIdx(ym)] + (pile.length + done.length ? ' <span class="muted">· ' + done.length + ' з ' + (pile.length + done.length) + '</span>' : '') + '</h3><a class="link small" data-action="plan-open">Увесь план ›</a></div>';
-    if (!pile.length) return h + '<p class="muted small">Стос порожній. Додайте книги, які хочете прочитати цього місяця.</p><button class="btn p" data-action="plan-pick" data-to="' + ym + '">＋ Спланувати ' + MONTHS_ON[mIdx(ym)] + '</button></div>';
+    if (!pile.length) return h + '<p class="muted small">Стос порожній. Додай книги, які хочеш прочитати цього місяця.</p><button class="btn p" data-action="plan-pick" data-to="' + ym + '">＋ Спланувати ' + MONTHS_ON[mIdx(ym)] + '</button></div>';
     var maxP = Math.max.apply(null, pile.map(function (b) { return b.pages || 350; }).concat([400]));
     var shown = pile.slice(0, 7);
     h += '<div class="pile">' + shown.map(function (b) {
@@ -3351,8 +3369,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return '<button class="ly" data-book="' + b.row + '" style="width:' + w + '%;background:' + genreColor(b.genre) + '"><span>' + esc(b.title) + '</span><small>' + (b.pages ? b.pages + ' с.' : '') + (b.plan < ym ? '<em>з ' + MONTHS_FROM[mIdx(b.plan)] + '</em>' : '') + '</small></button>';
     }).join('') + '</div><div class="muted small" style="text-align:center;margin-top:4px">' + (pile.length > shown.length ? '+ ще ' + (pile.length - shown.length) + ' · ' : '') + 'разом ' + f.left.toLocaleString('uk-UA') + ' стор.</div>';
     if (view.tipHide !== ym) {
-      if (f.fits) h += '<div class="tip ok">✅ Встигаєте: у вашому темпі це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.</div>';
-      else h += '<div class="tip">💡 Стос важкий: у вашому темпі це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.' +
+      if (f.fits) h += '<div class="tip ok">✅ Встигаєш: у твоєму темпі це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.</div>';
+      else h += '<div class="tip">💡 Стос важкий: у твоєму темпі це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.' +
         (f.move ? ' Перенести «' + esc(f.move.title) + '» на ' + MONTHS_ON[mIdx(addMonths(ym, 1))] + '?<div style="margin-top:6px"><button class="lnk" data-action="plan-set" data-row="' + f.move.row + '" data-to="' + addMonths(ym, 1) + '">Перенести</button> <button class="lnk mu" data-action="tip-hide" data-ym="' + ym + '">Залишити</button></div>' : '') + '</div>';
     }
     return h + '</div>';
@@ -3364,7 +3382,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return from && to && from <= last && to >= first;
     }).sort(function (a, b) { return String(a.started || a.readOn).localeCompare(String(b.started || b.readOn)); });
     var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Читання по днях</h3><a class="link small" data-action="cal-scroll">Календар ↓</a></div>';
-    if (!books.length) return h + '<p class="muted small">Цього місяця ще немає книг з датами. Дати ставляться самі, коли змінюєте статус на «читаю» і «прочитано».</p></div>';
+    if (!books.length) return h + '<p class="muted small">Цього місяця ще немає книг з датами. Дати ставляться самі, коли змінюєш статус на «читаю» і «прочитано».</p></div>';
     var days = '';
     for (var d = 1; d <= dim; d++) days += '<span>' + (d === 1 || d % 5 === 0 ? d : '') + '</span>';
     h += '<div class="tl"><div class="days" style="grid-template-columns:repeat(' + dim + ',1fr)">' + days + '</div><div class="grid" style="grid-template-columns:repeat(' + dim + ',1fr)">' + new Array(dim + 1).join('<div></div>') + '</div>';
@@ -3373,7 +3391,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var to = b.readOn || D.today; if (to > last) to = last;
       var s = Number(from.slice(8, 10)), e = Number(to.slice(8, 10));
       var fin = b.readOn && b.readOn.slice(0, 7) === ym;
-      return '<div class="ln"><i data-book="' + b.row + '" style="left:' + ((s - 1) / dim * 100).toFixed(2) + '%;width:' + Math.max(3.2, (e - s + 1) / dim * 100).toFixed(2) + '%;background:' + genreColor(b.genre) + '">' + esc(b.title) + (fin ? ' ✓' : '') + '</i></div>';
+      // назва окремим рядком над смужкою, щоб на телефоні її було видно повністю
+      return '<div class="ln" data-book="' + b.row + '"><div class="lt">' + esc(b.title) + (fin ? ' ✓' : '') + ' <span>' + s + (e !== s ? '–' + e : '') + '</span></div><i data-book="' + b.row + '" style="left:' + ((s - 1) / dim * 100).toFixed(2) + '%;width:' + Math.max(3.2, (e - s + 1) / dim * 100).toFixed(2) + '%;background:' + genreColor(b.genre) + '"></i></div>';
     }).join('');
     if (ym === curYm()) h += '<div class="now" style="left:' + ((Number(D.today.slice(8, 10)) - .5) / dim * 100).toFixed(2) + '%"></div>';
     h += '</div>';
@@ -3524,7 +3543,6 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var boughtY = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 4) === y; });
     var readY = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === y; });
     var lent = S.inLib.filter(function (b) { return low(b.avail) === 'позичена'; });
-    var at = achTotals(achievements());
     var cur = (function () { try { return localStorage.getItem('lb.theme') || ''; } catch (e) { return ''; } })();
     var row = function (attr, t, s, right) { return '<button class="mrow" ' + attr + '><span class="g"><b>' + t + '</b><small>' + s + '</small></span>' + (right || '') + '<span class="chev">›</span></button>'; };
     var h = '<div class="plaques two"><button class="plq" data-tab="money"><small>Витрачено за ' + y + '</small><b>' + money(sumPrice(boughtY)) + '</b></button><button class="plq" data-tab="stats"><small>Прочитано за ' + y + '</small><b>' + readY.length + ' ' + bookWord(readY.length) + '</b></button></div>';
@@ -3535,9 +3553,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' зараз у людей' : 'зараз нікому не позичено') +
       row('data-tab="kyiv"', 'У Києві', S.inLib.filter(inKyiv).length + ' кн. чекають посилки') +
       row('data-list="sold"', 'Продані', D.sold.length + ' кн.') +
-      row('data-tab="ach"', 'Досягнення', at.got + ' з ' + at.all + ' рівнів') +
+
       '</div>';
-    h += '<div class="hbox"><div class="hbh"><h4>Тема</h4></div><div class="seg3">' + [['', 'Як у телефоні'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+    h += '<div class="hbox"><div class="hbh"><h4>Тема</h4></div><div class="seg3">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
     return h;
   };
 
@@ -3545,9 +3563,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var MARKS = { open: ['є місце', 'var(--ok-soft)', 'var(--ok)'], full: ['повна', 'var(--bad-soft)', 'var(--bad)'], only: ['лише ', 'var(--accent-soft)', 'var(--accent)'] };
   function markChip(sh) {
     var m = (D.shelfMarks || {})[sh];
-    if (!m) return ' <span class="chip" role="button" style="font-size:11px;cursor:pointer;float:right" data-action="mark-open" data-shelf="' + esc(sh) + '">позначити</span>';
+    if (!m) return ' <button type="button" class="chip" style="font-size:12px;padding:8px 12px;cursor:pointer;float:right;margin:-8px -4px -8px 0" data-action="mark-open" data-shelf="' + esc(sh) + '">позначити</button>';
     var t = MARKS[m.k] || MARKS.open;
-    return ' <span class="chip" role="button" style="font-size:11px;cursor:pointer;float:right;background:' + t[1] + ';color:' + t[2] + '" data-action="mark-open" data-shelf="' + esc(sh) + '">' + esc(m.k === 'only' ? 'лише ' + (m.note || 'своє') : t[0]) + '</span>';
+    return ' <button type="button" class="chip" style="font-size:12px;padding:8px 12px;cursor:pointer;float:right;margin:-8px -4px -8px 0;background:' + t[1] + ';color:' + t[2] + '" data-action="mark-open" data-shelf="' + esc(sh) + '">' + esc(m.k === 'only' ? 'лише ' + (m.note || 'своє') : t[0]) + '</button>';
   }
   function markDialog(sh) {
     var m = (D.shelfMarks || {})[sh] || {};
@@ -3597,7 +3615,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<button class="close" data-action="close">×</button><h2>⇄ Перестановка</h2>';
     if (readN > 0 || moveAllRead) h += '<label class="small" style="display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;cursor:pointer"><input type="checkbox" data-action="move-read"' + (moveAllRead ? ' checked' : '') + '> Також прочитані з відкритих полиць → у закриту шафу (' + readN + ')</label>';
     if (!plan.length) { openModal(h + '<p>Усе стоїть на своїх місцях 👌</p>'); return; }
-    h += '<p class="muted small">Підійдіть до шафи й переставляйте по черзі. Галочка одразу записує нову полицю в таблицю. Не влазить? Оберіть іншу полицю в списку.</p>';
+    h += '<p class="muted small">Підійди до шафи й переставляй по черзі. Галочка одразу зберігає нову полицю. Не влазить? Обери іншу полицю в списку.</p>';
     var by = {};
     plan.forEach(function (o) { (by[o.to] = by[o.to] || []).push(o); });
     var shelves = opts('library', 'shelf');
@@ -3689,11 +3707,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     nav = []; modalStack = null;
     var list = gotCandidates();
     var parcel = S.inLib.filter(function (b) { return inKyiv(b) && b.parcel === 'в дорозі'; });
-    var h = '<button class="close" data-action="close">×</button><h2>📦 Що отримали?</h2>';
+    var h = '<button class="close" data-action="close">×</button><h2>📦 Що отримала?</h2>';
     if (parcel.length) h += '<div class="card"><h3>✈️ Посилка з Києва · ' + parcel.length + ' кн.</h3><button class="btn p" data-action="parcel-got">Отримала посилку</button></div>';
-    if (!list.length && !parcel.length) h += '<p class="muted">Немає замовлених книг, які чекають. Щоб додати книгу, якої не було в бажанках, натисніть «＋ Додати книгу» вгорі.</p>';
+    if (!list.length && !parcel.length) h += '<p class="muted">Немає замовлених книг, які чекають. Щоб додати книгу, якої не було в бажанках, натисни «＋ Додати книгу» вгорі.</p>';
     if (list.length) {
-      h += '<p class="muted small">Натисніть книгу, яка приїхала: вона перейде в бібліотеку з усіма даними з бажанок.</p>';
+      h += '<p class="muted small">Натисни книгу, яка приїхала: вона перейде в бібліотеку з усіма даними з бажанок.</p>';
       byStage(list).forEach(function (g, i) {
         if (!g.length) return;
         h += '<h3 class="grp-h">' + STAGES[i] + ' <span class="muted">· ' + g.length + '</span></h3><div class="list">' + g.map(function (w) {
@@ -3711,7 +3729,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var planned = S.inLib.filter(function (b) { return b.plan && !isRead(b) && !isDropped(b); });
     var months = uniq(planned.map(function (b) { return b.plan < ym ? 'old' : b.plan; }).concat([ym, addMonths(ym, 1)])).sort(function (a, b) { return a === 'old' ? -1 : b === 'old' ? 1 : a < b ? -1 : 1; });
     var h = heads() + '<div class="row"><h2 class="grow" style="margin:0">📅 План читання</h2><button class="btn p" data-action="plan-pick" data-to="' + ym + '">＋ Додати книги</button></div>';
-    h += '<p class="muted small">Щоб перенести книгу, утримуйте її (або правий клік) і виберіть місяць. Також місяць можна змінити в картці книги.</p>';
+    h += '<p class="muted small">Щоб перенести книгу, утримуй її (або правий клік) і вибери місяць. Також місяць можна змінити в картці книги.</p>';
     months.forEach(function (m) {
       var list = planned.filter(function (b) { return m === 'old' ? b.plan < ym : b.plan === m; });
       if (m === 'old' && !list.length) return;
@@ -3720,7 +3738,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var pages = list.reduce(function (a, b) { return a + (b.pages || 350); }, 0);
       var f = m === ym ? planForecast(ym) : null;
       h += '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + esc(title) + ' <span class="muted">(' + (list.length + done.length) + ')</span></h3>' + (m !== 'old' ? '<button class="btn" data-action="plan-pick" data-to="' + m + '">＋</button>' : '') + '</div>' +
-        '<div class="muted small" style="margin:4px 0 8px">' + (list.length ? pages.toLocaleString('uk-UA') + ' стор. · у вашому темпі ~' + Math.ceil(pages / (S.pace || 50)) + ' дн.' : 'поки порожньо') + (f ? (f.fits ? ' · ✅ встигаєте' : ' · ⚠️ не встигаєте до кінця місяця') : '') + (done.length ? ' · прочитано ' + done.length : '') + '</div>' +
+        '<div class="muted small" style="margin:4px 0 8px">' + (list.length ? pages.toLocaleString('uk-UA') + ' стор. · у твоєму темпі ~' + Math.ceil(pages / (S.pace || 50)) + ' дн.' : 'поки порожньо') + (f ? (f.fits ? ' · ✅ встигаєш' : ' · ⚠️ не встигаєш до кінця місяця') : '') + (done.length ? ' · прочитано ' + done.length : '') + '</div>' +
         (list.length + done.length ? '<div class="covers">' + list.map(function (b) { return covMini(b, m === 'old' ? 'з ' + MONTHS_FROM[mIdx(b.plan)] : (b.pages ? b.pages + ' стор.' : esc(b.author))); }).join('') + done.map(function (b) { return covMini(b, '✓ прочитано'); }).join('') + '</div>' : '') +
         (m === 'old' && list.length ? '<button class="more" data-action="plan-move-old" data-to="' + ym + '">Перенести всі на ' + MONTHS_ON[mIdx(ym)] + '</button>' : '') + '</div>';
     });
@@ -3759,7 +3777,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- закладка ---------- */
   function pageDialog(b) {
     nav = []; modalStack = null;
-    openModal('<button class="close" data-action="back-book" data-row="' + b.row + '">×</button><h2>📑 На якій ви сторінці?</h2><p class="muted small">«' + esc(b.title) + '»' + (b.pages ? ', усього ' + b.pages + ' стор.' : '') + '</p>' +
+    openModal('<button class="close" data-action="back-book" data-row="' + b.row + '">×</button><h2>📑 На якій ти сторінці?</h2><p class="muted small">«' + esc(b.title) + '»' + (b.pages ? ', усього ' + b.pages + ' стор.' : '') + '</p>' +
       '<input type="number" inputmode="numeric" id="pg-val" min="0" ' + (b.pages ? 'max="' + b.pages + '" ' : '') + 'value="' + esc(b.page || '') + '" enterkeyhint="done" style="font-size:28px;text-align:center;width:100%">' +
       '<div class="pick" style="margin-top:10px;justify-content:center">' + [10, 25, 50, 100].map(function (n) { return '<button data-action="pg-add" data-n="' + n + '">+' + n + '</button>'; }).join('') + '</div>' +
       '<div class="row" style="margin-top:14px"><button class="btn p" data-action="pg-save" data-row="' + b.row + '">Зберегти</button><button class="btn" data-action="back-book" data-row="' + b.row + '">Скасувати</button></div>', false, 'mid');
@@ -3771,7 +3789,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     nav = []; modalStack = null;
     var g = D.goals || {};
     openModal('<button class="close" data-action="close">×</button><h2>🎯 Мета читання</h2><div class="form"><label><span>Книг на місяць</span><input type="number" inputmode="numeric" id="g-month" value="' + esc(g.month || '') + '"></label><label><span>Книг на рік</span><input type="number" inputmode="numeric" id="g-year" value="' + esc(g.year || '') + '"></label></div>' +
-      '<p class="muted small">Мета місяця — це кількість місць на «Полиці місяця». У середньому ви читаєте ~' + Math.max(1, Math.round(avgPerMonth())) + ' ' + bookWord(Math.max(1, Math.round(avgPerMonth()))) + ' на місяць.</p>' +
+      '<p class="muted small">Мета місяця — це кількість місць на «Полиці місяця». У середньому ти читаєш ~' + Math.max(1, Math.round(avgPerMonth())) + ' ' + bookWord(Math.max(1, Math.round(avgPerMonth()))) + ' на місяць.</p>' +
       '<div class="row"><button class="btn p" data-action="goal-save">Зберегти</button><button class="btn" data-action="close">Скасувати</button></div>');
   }
   function avgPerMonth() {
@@ -3821,7 +3839,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function wishLook() {
     var box = document.getElementById('we-look'), e = document.getElementById('we-isbn');
     var isbn = e ? e.value.replace(/[^0-9Xx]/g, '') : '', title = fval('we-title'), author = fval('we-author');
-    if (!isbn && !title) { box.innerHTML = '<p class="msg">Впишіть ISBN.</p>'; return; }
+    if (!isbn && !title) { box.innerHTML = '<p class="msg">Впиши ISBN.</p>'; return; }
     box.innerHTML = '<p class="muted">Шукаю за ' + (isbn ? 'ISBN' : 'назвою') + '…</p>';
     api('lbApiLookup', { isbn: isbn, title: title, author: author, pub: fval('we-pub') }).then(function (r) {
       if (!document.getElementById('we-title')) return;
@@ -3829,10 +3847,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var oe = r.otherEdition, got = r.orig && !fval('we-orig') && document.getElementById('we-orig');
         if (got) { got.value = r.orig; got.style.borderColor = 'var(--acc)'; }
         box.innerHTML = '<p class="msg">Видання «' + esc(fval('we-pub')) + '» не знайшла. Є лише інше: ' + (oe.url && /^https:/.test(oe.url) ? '<a class="link" target="_blank" rel="noopener" href="' + esc(oe.url) + '">«' + esc(oe.title || '') + '», ' + esc(oe.pub || '') + '</a>' : '«' + esc(oe.title || '') + '», ' + esc(oe.pub || '')) +
-          '. Його ISBN і обкладинку не підставляю' + (got ? ', додала лише оригінальну назву' : '') + '. Впишіть ISBN зі своєї книги або сайту видавництва.</p>';
+          '. Його ISBN і обкладинку не підставляю' + (got ? ', додала лише оригінальну назву' : '') + '. Впиши ISBN зі своєї книги або сайту видавництва.</p>';
         return;
       }
-      if (!r || r.notFound) { box.innerHTML = '<p class="msg">Нічого не знайшла. Перевірте ISBN або заповніть вручну.</p>'; return; }
+      if (!r || r.notFound) { box.innerHTML = '<p class="msg">Нічого не знайшла. Перевір ISBN або заповни вручну.</p>'; return; }
       var put = function (id, v, always) { var el = document.getElementById(id); if (!el || v == null || v === '') return false; if (!always && String(el.value).trim()) return false; el.value = v; el.style.borderColor = 'var(--acc)'; return true; };
       var filled = [];
       if (put('we-title', r.title)) filled.push('назву');
@@ -4016,7 +4034,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="seg3">' + [['act', 'Активність'], ['lib', 'Бібліотека']].map(function (x) { return '<button data-st="' + x[0] + '" class="' + (t === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>';
     if (view.achOnly) {
       var list = achievements(), at = achTotals(list);
-      return h + '<div class="card"><div class="row"><span style="font-size:40px">🏅</span><div class="grow"><b style="font-size:18px">' + at.got + ' з ' + at.all + ' рівнів</b><div class="bar"><i style="width:' + pct(at.got, at.all) + '%"></i></div><div class="muted small">Рахується лише те, що є в таблиці: прочитані книги, дати, оцінки, серії. Що більше дат і оцінок, то точніше.</div></div></div></div>' + achHtml(list);
+      return h + '<div class="card"><div class="row"><span style="font-size:40px">🏅</span><div class="grow"><b style="font-size:18px">' + at.got + ' з ' + at.all + ' рівнів</b><div class="bar"><i style="width:' + pct(at.got, at.all) + '%"></i></div><div class="muted small">Рахується лише те, що є в бібліотеці: прочитані книги, дати, оцінки, серії. Що більше дат і оцінок, то точніше.</div></div></div></div>' + achHtml(list);
     }
     if (t === 'lib') return h + statsLibrary();
     return h + statsActivity();
@@ -4049,7 +4067,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (au) rec.push(['✍️', 'Найбільше книг автора', null, au[1] + ' ' + bookWord(au[1]), 'author|' + au[0], au[0]]);
     var sr = S.series.slice().sort(function (a, b) { return b.ownedCount - a.ownedCount; })[0];
     if (sr) { var sb = sr.owned[Object.keys(sr.owned).sort(function (a, b) { return a - b; })[0]] || null;
-      rec.push(['📚', 'Найбільша серія у вас', sb, sr.ownedCount + ' ' + bookWord(sr.ownedCount) + (sr.missing.length ? ' · бракує ' + sr.missing.length : ' · зібрана'), 'series|' + sr.name, sr.name]); }
+      rec.push(['📚', 'Найбільша серія у тебе', sb, sr.ownedCount + ' ' + bookWord(sr.ownedCount) + (sr.missing.length ? ' · бракує ' + sr.missing.length : ' · зібрана'), 'series|' + sr.name, sr.name]); }
     var pb = topList(count(lib, function (b) { return b.pub; }), 1)[0];
     if (pb) rec.push(['🏢', 'Улюблене видавництво', null, pb[1] + ' ' + bookWord(pb[1]), 'pub|' + pb[0], pb[0]]);
     return rec.length ? recCard('🏅 Ще рекорди', rec) : '';
@@ -4073,7 +4091,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var ser = topList((function () { var m = {}; paid.forEach(function (b) { if (b.series && b.series !== '-') m[b.series] = (m[b.series] || 0) + b.price; }); return m; })(), 1)[0];
     var h = '<div class="card"><h3>🏆 Рекорди</h3><div class="recs">' + rec.map(function (r) {
       return '<div class="rc" style="cursor:pointer" data-list="' + esc(r[4]) + '">' + cover(r[2]) + '<div class="grow"><span class="muted small">' + r[0] + ' ' + r[1] + ' ›</span><b>' + esc(r[2].title) + '</b><span class="muted small">' + esc(r[2].author) + '</span><span class="v">' + r[3] + '</span></div></div>';
-    }).join('') + '</div><div class="muted small" style="margin-top:8px">Натисніть рекорд — відкриється весь список за цим показником. ' + (ser ? 'Найдорожча серія: <a class="link" data-list="' + esc('sercost|' + ser[0]) + '">' + esc(ser[0]) + '</a> — ' + money(ser[1]) + '. ' : '') + (free ? 'Безкоштовних книг: <a class="link" data-list="free">' + free + '</a>.' : '') + '</div></div>';
+    }).join('') + '</div><div class="muted small" style="margin-top:8px">Натисни рекорд — відкриється весь список за цим показником. ' + (ser ? 'Найдорожча серія: <a class="link" data-list="' + esc('sercost|' + ser[0]) + '">' + esc(ser[0]) + '</a> — ' + money(ser[1]) + '. ' : '') + (free ? 'Безкоштовних книг: <a class="link" data-list="free">' + free + '</a>.' : '') + '</div></div>';
     return h + promoCard();
   }
   function promoCard() {
@@ -4082,7 +4100,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var avg = Math.round(S.avg || 0);
     var saved = list.reduce(function (a, b) { return a + avg - b.price; }, 0);
     return '<div class="card"><h3>🎁 Майже даром</h3><p class="muted small" style="margin-top:-4px">Книги з акцій за 0 або 1 грн: <a class="link" data-list="free">' + list.length + ' ' + bookWord(list.length) + '</a>. ' +
-      (avg ? 'Якби кожна коштувала як ваша середня книга (' + money(avg) + '), це було б приблизно <b>' + money(Math.round(saved / 10) * 10) + '</b> — стільки ви зекономили.' : '') + '</p>' +
+      (avg ? 'Якби кожна коштувала як твоя середня книга (' + money(avg) + '), це було б приблизно <b>' + money(Math.round(saved / 10) * 10) + '</b> — стільки ти зекономила.' : '') + '</p>' +
       '<div class="strip">' + list.slice(0, 24).map(function (b) { return covMini(b, b.price ? '1 грн' : '0 грн'); }).join('') + '</div></div>';
   }
 
@@ -4158,7 +4176,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'pg-add') { var pv = document.getElementById('pg-val'); if (pv) { pv.value = (Number(pv.value) || 0) + Number(act.getAttribute('data-n')); pv.focus(); } }
     if (a === 'pg-save' && b) {
       var pgv = Math.round(Number(fval('pg-val')));
-      if (!(pgv >= 0)) return toast('Впишіть номер сторінки', true);
+      if (!(pgv >= 0)) return toast('Впиши номер сторінки', true);
       closeModal();
       if (b.pages && pgv >= b.pages) { saveSet('library', b, { page: b.pages }).then(function () { finishDialog(b); }); }
       else saveSet('library', b, { page: pgv || '' }).then(function () { toast('📑 Закладка: с. ' + pgv); });
@@ -4167,7 +4185,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'edit-book' && b) editBook(b);
     if (a === 'edit-save' && b) editSave(b);
     if (a === 'del-book' && b) {
-      document.getElementById('e-del').innerHTML = '<div class="note" style="margin-top:8px">Видалити «' + esc(b.title) + '» з бібліотеки назавжди? Рядок зникне з таблиці, а в «Лозі» лишиться запис з усіма даними. Якщо книгу продали чи подарували, краще змініть «Наявність».<div class="row" style="margin-top:8px"><button class="btn" style="color:var(--bad)" data-action="del-book-go" data-row="' + b.row + '">Так, видалити</button><button class="btn" data-action="del-book-no">Скасувати</button></div></div>';
+      document.getElementById('e-del').innerHTML = '<div class="note" style="margin-top:8px">Видалити «' + esc(b.title) + '» з бібліотеки назавжди? Книга зникне з бібліотеки, а в журналі лишиться запис з усіма даними. Якщо книгу продали чи подарували, краще зміни «Наявність».<div class="row" style="margin-top:8px"><button class="btn" style="color:var(--bad)" data-action="del-book-go" data-row="' + b.row + '">Так, видалити</button><button class="btn" data-action="del-book-no">Скасувати</button></div></div>';
     }
     if (a === 'del-book-no') document.getElementById('e-del').innerHTML = '';
     if (a === 'del-book-go' && b) {
@@ -4191,7 +4209,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'add') openAdd();
     if (a === 'plus') plusSheet();
     if (a === 'lib-new') { closeModal(); view.sort = 'newest'; saveView(); view.tab = 'books'; try { localStorage.setItem('lb.tab', 'books'); } catch (e) {} render(); window.scrollTo(0, 0); return; }
-    if (a === 'plus-go') { var ptx = String((document.getElementById('plus-text') || {}).value || '').trim(); if (!ptx) return toast('Вставте посилання або текст', true); openOrder('wish'); orderState.text = ptx; orderDialog(); var pb = document.querySelector('[data-action="ord-parse"]'); if (pb) pb.click(); return; }
+    if (a === 'plus-go') { var ptx = String((document.getElementById('plus-text') || {}).value || '').trim(); if (!ptx) return toast('Встав посилання або текст', true); openOrder('wish'); orderState.text = ptx; orderDialog(); var pb = document.querySelector('[data-action="ord-parse"]'); if (pb) pb.click(); return; }
     if (a === 'plus-shot') { closeModal(); openOrder('wish'); document.getElementById('orderfile').click(); return; }
     if (a === 'hseg') { view.hseg = act.getAttribute('data-v'); try { localStorage.setItem('lb.hseg', view.hseg); } catch (e) {} return render(); }
     if (a === 'theme') { setTheme(act.getAttribute('data-v')); return render(); }
@@ -4254,7 +4272,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'move-do' && b) { moveDone[b.row] = 1; var mto = act.getAttribute('data-to'); saveSet('library', b, { shelf: mto }).then(function () { moveOpen(); }); moveOpen(); }
     if (a === 'mark-set') {
       var msh = act.getAttribute('data-shelf'), mk = act.getAttribute('data-k'), mnote = fval('mark-note');
-      if (mk === 'only' && !mnote) return toast('Впишіть, для чого ця полиця', true);
+      if (mk === 'only' && !mnote) return toast('Впиши, для чого ця полиця', true);
       D.shelfMarks = D.shelfMarks || {};
       if (mk === 'none') delete D.shelfMarks[msh]; else D.shelfMarks[msh] = { k: mk, note: mk === 'only' ? mnote : '' };
       closeModal(); render();
@@ -4273,13 +4291,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'got-order-go') gotOrderGo();
     if (a === 'ord-shot') { ordSync(); document.getElementById('orderfile').click(); }
     if (a === 'ord-parse') {
-      ordSync(); if (!orderState.text.trim()) return toast('Вставте текст або скриншот', true);
+      ordSync(); if (!orderState.text.trim()) return toast('Встав текст або скриншот', true);
       if (orderState.mode !== 'wish') return ordApply(orderState.text);
       var olink = orderState.text.match(/https?:\/\/[^\s<>"]+/);
       if (olink) {
         orderState.busy = 'Читаю сторінку за посиланням…'; orderDialog();
         api('lbApiFromLink', { url: olink[0] }).then(function (r) {
-          if (!(r.items || []).length) { orderState.busy = ''; orderDialog(); return toast('На сторінці не знайшла книги. Спробуйте скриншот.', true); }
+          if (!(r.items || []).length) { orderState.busy = ''; orderDialog(); return toast('На сторінці не знайшла книги. Спробуй скриншот.', true); }
           orderState.text = orderState.text.replace(olink[0], '').trim(); ordFromAi(r.items);
         }).catch(function (e) { orderState.busy = ''; orderDialog(); toast(e.message, true); });
         return;
@@ -4295,9 +4313,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var oi = orderState.items.filter(function (x) { return x.title; });
       var bad = oi.filter(function (x) { return !x.author; })[0];
       if (!oi.length) return toast('Немає книг', true);
-      if (bad) return toast('Вкажіть автора для «' + bad.title + '»', true);
+      if (bad) return toast('Вкажи автора для «' + bad.title + '»', true);
       var gap = orderState.mode === 'wish' && !orderState.warned && oi.filter(function (x) { return (x.series && !x.part) || (!x.release && ['Анонс', 'Передзамовлення', ''].indexOf(x.avail || '') !== -1); })[0];
-      if (gap) { orderState.warned = true; return toast('Для «' + gap.title + '» бракує ' + (gap.series && !gap.part ? 'номера тому' : 'дати виходу') + ' (поля з рамкою). Впишіть або натисніть «Зберегти» ще раз.', true); }
+      if (gap) { orderState.warned = true; return toast('Для «' + gap.title + '» бракує ' + (gap.series && !gap.part ? 'номера тому' : 'дати виходу') + ' (поля з рамкою). Впиши або натисни «Зберегти» ще раз.', true); }
       act.disabled = true; act.textContent = 'Зберігаю…';
       var wasW = orderState.mode === 'wish';
       api('lbApiOrder', { mode: orderState.mode, where: wasW ? '' : orderState.where, site: wasW ? '' : orderState.site, num: wasW ? '' : orderState.num, date: wasW ? '' : orderState.date,
@@ -4324,7 +4342,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'wish-edit-save') { var ws2 = D.wish.filter(function (x) { return x.row === row; })[0]; if (ws2) wishEditSave(ws2); return; }
     if (a === 'add-from-wish') { var w = D.wish.filter(function (x) { return x.row === row; })[0]; if (w) openAdd({ wish: w, book: wishToBook(w) }); }
     if (a === 'wish-del') {
-      document.getElementById('wdel').innerHTML = '<div class="note">Видалити з бажанок назавжди? Рядок зникне з таблиці (у Лозі залишиться запис).<div class="row" style="margin-top:8px">' +
+      document.getElementById('wdel').innerHTML = '<div class="note">Видалити з бажанок назавжди? Бажанка зникне (у журналі залишиться запис).<div class="row" style="margin-top:8px">' +
         '<button class="btn" data-action="wish-del-go" data-row="' + row + '" data-why="задублювалась">Задублювалась</button><button class="btn" data-action="wish-del-go" data-row="' + row + '" data-why="більше не хочу">Більше не хочу</button><button class="btn" data-action="wish-del-no">Скасувати</button></div></div>';
     }
     if (a === 'wish-del-no') document.getElementById('wdel').innerHTML = '';
@@ -4401,14 +4419,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'got-kyiv' && b) { nav = []; gotFromKyiv([b]); }
     if (a === 'parcel-add') {
       var sel = Array.prototype.map.call(document.querySelectorAll('[data-sel]:checked'), function (e) { return bookByRow(e.getAttribute('data-sel')); }).filter(Boolean);
-      if (!sel.length) return toast('Позначте книги галочками', true);
+      if (!sel.length) return toast('Познач книги галочками', true);
       saveMany(sel.map(function (x) { return { kind: 'library', item: x, set: { parcel: 'в списку' } }; }));
     }
     if (a === 'prio-bulk') {
       var psel = Array.prototype.map.call(document.querySelectorAll('[data-sel]:checked'), function (e) { return bookByRow(e.getAttribute('data-sel')); }).filter(Boolean);
-      if (!psel.length) return toast('Позначте книги галочками', true);
+      if (!psel.length) return toast('Познач книги галочками', true);
       var pv = fval('bulk-prio');
-      if (!pv) return toast('Оберіть новий пріоритет у списку поруч', true);
+      if (!pv) return toast('Обери новий пріоритет у списку поруч', true);
       if (pv === '__none') pv = '';
       saveMany(psel.map(function (x) { return { kind: 'library', item: x, set: { prio: pv } }; }));
     }
@@ -4448,7 +4466,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         te.busy = false;
         if (r && r.nokey) toast('Gemini не підключено (немає GEMINI_API_KEY)', true);
         else if (!r || !r.tropes || !r.tropes.length) toast('Gemini не знайшов тропів для цієї книги', true);
-        else { r.tropes.forEach(function (x) { if (te.list.indexOf(x) === -1) te.list.push(x); }); toast('Додала підказки. Приберіть зайві ✕ і натисніть «Зберегти»'); }
+        else { r.tropes.forEach(function (x) { if (te.list.indexOf(x) === -1) te.list.push(x); }); toast('Додала підказки. Прибери зайві ✕ і натисни «Зберегти»'); }
         if (tropeEd === te) tropeEdDraw();
       }, function (e) { te.busy = false; if (tropeEd === te) tropeEdDraw(); toast(e.message, true); });
       return;
@@ -4470,7 +4488,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var vx = vf.list[vf.i], vu = (fval('rv-url') || '').trim(), vi = (fval('rv-isbn') || '').replace(/[^0-9Xx]/g, ''), vs = {};
       if (vu) { if (!/^https?:\/\//i.test(vu)) return toast('Посилання має починатися з https://', true); vs.cover = vu; }
       if (vi) { if (vi.length !== 10 && vi.length !== 13) return toast('ISBN має 10 або 13 цифр', true); vs.isbn = vi; }
-      if (!Object.keys(vs).length) return toast('Вставте посилання або ISBN', true);
+      if (!Object.keys(vs).length) return toast('Встав посилання або ISBN', true);
       vfMark(vf.kind, vx); vf.i++; vfFetch(); vfDialog(); saveSet(vf.kind, vx, vs).then(function () { if (vf && modalStack && modalStack.fn === vfDialog) vfDialog(); }, function () {});
     }
     if (a === 'vf-save' && vf) {
@@ -4484,12 +4502,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'rv-url' && rv) {
       var ux = rv.list[rv.i], uu = (fval('rv-url') || '').trim(), ui = (fval('rv-isbn') || '').replace(/[^0-9Xx]/g, ''), us = {};
       if (uu) {
-        if (/^data:/i.test(uu)) return toast('Це вбудована мініатюра. Відкрийте картинку на сайті й скопіюйте її адресу (має починатися з https://).', true);
+        if (/^data:/i.test(uu)) return toast('Це вбудована мініатюра. Відкрий картинку на сайті й скопіюй її адресу (має починатися з https://).', true);
         if (!/^https?:\/\//i.test(uu)) return toast('Посилання має починатися з https://', true);
         us.cover = uu;
       }
       if (ui) { if (ui.length !== 10 && ui.length !== 13) return toast('ISBN має 10 або 13 цифр', true); us.isbn = ui; }
-      if (!Object.keys(us).length) return toast('Вставте посилання або ISBN', true);
+      if (!Object.keys(us).length) return toast('Встав посилання або ISBN', true);
       rv.i++; rvFetch(); saveSet('library', ux, us);
     }
     if (a === 'rv-no' && rv) { var rx = rv.list[rv.i], rj = rvRejected(); rj[rx.author + '|' + rx.title] = 1; try { localStorage.setItem('lb.rej', JSON.stringify(rj)); } catch (e) {} rvNext(); }
@@ -4559,8 +4577,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       inp.dispatchEvent(new Event('input', { bubbles: true }));
     };
     if (navigator.clipboard && navigator.clipboard.readText) {
-      navigator.clipboard.readText().then(put, function () { inp.focus(); toast('Не вдалося прочитати буфер. Утримайте палець на полі ISBN → «Вставити».'); });
-    } else { inp.focus(); toast('Утримайте палець на полі ISBN → «Вставити».'); }
+      navigator.clipboard.readText().then(put, function () { inp.focus(); toast('Не вдалося прочитати буфер. Утримай палець на полі ISBN → «Вставити».'); });
+    } else { inp.focus(); toast('Утримай палець на полі ISBN → «Вставити».'); }
   }
   // хрестик у полі пошуку: стирає текст і одразу оновлює результати
   document.addEventListener('click', function (ev) {
@@ -4583,7 +4601,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (k === 'gq') { view.q = t.value; document.getElementById('gres').innerHTML = globalResults(); return; }
       if (k === 'we-isbn') { var dg = t.value.replace(/[^0-9Xx]/g, ''); if (dg.length === 13 || dg.length === 10) wishLook(); return; }
       if (k === 'pq') { view.pq = t.value; var top = nav[nav.length - 1]; if (top) { top.fn.apply(null, top.args); var pi = document.querySelector('[data-input="pq"]'); if (pi) { pi.focus(); try { pi.setSelectionRange(pi.value.length, pi.value.length); } catch (e) {} } } return; }
-      if (k === 'sq') { view.sq = t.value; var sr = document.getElementById('sres'); if (sr) sr.innerHTML = globalResults(view.sq) || '<p class="muted small">Почніть друкувати: шукаю серед книг, бажанок, авторів, серій, видавництв і полиць.</p>'; return; }
+      if (k === 'sq') { view.sq = t.value; var sr = document.getElementById('sres'); if (sr) sr.innerHTML = globalResults(view.sq) || '<p class="muted small">Почни друкувати: шукаю серед книг, бажанок, авторів, серій, видавництв і полиць.</p>'; return; }
       if (k === 'bq') view.q = t.value;
       if (k === 'wq') view.wq = t.value;
       if (k === 'dq') view.dq = t.value;
@@ -4676,6 +4694,24 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     ev.preventDefault();
     if (Date.now() - suppressClick < 650) return;
     quickMenu(bookByRow(el.getAttribute('data-book')));
+  });
+
+  // клавіатура на комп'ютері: рядки книг, бажанок і списків можна вибрати Tab і відкрити Enter або пробілом
+  var CLICKY = '[data-book],[data-wish],[data-list],[data-go],[data-tab],[data-shopen],[data-action]';
+  function makeFocusable(root) {
+    if (!root) return;
+    root.querySelectorAll(CLICKY).forEach(function (e) {
+      if (/^(BUTTON|A|INPUT|SELECT|TEXTAREA|LABEL|OPTION)$/.test(e.tagName) || e.hasAttribute('tabindex')) return;
+      if (e.parentElement && e.parentElement.closest(CLICKY) && e.parentElement.closest(CLICKY) !== e && !e.matches('.item,.lst,.hrow,.oline,.rrow,.cov,.fi,.rc,.miss')) return;
+      e.setAttribute('tabindex', '0'); e.setAttribute('role', 'button');
+    });
+  }
+  ['app', 'modal'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (window.MutationObserver) new MutationObserver(function () { makeFocusable(el); }).observe(el, { childList: true, subtree: true });
+  });
+  document.addEventListener('keydown', function (ev) {
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('role') === 'button' && ev.target.tagName !== 'BUTTON') { ev.preventDefault(); ev.target.click(); }
   });
 
   load();
