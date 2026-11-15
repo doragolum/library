@@ -219,7 +219,8 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .hd .close{float:none;margin-left:auto}
 .iconbtn{border:0;background:var(--line);color:var(--ink);border-radius:999px;width:40px;height:40px;font-size:15px;cursor:pointer;flex:none}
 .bhero{position:relative;margin:-18px -16px 12px;padding:14px 16px;overflow:hidden;border-radius:18px 18px 0 0}
-.bhero .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) saturate(1.5);opacity:.55;z-index:0}
+.bhero .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) saturate(1.5);opacity:.3;z-index:0}
+.bhero .link{color:var(--ink)} /* посилання на кольоровій шапці — кольором тексту, щоб читалось у темній темі */
 .bhero>*{position:relative;z-index:1}
 .bhero .shelf{background:var(--plate)}
 .link{color:var(--accent);cursor:pointer;text-decoration:none;border-bottom:1px dashed currentColor}
@@ -1566,7 +1567,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       '<div class="grow"><h2 style="margin-top:0">' + esc(w.title) + '</h2><div>' + lk('author', w.author) + '</div>' + (hasSer ? '<div class="small">' + lk('series', w.series) + (w.part ? ' · #' + esc(numTxt(w.part)) : '') + '</div>' : '') + '<div class="chips" style="margin-top:6px">' + wishChip(w.status) + (w._lib ? '<a class="chip b" data-go="' + esc('book|' + w._lib.row) + '">📚 за ISBN уже є в бібліотеці ›</a>' : '') + '</div></div></div></div>' +
       (wv.length > 1 ? '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Серія</h3><a class="link small" data-go="' + esc('series|' + w.series) + '">Уся серія ›</a></div>' + trackHtml(wv) + '</div>' : '') + '<div class="edits">' + editSelect('wish', w, 'status', 'Статус') + editSelect('wish', w, 'avail', 'Наявність') +
       (D.cols.wishOrdered && (ORDERED.indexOf(w.status) !== -1 || w.ordered || w.order) ? '<label class="edit"><span>Дата замовлення</span><input type="date" data-wdate="ordered|' + w.row + '" value="' + esc(w.ordered || '') + '"></label>' : '') + '</div>' +
-      '<div class="row" style="margin-bottom:12px">' + wishGotBtn(w) + '<button class="btn" data-action="wish-edit" data-row="' + w.row + '">✎ Редагувати</button>' + (window.LB_DB && !w.ttn && w.status !== 'В бібліотеці' && (ORDERED.indexOf(w.status) !== -1 || w.order) ? '<button class="btn" data-action="wish-ttn" data-row="' + w.row + '">🚚 Додати ТТН</button>' : '') + '<button class="btn" data-action="wish-del" data-row="' + w.row + '">🗑 Видалити</button></div><div id="wdel"></div>' +
+      // одна головна дія (розбір ієрархії 15.11): «Замовила» для бажанки, «Отримала» для замовленої; «Видалити» — тихим текстом окремо
+      '<div class="row" style="margin-bottom:12px">' + (ORDERED.indexOf(w.status) === -1 && !w.order && w.status !== 'В бібліотеці' ? '<button class="btn p" data-action="wish-ordered" data-row="' + w.row + '">🛒 Замовила</button>' : '') + wishGotBtn(w) + '<button class="btn" data-action="wish-edit" data-row="' + w.row + '">✎ Редагувати</button>' + (window.LB_DB && !w.ttn && w.status !== 'В бібліотеці' && (ORDERED.indexOf(w.status) !== -1 || w.order) ? '<button class="btn" data-action="wish-ttn" data-row="' + w.row + '">🚚 Додати ТТН</button>' : '') + '</div><button class="lnk" style="display:block;color:var(--bad);margin:0 0 14px" data-action="wish-del" data-row="' + w.row + '">Видалити бажанку</button><div id="wdel"></div>' +
       '<table class="kv">' + rows.map(function (r) {
         var v = linked[r[0]] ? r[1] : r[0] === 'Джерело' ? srcLink(r[1]) : r[0] === 'Сайт' && /^https?:\/\//.test(r[1]) ? '<a href="' + esc(r[1]) + '" target="_blank" rel="noopener">' + esc(r[1]) + '</a>' : esc(r[1]);
         return '<tr><td>' + esc(r[0]) + '</td><td>' + v + '</td></tr>';
@@ -4548,6 +4550,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
           return load();
         }).catch(function (e) { act.disabled = false; act.textContent = 'Зберегти в бажанки'; toast(e.message, true); });
     }
+    if (a === 'wish-ordered') { var wo = D.wish.filter(function (x) { return x.row === row; })[0]; if (wo) saveSet('wish', wo, { status: 'Замовлено' }); return; }
     if (a === 'wish-edit') { var we = D.wish.filter(function (x) { return x.row === row; })[0]; if (we) editWish(we); return; }
     if (a === 'wish-ttn') {
       var wt = D.wish.filter(function (x) { return x.row === row; })[0]; if (!wt) return;
