@@ -1526,8 +1526,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function wishItem(w, inCol) {
     var ser = w.series && w.series !== 'нонфік' ? esc(w.series) + (w.part ? ' #' + esc(w.part) : '') : '';
     var soon = w.release && w.release >= D.today, sale = w.avail === 'Є у продажу';
-    var meta = [sale ? '' : esc(w.avail || ''), !soon && w.release && !sale ? 'реліз ' + dmy(w.release) : '', !w.release && w.releaseText ? 'реліз: ' + esc(w.releaseText) : '', w.price != null ? money(w.price) : ''].filter(Boolean).join(' · ');
-    var chips = (inCol === true || view.wishStatus === w.status ? '' : wishChip(w.status)) + (soon ? '<span class="chip a">реліз ' + dmy(w.release) + '</span>' : '') + (sale ? '<span class="chip ok">Є у продажу</span>' : '') +
+    // розбір ієрархії 15.11: ціна жирна першою; «Хочу купити» й «Є у продажу» не показуємо (звичайний стан);
+    // дата релізу — текстом, жовтою позначкою лише коли до релізу менше 14 днів
+    var near = soon && w.release <= addDays(D.today, 14);
+    var meta = [w.price != null ? '<b>' + money(w.price) + '</b>' : '', sale ? '' : esc(w.avail || ''), w.release && !near ? (soon ? 'вийде ' + dmy(w.release).slice(0, 5) : 'реліз ' + dmy(w.release)) : '', !w.release && w.releaseText ? 'реліз: ' + esc(w.releaseText) : ''].filter(Boolean).join(' · ');
+    var chips = (inCol === true || view.wishStatus === w.status || w.status === 'Хочу купити' ? '' : wishChip(w.status)) + (near ? '<span class="chip w">вийде ' + dmy(w.release).slice(0, 5) + '</span>' : '') +
       (w.np ? '<span class="chip w">НП: ' + esc(w.np) + '</span>' : '') + (w._lib ? '<span class="chip b">📚 вже є в бібліотеці</span>' : '');
     return '<div class="item" data-wish="' + w.row + '">' + cover(w) + '<div class="body"><div class="t">' + esc(w.title) + '</div><div class="muted small">' + esc(w.author) + (ser ? ' · ' + ser : '') + (w.pub ? ' · ' + esc(w.pub) : '') + '</div>' +
       (meta ? '<div class="small" style="margin-top:2px">' + meta + '</div>' : '') + (chips ? '<div class="chips">' + chips + '</div>' : '') + '</div></div>';
