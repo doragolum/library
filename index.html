@@ -3539,8 +3539,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (ready.length > 1 ? '<div class="hfoot"><button class="btn p sm" data-action="got-order" data-rows="' + ready.map(function (w) { return w.row; }).join(',') + '">Отримала всі ' + ready.length + '</button></div>' : ''), 'ok'));
     // найближчі до тебе першими: в дорозі → ТТН створено → замовлено; серед однакових — новіші замовлення
     var wayRank = function (w) { return /дорозі|прямує|відправлен/i.test(w.np || '') ? 1 : stageOf(w); };
-    var way = del.filter(function (w) { return !arrived(w); }).sort(function (a, b) { return wayRank(a) - wayRank(b) || String(b.ordered || '').localeCompare(String(a.ordered || '')); });
-    if (way.length) out.push(hbox('Замовлення', '<a class="link small" data-tab="delivery">усі ' + way.length + ' ›</a>',
+    // книги з блоку «Вийшли, але не відправили» тут не повторюємо
+    var nsRows = notSent().map(function (w) { return w.row; });
+    var way = del.filter(function (w) { return !arrived(w) && nsRows.indexOf(w.row) === -1; }).sort(function (a, b) { return wayRank(a) - wayRank(b) || String(b.ordered || '').localeCompare(String(a.ordered || '')); });
+    if (way.length) out.push(hbox('Замовлення', '<a class="link small" data-tab="delivery">усі ' + (way.length + nsRows.length) + ' ›</a>',
       way.slice(0, 4).map(function (w) {
         // колір пігулки = стан: жовта — їде, світло-зелена — ТТН є; звичайне «Замовлено» без пігулки, з датою в другому рядку
         var pill = w.np ? '<span class="pill2 ' + (wayRank(w) === 1 ? 'w' : 'ok') + '" title="' + esc(w.np) + '">' + esc(npShort(w.np).replace(', ще не передано', '')) + '</span>' : w.status === 'Замовлено' ? '' : '<span class="pill2 ' + wishKind(w.status) + '">' + esc(w.status) + '</span>';
