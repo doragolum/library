@@ -18,20 +18,20 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>if ('serviceWorker' in navigator && location.protocol === 'https:' && !/script\.google/.test(location.host)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });</script>
 <style>
-:root{--bg:#f4f3ef;--card:#fff;--ink:#1c1e1d;--muted:#6a6d67;--line:#e3e1da;--accent:#2f5d50;--accent-soft:#e2ebe6;--ok:#2e6b3f;--ok-soft:#e1efe4;--warn:#9a5b13;--warn-soft:#f6ead9;--bad:#a8342b;--bad-soft:#f8e3e0;--wood:#9b6a3c;--wood-dark:#6e4626;--shelf-bg:#efe6d9;--head:"Literata",Georgia,"Times New Roman",serif;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#4e8f77;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;color-scheme:dark}
+:root{--bg:#f4f3ef;--card:#fff;--ink:#1c1e1d;--muted:#6a6d67;--line:#e3e1da;--accent:#2f5d50;--accent-soft:#e2ebe6;--ok:#2e6b3f;--ok-soft:#e1efe4;--warn:#9a5b13;--warn-soft:#f6ead9;--bad:#a8342b;--bad-soft:#f8e3e0;--wood:#9b6a3c;--wood-dark:#6e4626;--shelf-bg:#efe6d9;--accent-fill:#2f5d50;--blue:#2d5f93;--blue-soft:#e1eaf4;--teal:#1d6f6c;--teal-soft:#dbeeec;--plum:#7a4a88;--plum-soft:#efe4f2;--gold:#8a6100;--gold-soft:#f6ebcd;--head:"Literata",Georgia,"Times New Roman",serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#6fb497;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--blue:#93b9e6;--blue-soft:#1c2633;--teal:#7fcfc8;--teal-soft:#17302d;--plum:#d1a9de;--plum-soft:#2b2231;--gold:#e6c46e;--gold-soft:#2f2816;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#ece9e1;--muted:#9da29b;--line:#2b312d;--accent:#6fb497;--accent-soft:#1f2c27;--ok:#7cc391;--ok-soft:#1d2b22;--warn:#e0a35e;--warn-soft:#30271b;--bad:#ee8a80;--bad-soft:#38211f;--wood:#7a5330;--wood-dark:#4d321b;--shelf-bg:#26211b;--accent-fill:#3d7a63;--blue:#93b9e6;--blue-soft:#1c2633;--teal:#7fcfc8;--teal-soft:#17302d;--plum:#d1a9de;--plum-soft:#2b2231;--gold:#e6c46e;--gold-soft:#2f2816;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:8px;padding:10px 16px 4px}
 .top h1{font:600 19px var(--head);margin:0;flex:1}
 h2,h3,.hello{font-family:var(--head);font-weight:600}
-.addbtn{border:0;background:var(--accent);color:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.addbtn{border:0;background:var(--accent-fill);color:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
 .tabs{display:flex;gap:4px;overflow-x:auto;padding:6px 12px 8px;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:999px;font:inherit;white-space:nowrap;cursor:pointer;text-align:left}
-.tab.on{background:var(--accent);color:#fff}
+.tab.on{background:var(--accent-fill);color:#fff}
 main{max-width:980px;margin:0 auto;padding:14px 16px 60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;min-width:0}
 h2{font-size:17px;margin:4px 0 10px}
@@ -73,9 +73,9 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appeara
 a.chip,button.chip{cursor:pointer;border:0;font:inherit;font-size:12px;text-decoration:none}
 .pick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .pick button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
-.pick button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pick button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 13px;font:inherit;cursor:pointer}
-.btn.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.p{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff;font-weight:600}
 .btn:disabled{opacity:.5;cursor:default}
 .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
@@ -172,7 +172,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .qa{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 6px}
 .qa button{border:0;border-radius:16px;background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);padding:14px 6px;font:inherit;font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:84px;cursor:pointer}
 .qa button svg{width:24px;height:24px;color:var(--accent)}
-.qa button.p{background:var(--accent);color:#fff;box-shadow:none}
+.qa button.p{background:var(--accent-fill);color:#fff;box-shadow:none}
 .qa button.p svg{color:#fff}
 .need span{color:var(--warn);font-weight:600}.need input{border:2px solid var(--warn)!important}
 .qa-hint{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px}
@@ -229,7 +229,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .vol{flex:1 0 34px;text-align:center;font-size:11px;color:var(--muted);min-width:34px;max-width:70px}
 .vol[data-book],.vol[data-wish]{cursor:pointer}
 .vol i{display:block;height:30px;border-radius:6px;margin-bottom:3px;line-height:30px;font-style:normal;font-weight:600;color:#fff;font-size:12px}
-.v-read{background:var(--ok)}.v-own{background:var(--accent)}.v-now{background:#e0a011}.v-wish{background:transparent;border:2px dashed var(--warn);color:var(--warn)!important;line-height:26px!important}.v-none{background:var(--line);color:var(--muted)!important}
+.v-read{background:var(--ok)}.v-own{background:var(--accent-fill)}.v-now{background:#e0a011}.v-wish{background:transparent;border:2px dashed var(--warn);color:var(--warn)!important;line-height:26px!important}.v-none{background:var(--line);color:var(--muted)!important}
 .legend2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted);margin-top:8px}.legend2 em{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
 .strip .cov{flex:0 0 72px}
@@ -263,7 +263,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .fchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
 .fchips::-webkit-scrollbar{display:none}
 .fchips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
-.fchips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fchips button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .fchips button.x{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .fchips .sep{flex:none;width:1px;background:var(--line);margin:0 2px}
 .about{font-size:14px;line-height:1.5;white-space:pre-line}
@@ -312,7 +312,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .mrow{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:13px 14px;cursor:pointer}.mrow:last-child{border-bottom:0}
 .mrow .g{flex:1;min-width:0;display:flex;flex-direction:column}.mrow small{color:var(--muted);font-size:12.5px}.mrow .chev{color:var(--muted);font-size:18px}
 .backme{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;padding:2px 0 10px;cursor:pointer}
-.tab.fab b{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;font-weight:400;line-height:1;margin:-20px auto 0;box-shadow:0 6px 16px -6px rgba(0,0,0,.45)}
+.tab.fab b{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent-fill);color:#fff;font-size:28px;font-weight:400;line-height:1;margin:-20px auto 0;box-shadow:0 6px 16px -6px rgba(0,0,0,.45)}
 .btn.sm{padding:5px 11px;font-size:13px}
 @media (min-width:1000px){.tab.fab{display:none}.hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.hgrid.one{grid-template-columns:minmax(0,760px)}.plaques{max-width:760px}}
 .hello{font-size:22px;font-weight:700;margin:2px 0 0}.hsum{color:var(--muted);font-size:14px;margin:2px 0 12px}.hsum b{color:var(--ink)}.hsum b[data-list]{cursor:pointer;text-decoration:underline dotted}
@@ -355,13 +355,13 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .tl .ln{position:relative;height:22px;margin:4px 0}.tl .ln i{position:absolute;top:0;height:22px;border-radius:11px;color:#fff;font-size:11px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
 .tl .now{position:absolute;top:16px;bottom:0;width:2px;background:var(--accent)}
 .seg3{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent);color:#fff}
+.seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent-fill);color:#fff}
 .pick.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pick.scroll::-webkit-scrollbar{display:none}.pick.scroll button{flex:none}
 .tbtn{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;min-width:44px;min-height:40px;padding:0 12px;font:inherit;cursor:pointer;position:relative}.tbtn.on{border-color:var(--accent);color:var(--accent)}.tbtn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
 .selbar{position:sticky;bottom:16px;z-index:4;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:1px solid var(--accent);border-radius:16px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.15);margin-top:12px}.selbar[hidden]{display:none}
 .shops{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}.shops::-webkit-scrollbar{display:none}
 .shops button{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:8px 13px;font:inherit;cursor:pointer;text-align:left}
-.shops button b{font-size:15px}.shops button span{font-size:12px;color:var(--muted)}.shops button.on{background:var(--accent);border-color:var(--accent);color:#fff}.shops button.on span{color:rgba(255,255,255,.85)}
+.shops button b{font-size:15px}.shops button span{font-size:12px;color:var(--muted)}.shops button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}.shops button.on span{color:rgba(255,255,255,.85)}
 .dfilt{margin:2px 0 10px}.dfilt summary{cursor:pointer;color:var(--muted);font-size:14px;padding:4px 0}
 .ocard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
 .ohead{display:flex;align-items:flex-start;gap:10px}.ono{font-size:20px;font-weight:700;letter-spacing:.3px;font-variant-numeric:tabular-nums}
@@ -371,7 +371,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .oi{align-items:center}.oi .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .oi-meta{font-size:13px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
 .oi-np{display:flex;align-items:baseline;gap:6px;font-size:12.5px;color:var(--warn);margin-top:3px}.oi-np i{flex:none;width:7px;height:7px;border-radius:50%;background:currentColor;transform:translateY(-1px)}.oi-np.ok{color:var(--ok)}
-.oi-got{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 8px 6px;min-width:64px;font:inherit;font-size:11px;cursor:pointer}.oi-got:hover{border-color:var(--accent);color:var(--accent)}.oi-got.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.oi-got{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 8px 6px;min-width:64px;font:inherit;font-size:11px;cursor:pointer}.oi-got:hover{border-color:var(--accent);color:var(--accent)}.oi-got.p{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .grp-h{margin:14px 0 6px;font-size:14px;display:flex;gap:6px;align-items:baseline}.grp-h .muted{font-weight:400}
 .pick .sep{width:1px;background:var(--line);margin:0 4px;align-self:stretch}
 .kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -386,7 +386,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .ach{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .ac{background:var(--card);border-radius:16px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}.ac.off{opacity:.75}.ac .e{font-size:28px}
 .ac .lv{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 6px}.ac .lv span{font-size:11px;border-radius:99px;padding:2px 7px;background:var(--line);color:var(--muted)}
-.ac .lv span.on{background:var(--accent);color:#fff}.ac .lv span.nx{border:1.5px dashed var(--accent);color:var(--accent);background:none}
+.ac .lv span.on{background:var(--accent-fill);color:#fff}.ac .lv span.nx{border:1.5px dashed var(--accent);color:var(--accent);background:none}
 .recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .rc{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer}.rc .thumb,.rc .ph{width:44px;height:66px}
 .rc .grow>*{display:block}.rc b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rc .v{font-weight:700;color:var(--accent)}
@@ -408,6 +408,21 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .vft{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.vft th{text-align:left;font-size:11px;color:var(--muted);font-weight:500;padding:4px}
 .vft td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}.vft td:first-child{white-space:nowrap}
 .vft label{display:flex;gap:6px;align-items:center;cursor:pointer}
+/* ===== кольори: статуси, жанри, плашки ===== */
+.chip.t,.pill2.t{background:var(--blue-soft);color:var(--blue)}
+.chip.s,.pill2.s{background:var(--teal-soft);color:var(--teal)}
+.chip.f,.pill2.f{background:var(--plum-soft);color:var(--plum)}
+.pill2.a{background:var(--accent-soft);color:var(--accent)}
+.chip.g{background:color-mix(in srgb,var(--gc) 16%,var(--card));color:color-mix(in srgb,var(--gc) 72%,var(--ink))}
+.plq b{color:var(--pc,var(--ink))}.plq.money{--pc:var(--gold)}.plq.way{--pc:var(--blue)}.plq.read{--pc:var(--ok)}.plq.hot{--pc:var(--ok)}
+.plq small::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pc,var(--line));margin-right:5px;vertical-align:1px}
+.hbox.ok .hbh h4{color:var(--ok)}.hbox.bad .hbh h4{color:var(--bad)}
+.mrow .mi{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:var(--mc-soft)}
+.mi.g1{--mc-soft:var(--gold-soft)}.mi.g2{--mc-soft:var(--blue-soft)}.mi.g3{--mc-soft:var(--teal-soft)}.mi.g4{--mc-soft:var(--plum-soft)}.mi.g5{--mc-soft:var(--accent-soft)}.mi.g6{--mc-soft:var(--bad-soft)}.mi.g7{--mc-soft:var(--warn-soft)}
+.card.ask{background:linear-gradient(135deg,var(--accent-fill),color-mix(in srgb,var(--accent-fill) 65%,#1d6f8c))!important}
+.hero{background:linear-gradient(135deg,#1e3b33,#2f5d50 55%,#4f7d5c)}
+.hero .ava{color:#2f5d50}
+@media (max-width:999px){.tab svg{box-sizing:content-box;padding:3px 14px;border-radius:999px;transition:background .15s}.tab.on svg{background:var(--accent-soft)}}
 </style>
 </head>
 <body>
@@ -536,16 +551,23 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function hbars(rows, fmt, clickKey) {
     var max = Math.max.apply(null, rows.map(function (r) { return r[1]; }).concat([1]));
     return '<div class="hbars">' + rows.map(function (r) {
-      return '<div class="r"' + (clickKey ? ' style="cursor:pointer" data-list="' + clickKey + '|' + esc(r[0]) + '"' : '') + '><span title="' + esc(r[0]) + '">' + esc(r[0]) + '</span><div class="bar"><i style="width:' + (r[1] / max * 100).toFixed(1) + '%"></i></div><span class="v">' + esc(fmt ? fmt(r[1], r) : r[1]) + '</span></div>';
+      return '<div class="r"' + (clickKey ? ' style="cursor:pointer" data-list="' + clickKey + '|' + esc(r[0]) + '"' : '') + '><span title="' + esc(r[0]) + '">' + esc(r[0]) + '</span><div class="bar"><i style="width:' + (r[1] / max * 100).toFixed(1) + '%' + (clickKey === 'genre' || clickKey === 'maingenre' ? ';background:' + genreColor(r[0]) : '') + '"></i></div><span class="v">' + esc(fmt ? fmt(r[1], r) : r[1]) + '</span></div>';
     }).join('') + '</div>';
   }
   function statusChip(s) {
-    var k = { 'прочитано': 'ok', 'читаю': 'a', 'закинула': 'b' }[low(s)] || '';
+    var k = { 'прочитано': 'ok', 'читаю': 't', 'закинула': 'b' }[low(s)] || '';
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
   }
   function wishChip(s) {
-    var k = ORDERED.indexOf(s) !== -1 ? 'w' : s === 'В бібліотеці' ? 'ok' : s === 'Хочу купити' ? 'a' : '';
+    var k = wishKind(s);
     return s ? '<span class="chip ' + k + '">' + esc(s) + '</span>' : '';
+  }
+  // колір статусу бажанки: хочу — зелений, докупити — бірюзовий, на майбутнє — сливовий, замовлено — бурштиновий, в дорозі — синій, приїхала — зелений
+  function wishKind(s) {
+    return { 'Хочу купити': 'a', 'Докупити серію': 's', 'На майбутнє': 'f', 'Замовлено': 'w', 'Створено ТТН': 'w', 'Відправлено': 't', 'В дорозі': 't', 'Доставлено': 'ok', 'В бібліотеці': 'ok' }[s] || '';
+  }
+  function genreChip(g) {
+    return g ? '<span class="chip g" style="--gc:' + genreColor(g) + '">' + esc(g) + '</span>' : '';
   }
   function stars(r) { if (!r) return ''; var f = Math.floor(r), h = r - f >= .5; return '<span style="color:#f2b01e">' + '★'.repeat(f) + (h ? '½' : '') + '</span>'; }
   function tile(val, label, list) {
@@ -996,7 +1018,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function bookItem(b) {
     var ser = b.type === 'Серія' && b.series && b.series !== '-' ? esc(b.series) + (b.num ? ' #' + esc(b.num) : '') + (b.total ? ' з ' + esc(b.total) : '') : '';
     return '<div class="item" data-book="' + b.row + '">' + cover(b) + '<div class="body"><div class="t">' + esc(b.title) + '</div><div class="muted small">' + esc(b.author) + (ser ? ' · ' + ser : '') + '</div>' +
-      '<div class="chips">' + statusChip(b.status) + (b.rating ? '<span class="chip">' + stars(b.rating) + '</span>' : '') + '<span class="chip">' + whereText(b) + '</span>' + (b.genre ? '<span class="chip">' + esc(b.genre) + '</span>' : '') + '</div></div></div>';
+      '<div class="chips">' + statusChip(b.status) + (b.rating ? '<span class="chip">' + stars(b.rating) + '</span>' : '') + '<span class="chip">' + whereText(b) + '</span>' + genreChip(b.genre) + '</div></div></div>';
   }
 
   /* ---------- картка книги ---------- */
@@ -2023,19 +2045,19 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var base = askPool({ kind: a.kind, genres: [], lang: '', size: '' });
         var gc = {}; base.forEach(function (b) { b._g.forEach(function (g) { if (g) gc[g] = (gc[g] || 0) + 1; }); });
         h += '<h3>Жанр? <span class="muted small">можна кілька</span></h3><div class="chips">' + Object.keys(gc).sort(function (x, y) { return gc[y] - gc[x]; }).map(function (g) {
-          return '<button class="chip' + (a.genres.indexOf(g) !== -1 ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (a.genres.indexOf(g) !== -1 ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-genre" data-v="' + esc(g) + '">' + esc(g) + ' · ' + gc[g] + '</button>';
+          return '<button class="chip' + (a.genres.indexOf(g) !== -1 ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (a.genres.indexOf(g) !== -1 ? ';background:var(--accent-fill);color:#fff' : '') + '" data-action="ask-genre" data-v="' + esc(g) + '">' + esc(g) + ' · ' + gc[g] + '</button>';
         }).join('') + '</div>';
         var tc = {}; base.forEach(function (b) { b._t.forEach(function (t) { tc[t] = (tc[t] || 0) + 1; }); });
         var tk = Object.keys(tc).sort(function (x, y) { return tc[y] - tc[x]; }).slice(0, 30);
         if (tk.length && !NO_TROPES) h += '<h3 style="margin-top:14px">Тропи? <span class="muted small">можна кілька</span></h3><div class="chips">' + tk.map(function (t) {
           var on = (a.tropes || []).indexOf(t) !== -1;
-          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-trope" data-v="' + esc(t) + '">' + esc(t) + ' <small>' + tc[t] + '</small></button>';
+          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent-fill);color:#fff' : '') + '" data-action="ask-trope" data-v="' + esc(t) + '">' + esc(t) + ' <small>' + tc[t] + '</small></button>';
         }).join('') + '</div>';
         var mc = {}; D.books.forEach(function (b) { b._m.forEach(function (m) { mc[m] = (mc[m] || 0) + 1; }); });
         var mk = MOODS.filter(function (m) { return mc[m]; });
         if (mk.length) h += '<h3 style="margin-top:14px">Настрій? <span class="muted small">як книги, що вам…</span></h3><div class="chips">' + mk.map(function (m) {
           var on = a.mood === m;
-          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent);color:#fff' : '') + '" data-action="ask-mood" data-v="' + esc(m) + '">' + esc(m) + '</button>';
+          return '<button class="chip' + (on ? ' on' : '') + '" style="font-size:14px;padding:8px 12px;cursor:pointer' + (on ? ';background:var(--accent-fill);color:#fff' : '') + '" data-action="ask-mood" data-v="' + esc(m) + '">' + esc(m) + '</button>';
         }).join('') + '</div>';
         h += '<div class="row" style="margin-top:12px"><button class="btn p" data-action="ask-next">' + (a.genres.length || (a.tropes || []).length || a.mood ? 'Далі' : 'Будь-що') + '</button></div>';
       }
@@ -2074,7 +2096,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function askHomeCard() {
     var u = unfinishedSeries().length;
-    return '<button class="card" data-action="ask-open" style="display:flex;width:100%;align-items:center;gap:12px;background:var(--accent);color:#fff;border:0;font:inherit;text-align:left;cursor:pointer">' +
+    return '<button class="card ask" data-action="ask-open" style="display:flex;width:100%;align-items:center;gap:12px;background:var(--accent-fill);color:#fff;border:0;font:inherit;text-align:left;cursor:pointer">' +
       '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 013 3v12a2 2 0 00-2-2H2zM22 5h-7a3 3 0 00-3 3v12a2 2 0 012-2h8z"/></svg>' +
       '<span style="flex:1"><b style="font-size:16px">Що почитати?</b><br><span class="small" style="opacity:.9">4 питання' + (u ? ' · недочитаних серій: ' + u : '') + '</span></span><span style="font-size:20px">›</span></button>';
   }
@@ -3407,7 +3429,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var way = del.filter(function (w) { return !arrived(w); }).sort(function (a, b) { return stageOf(b) - stageOf(a); });
     if (way.length) out.push(hbox('Замовлення', '<a class="link small" data-tab="delivery">усі ' + way.length + ' ›</a>',
       way.slice(0, 4).map(function (w) {
-        var pill = w.np ? '<span class="pill2 w" title="' + esc(w.np) + '">' + esc(npShort(w.np)) + '</span>' : '<span class="pill2">' + esc(w.status) + '</span>';
+        var pill = w.np ? '<span class="pill2 w" title="' + esc(w.np) + '">' + esc(npShort(w.np)) + '</span>' : '<span class="pill2 ' + wishKind(w.status) + '">' + esc(w.status) + '</span>';
         return hrow(w, [esc(shopOf(w)), w.release && w.release > D.today ? 'вийде ' + dmy(w.release).slice(0, 5) : ''].filter(Boolean).join(' · '), pill, 'data-wish="' + w.row + '"');
       }).join('')));
     var ns = notSent();
@@ -3453,7 +3475,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return '<button class="hc" data-book="' + b.row + '" title="' + esc(b.title) + '">' + cover(b) + '<small>' + (b.bought ? dmy(b.bought).slice(0, 5) : '') + '</small></button>';
     }).join('') + '</div>');
     var ord = D.wish.filter(function (w) { return w.ordered && w.status !== 'В бібліотеці'; }).sort(function (a, b) { return String(b.ordered).localeCompare(String(a.ordered)); }).slice(0, 6);
-    if (ord.length) h += hbox('Нові замовлення', '<a class="link small" data-tab="delivery">усі ›</a>', ord.map(function (w) { return hrow(w, [esc(shopOf(w)), 'замовлено ' + dmy(w.ordered).slice(0, 5), w.price != null ? money(w.price) : ''].filter(Boolean).join(' · '), '<span class="pill2">' + esc(w.status) + '</span>', 'data-wish="' + w.row + '"'); }).join(''));
+    if (ord.length) h += hbox('Нові замовлення', '<a class="link small" data-tab="delivery">усі ›</a>', ord.map(function (w) { return hrow(w, [esc(shopOf(w)), 'замовлено ' + dmy(w.ordered).slice(0, 5), w.price != null ? money(w.price) : ''].filter(Boolean).join(' · '), '<span class="pill2 ' + wishKind(w.status) + '">' + esc(w.status) + '</span>', 'data-wish="' + w.row + '"'); }).join(''));
     var wl = D.wish.filter(function (w) { return ORDERED.indexOf(w.status) === -1 && w.status !== 'В бібліотеці'; }).sort(function (a, b) { return (b.row || 0) - (a.row || 0); }).slice(0, 5);
     if (wl.length) h += hbox('Нові бажанки', '<a class="link small" data-tab="wish">усі ›</a>', wl.map(function (w) { return hrow(w, [esc(w.author), w.release ? 'вийде ' + dmy(w.release) : ''].filter(Boolean).join(' · '), '', 'data-wish="' + w.row + '"'); }).join(''));
     return '<div class="hgrid">' + h + '</div>';
@@ -3463,8 +3485,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var newM = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 7) === ym; });
     var del = deliveryRows(), ready = del.filter(arrived), way = del.filter(function (w) { return !arrived(w); });
     var h = '<div class="plaques">' +
-      '<button class="plq" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
-      '<button class="plq" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
+      '<button class="plq money" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
+      '<button class="plq way" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
       '<button class="plq' + (ready.length ? ' hot' : '') + '" data-action="got-open"><small>Можна забирати</small><b>' + ready.length + '</b></button></div>';
     var seg = view.hseg || 'today';
     h += '<div class="subtabs hseg">' + [['today', 'Сьогодні'], ['30', '30 днів'], ['new', 'Нове']].map(function (x) { return '<button class="' + (seg === x[0] ? 'on' : '') + '" data-action="hseg" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
@@ -3499,16 +3521,16 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var lent = S.inLib.filter(function (b) { return low(b.avail) === 'позичена'; });
     var at = achTotals(achievements());
     var cur = (function () { try { return localStorage.getItem('lb.theme') || ''; } catch (e) { return ''; } })();
-    var row = function (attr, t, s, right) { return '<button class="mrow" ' + attr + '><span class="g"><b>' + t + '</b><small>' + s + '</small></span>' + (right || '') + '<span class="chev">›</span></button>'; };
-    var h = '<div class="plaques two"><button class="plq" data-tab="money"><small>Витрачено за ' + y + '</small><b>' + money(sumPrice(boughtY)) + '</b></button><button class="plq" data-tab="stats"><small>Прочитано за ' + y + '</small><b>' + readY.length + ' ' + bookWord(readY.length) + '</b></button></div>';
+    var row = function (attr, t, s, right, ic) { return '<button class="mrow" ' + attr + '>' + (ic ? '<span class="mi ' + ic[1] + '" aria-hidden="true">' + ic[0] + '</span>' : '') + '<span class="g"><b>' + t + '</b><small>' + s + '</small></span>' + (right || '') + '<span class="chev">›</span></button>'; };
+    var h = '<div class="plaques two"><button class="plq money" data-tab="money"><small>Витрачено за ' + y + '</small><b>' + money(sumPrice(boughtY)) + '</b></button><button class="plq read" data-tab="stats"><small>Прочитано за ' + y + '</small><b>' + readY.length + ' ' + bookWord(readY.length) + '</b></button></div>';
     h += '<div class="mlist">' +
-      row('data-tab="money"', 'Фінанси', 'витрати по місяцях, видавництва, акції, рекорди') +
-      row('data-tab="stats"', 'Статистика', 'читання, жанри, оцінки, бібліотека') +
-      row('data-tab="series"', 'Серії', 'повні, недочитані, яких томів бракує') +
-      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' зараз у людей' : 'зараз нікому не позичено') +
-      row('data-tab="kyiv"', 'У Києві', S.inLib.filter(inKyiv).length + ' кн. чекають посилки') +
-      row('data-list="sold"', 'Продані', D.sold.length + ' кн.') +
-      row('data-tab="ach"', 'Досягнення', at.got + ' з ' + at.all + ' рівнів') +
+      row('data-tab="money"', 'Фінанси', 'витрати по місяцях, видавництва, акції, рекорди', '', ['💸', 'g1']) +
+      row('data-tab="stats"', 'Статистика', 'читання, жанри, оцінки, бібліотека', '', ['📊', 'g2']) +
+      row('data-tab="series"', 'Серії', 'повні, недочитані, яких томів бракує', '', ['📚', 'g3']) +
+      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' зараз у людей' : 'зараз нікому не позичено', '', ['🤝', 'g4']) +
+      row('data-tab="kyiv"', 'У Києві', S.inLib.filter(inKyiv).length + ' кн. чекають посилки', '', ['📦', 'g7']) +
+      row('data-list="sold"', 'Продані', D.sold.length + ' кн.', '', ['🏷', 'g6']) +
+      row('data-tab="ach"', 'Досягнення', at.got + ' з ' + at.all + ' рівнів', '', ['🏆', 'g5']) +
       '</div>';
     h += '<div class="hbox"><div class="hbh"><h4>Тема</h4></div><div class="seg3">' + [['', 'Як у телефоні'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
     return h;
