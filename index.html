@@ -39,9 +39,10 @@ h2{font-size:17px;margin:4px 0 10px}
 h3{font-size:15px;margin:0 0 8px}
 .muted{color:var(--muted)}
 .small{font-size:13px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;font:inherit;color:inherit}
 .tile b{display:block;font-size:22px}
+.tiles.sm{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
 button.tile{cursor:pointer}
 button.tile:hover{border-color:var(--accent)}
 button.tile::after{content:"›";float:right;color:var(--muted);margin-top:-30px;font-size:18px}
@@ -267,6 +268,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .fchips button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .fchips button.x{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .fchips .sep{flex:none;width:1px;background:var(--line);margin:0 2px}
+@media (max-width:999px){.fchips .sep{display:none}}
 .about{font-size:14px;line-height:1.5;white-space:pre-line}
 .about.clip{max-height:7.4em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);cursor:pointer}
 .prevnext{display:flex;gap:8px;margin:12px 0}.prevnext .btn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-size:13px}
@@ -972,7 +974,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (WIDE ? '<div class="pick" style="margin:0"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '<button class="tbtn" data-action="bmore-toggle" aria-label="Вигляд">⋯</button>') + '</div>' +
       (!WIDE && view.bookMoreOpen ? '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Вигляд:</span><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '');
     var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Роттердам'], ['place', 'Київ'], ['avail', 'позичена']]
-      .concat(topList(count(S.inLib, function (b) { return b.genre; }), 6).map(function (r) { return ['genre', r[0]]; }));
+      .concat(topList(count(S.inLib, function (b) { return b.genre; }), WIDE ? 6 : 3).map(function (r) { return ['genre', r[0]]; }));
     var chipKey = {}; chips.forEach(function (c) { chipKey[c[0] + '|' + c[1]] = 1; });
     var names = {}; FILTERS.forEach(function (f) { names[f[0]] = f[1]; });
     h += '<div class="fchips">' + chips.map(function (c, i) {
@@ -1459,7 +1461,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return true;
     }).sort(function (a, b) { return (b.ownedCount / b.expected) - (a.ownedCount / a.expected) || a.name.localeCompare(b.name, 'uk'); });
     var done = all.filter(function (x) { return !x.missing.length; }).length;
-    var h = '<div class="tiles">' + tile(all.length, 'серій у бібліотеці') + tile(done, 'зібрано повністю') + tile(all.filter(function (x) { return x.missing.length === 1; }).length, 'бракує 1 книги') + '</div>';
+    var h = '<div class="tiles sm">' + tile(all.length, 'серій у бібліотеці') + tile(done, 'зібрано повністю') + tile(all.filter(function (x) { return x.missing.length === 1; }).length, 'бракує 1 книги') + '</div>';
     h += '<div class="pick">' + modes.map(function (m) { return '<button data-smode="' + m[0] + '" class="' + (view.seriesMode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div>';
     h += '<div class="cols">' + (list.map(function (x) {
       return '<div class="card"><div class="row" data-go="' + esc('series|' + x.name) + '" style="cursor:pointer"><div class="grow"><div style="font-weight:600">' + esc(x.name) + ' <span class="muted">›</span></div><div class="muted small">' + esc(x.author) + (x.pub ? ' · ' + esc(x.pub) : '') + '</div></div><b class="num">' + x.ownedCount + ' / ' + x.expected + '</b></div>' + seriesBody(x) + '</div>';
@@ -1783,7 +1785,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return (a.site < b.site ? -1 : a.site > b.site ? 1 : 0) || (a.date < b.date ? 1 : -1);
     });
     var sum = sumPrice(all), ready = all.filter(arrived), ns = notSent();
-    var h = '<div class="row" style="flex-wrap:nowrap;margin-bottom:8px">' + sbox('<input type="search" data-input="dq" placeholder="Номер, ТТН або назва" value="' + esc(view.dq || '') + '">', 'grow') +
+    var h = '<div class="row" style="flex-wrap:nowrap;margin-bottom:8px">' + sbox('<input type="search" data-input="dq" placeholder="Пошук замовлення" value="' + esc(view.dq || '') + '">', 'grow') +
       '<button class="btn p" data-action="order-open" style="white-space:nowrap">＋ Замовлення</button></div>';
     h += '<p class="muted small" style="margin:0 0 8px">' + orderGroups(all).length + ' замовлень · ' + all.length + ' кн. · ' + money(sum) +
       (ready.length ? ' · <b style="color:var(--ok)">можна забирати: ' + ready.length + '</b>' : '') + (ns.length ? ' · <a class="link" data-list="notsent">не відправлені: ' + ns.length + '</a>' : '') + '</p>';
@@ -1877,7 +1879,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var rest = k.filter(function (b) { return !b.parcel; });
     var nPrio = k.filter(function (b) { return b.prio; }).length;
     // плитки з нулем не показуємо
-    var h = '<div class="tiles">' + tile(k.length, 'книг у Києві', 'kyiv') + (nPrio ? tile(nPrio, 'з пріоритетом') : '') +
+    var h = '<div class="tiles sm">' + tile(k.length, 'книг у Києві', 'kyiv') + (nPrio ? tile(nPrio, 'з пріоритетом') : '') +
       (c.parcel && inList.length + onWay.length ? tile(inList.length + onWay.length, 'у посилці') : '') + '</div>';
     if (!c.parcel) h += '<div class="note">Щоб збирати посилку (список → в дорозі → отримала), потрібна колонка «Посилка з Києва». Поки можна міняти пріоритет і відмічати «Отримала» в картці книги.</div>';
     if (c.parcel) {
@@ -3333,7 +3335,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         '<div class="bk" data-book="' + b.row + '" style="background:' + genreColor(b.genre) + '">' + cv + '<i class="rib" style="height:' + Math.max(12, pct) + '%"></i></div>' +
         '<div class="grow" style="min-width:0"><h3 data-book="' + b.row + '">' + esc(b.title) + '</h3><div class="a">' + esc(b.author) + (b.type === 'Серія' && b.num ? ' · #' + esc(numTxt(b.num)) : '') + '</div>' +
         (b.page ? '<div class="pg">' + b.page + (b.pages ? ' <small>/ ' + b.pages + ' стор.</small>' : '') + '</div>' + (b.pages && b.page >= b.pages ? '<div class="info">Закладка на останній сторінці. <button class="lnk w" style="margin:0" data-action="finish" data-row="' + b.row + '">Дочитала?</button> Або <button class="lnk w" style="margin:0" data-action="page-dlg" data-row="' + b.row + '">виправ сторінку</button>.</div>' : '') : '<div class="pg" style="font-size:16px;margin-top:10px">' + (b.pages ? b.pages + ' стор.' : '') + '<br><small>познач сторінку закладкою</small></div>') +
-        '<div class="info">' + esc(info.join(' · ')) + '</div>' + (b.started && !(b.pages && b.page >= b.pages) ? '<div class="info">дочитаєш ~' + dmy(addDays(D.today, ndays - 1)).slice(0, 5) + '</div>' : '<button class="lnk w" data-action="start-date" data-row="' + b.row + '">Коли почала? ›</button>') + '</div></div>' +
+        '<div class="info">' + esc(info.join(' · ')) + '</div>' + (b.started ? (b.pages && b.page >= b.pages ? '' : '<div class="info">дочитаєш ~' + dmy(addDays(D.today, ndays - 1)).slice(0, 5) + '</div>') : '<button class="lnk w" data-action="start-date" data-row="' + b.row + '">Коли почала? ›</button>') + '</div></div>' +
         '<div class="btns"><button class="b1" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка</button><button class="b2" data-action="finish" data-row="' + b.row + '">✅ Дочитала</button></div></div>';
     }).join('') + '</div>';
   }
