@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Моя бібліотека</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="icons/icon-192.png?v=2">
@@ -24,7 +24,7 @@
 *{box-sizing:border-box}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
 .top{display:flex;align-items:center;gap:8px;padding:10px 16px 4px}
 .top h1{font:600 19px var(--head);margin:0;flex:1}
 h2,h3,.hello{font-family:var(--head);font-weight:600}
@@ -184,18 +184,19 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .need span{color:var(--warn);font-weight:600}.need input{border:2px solid var(--warn)!important}
 .qa-hint{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px}
 @media (max-width:999px){
-  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(8px + env(safe-area-inset-bottom));overflow:visible}
-  .tab{flex-direction:column;gap:2px;border-radius:10px;font-size:11px;padding:4px 2px;text-align:center}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;background:var(--card);border-top:1px solid var(--line);padding:8px 4px calc(10px + env(safe-area-inset-bottom,0px));overflow:visible}
+  @media (display-mode:standalone){.tabs{padding-bottom:max(26px,calc(10px + env(safe-area-inset-bottom,0px)))}main .selbar{bottom:max(104px,calc(88px + env(safe-area-inset-bottom,0px)))}}
+  .tab{flex-direction:column;justify-content:center;gap:3px;border-radius:10px;font-size:12px;padding:6px 2px;min-height:54px;text-align:center}
   .tab.on{background:transparent;color:var(--accent);font-weight:700}
-  main{padding-bottom:96px}
-  .toast{bottom:84px}
+  main{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
   .top{padding:8px 16px 6px}
   .top h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:19px}
   .top .addbtn{display:none}
   .addbtn .lbl{display:none}
   .addbtn{width:40px;height:40px;padding:0;font-size:22px;line-height:1}
   .top .iconbtn{width:40px;height:40px}
-  main .selbar{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  main .selbar{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 }
 /* широкий екран */
 @media (min-width:1000px){
