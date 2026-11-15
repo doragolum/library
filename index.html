@@ -312,7 +312,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .nextc .thumb,.nextc .ph{width:56px;height:84px}
 
 /* ===== v4 ===== */
-.plaques{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:2px 0 12px}.plaques.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plaques{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:2px 0 12px}.plaques.four{grid-template-columns:repeat(2,minmax(0,1fr))}@media (min-width:700px){.plaques.four{grid-template-columns:repeat(4,minmax(0,1fr))}}.plaques.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .plq{justify-content:space-between;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:9px 11px;text-align:left;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
 .plq small{font-size:12px;color:var(--muted);line-height:1.25;min-height:2.5em}.plq b{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .plq.hot{border-color:var(--ok);background:var(--ok-soft)}.plq.hot b{color:var(--ok)}
@@ -3609,7 +3609,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     // релізи бажанок на найближчі 7 днів (без того, що вже в бібліотеці)
     var rel7 = D.wish.filter(function (w) { return w.release && w.release >= D.today && w.release <= addDays(D.today, 7) && w.status !== 'В бібліотеці'; }).length;
     // плашки: витрати за місяць (натиснути — список покупок), в дорозі, релізи; «Прочитано» — на вкладці «План»
-    var h = '<div class="plaques">' +
+    // коли є посилки у відділенні — першою зелена плашка «Можна забирати», натиснути = «Отримала» для всіх; коли нуль — її немає
+    var ready = del.filter(arrived);
+    var h = '<div class="plaques' + (ready.length ? ' four' : '') + '">' +
+      (ready.length ? '<button class="plq hot" data-action="got-order" data-rows="' + ready.map(function (w) { return w.row; }).join(',') + '"><small>Можна забирати</small><b>' + ready.length + ' ' + bookWord(ready.length) + '</b></button>' : '') +
       '<button class="plq money" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
       '<button class="plq way" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
       '<button class="plq rel" data-action="hseg" data-v="30"><small>Релізи за тиждень</small><b>' + rel7 + ' ' + bookWord(rel7) + '</b></button></div>';
