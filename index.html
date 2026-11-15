@@ -374,6 +374,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#fff;font-size:11px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
 .tl .now{position:absolute;top:16px;bottom:0;width:2px;background:var(--accent)}
 .seg3{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.mtheme{cursor:default}.seg3.mini{margin:0;padding:3px;gap:2px;background:var(--bg);box-shadow:none;border-radius:12px}.seg3.mini button{padding:0 12px;min-height:40px;font-size:14px}
 .seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent-fill);color:#fff}
 .pick.scroll button{flex:none}
 .tbtn{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;min-width:44px;min-height:40px;padding:0 12px;font:inherit;cursor:pointer;position:relative}.tbtn.on{border-color:var(--accent);color:var(--accent)}.tbtn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
@@ -3643,23 +3644,20 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 
   /* ---------- «Я» як акаунт ---------- */
   VIEWS.me = function () {
+    // одне спокійне меню: цифри року стоять у рядках, без окремих плиток і дублів вкладок
     var y = D.today.slice(0, 4);
     var boughtY = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 4) === y; });
     var readY = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === y; });
     var lent = S.inLib.filter(function (b) { return low(b.avail) === 'позичена'; });
     var cur = (function () { try { return localStorage.getItem('lb.theme') || ''; } catch (e) { return ''; } })();
-    var row = function (attr, t, s, right) { return '<button class="mrow" ' + attr + '><span class="g"><b>' + t + '</b><small>' + s + '</small></span>' + (right || '') + '<span class="chev">›</span></button>'; };
-    var h = '<div class="plaques two"><button class="plq" data-tab="money"><small>Витрачено за ' + y + '</small><b>' + money(sumPrice(boughtY)) + '</b></button><button class="plq" data-tab="stats"><small>Прочитано за ' + y + '</small><b>' + readY.length + ' ' + bookWord(readY.length) + '</b></button></div>';
-    h += '<div class="mlist">' +
-      row('data-tab="money"', 'Фінанси', 'витрати по місяцях, видавництва, акції, рекорди') +
-      row('data-tab="stats"', 'Статистика', 'читання, жанри, оцінки, бібліотека') +
-      row('data-tab="series"', 'Серії', 'повні, недочитані, яких томів бракує') +
-      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' зараз у людей' : 'зараз нікому не позичено') +
-      row('data-tab="kyiv"', 'У Києві', S.inLib.filter(inKyiv).length + ' кн. чекають посилки') +
-      row('data-list="sold"', 'Продані', D.sold.length + ' кн.') +
-
+    var row = function (attr, t, s) { return '<button class="mrow" ' + attr + '><span class="g"><b>' + t + '</b><small>' + s + '</small></span><span class="chev">›</span></button>'; };
+    var h = '<div class="mlist">' +
+      row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y) +
+      row('data-tab="stats"', 'Статистика', 'прочитано ' + readY.length + ' ' + bookWord(readY.length) + ' за ' + y) +
+      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' у людей' : 'нікому не позичено') +
+      row('data-list="sold"', 'Продані', D.sold.length + ' ' + bookWord(D.sold.length)) +
       '</div>';
-    h += '<div class="hbox"><div class="hbh"><h4>Тема</h4></div><div class="seg3">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+    h += '<div class="mlist"><div class="mrow mtheme"><span class="g"><b>Тема</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div></div>';
     return h;
   };
 
