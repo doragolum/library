@@ -108,6 +108,24 @@ export function kyivText(data: Row) {
     return "\n<b>" + label + "</b> (" + groups[p].length + ")\n" + groups[p].map((b) => "• " + esc(b.title) + " — " + esc(b.author) + (b.parcel ? " · " + esc(b.parcel) : "")).join("\n");
   }).join("\n");
 }
+/** /rotterdam: коротке зведення книг у Роттердамі (повний список із кількох сотень книг задовгий). */
+export function rotterdamText(data: Row) {
+  const gone = (b: Row) => ["продана", "подарована"].includes(k(b.avail));
+  const rr = data.books.filter((b: Row) => !inKyiv(b) && !gone(b));
+  if (!rr.length) return "У Роттердамі книг немає.";
+  const cnt = (f: (b: Row) => boolean) => rr.filter(f).length;
+  const st = ["не читала", "читаю", "прочитано", "закинула"].map((s) => [s, cnt((b) => k(b.status) === s)] as [string, number]).filter((x) => x[1]);
+  const list = (title: string, xs: Row[], line: (b: Row) => string) => xs.length ? "\n\n<b>" + title + " (" + xs.length + ")</b>\n" + xs.slice(0, 10).map(line).join("\n") + (xs.length > 10 ? "\n…і ще " + (xs.length - 10) : "") : "";
+  const lent = rr.filter((b: Row) => k(b.avail) === "позичена");
+  const sale = rr.filter((b: Row) => k(b.avail) === "на продаж");
+  const shelves: Record<string, number> = {};
+  for (const b of rr) { const s = String(b.shelf || "").trim() || "без полиці"; shelves[s] = (shelves[s] || 0) + 1; }
+  const sh = Object.keys(shelves).sort((a, b) => a.localeCompare(b, "uk", { numeric: true })).map((s) => esc(s) + " — " + shelves[s]).join(" · ");
+  return "📍 <b>Книги в Роттердамі: " + rr.length + "</b>\n" + st.map((x) => x[0] + " " + x[1]).join(" · ") +
+    list("Позичені", lent, (b) => "• " + esc(b.title) + " — " + esc(b.lentTo || "кому, не вказано") + (b.lentDue ? ", повернути до " + human(String(b.lentDue)).slice(0, 5) : "")) +
+    list("На продаж", sale, (b) => "• " + esc(b.title) + " — " + esc(b.author)) +
+    "\n\n<b>По полицях</b>\n" + sh;
+}
 export function findText(q: string, data: Row) {
   const words = norm(q).split(" ").filter(Boolean);
   const hit = (parts: unknown[]) => { const s = norm(parts.join(" ")); return words.every((w) => s.includes(w)); };
@@ -132,6 +150,6 @@ export function findText(q: string, data: Row) {
 export const helpText = () => "📚 <b>Що я вмію</b>\n" +
   "• Напишіть назву, автора або серію, і я скажу, чи є книга в бібліотеці, де вона стоїть, чи є в бажанках або серед проданих.\n" +
   "• Надішліть скриншот анонсу чи замовлення, посилання на сторінку книги або голосове («хочу нову книгу Маас, вийде в березні») — я складу картку і запропоную додати в бажанки або як замовлену. Чого бракує — перепитаю.\n" +
-  "• /week — підсумок тижня, /month — підсумок місяця, /kyiv — книги в Києві за пріоритетом.\n" +
+  "• /week — підсумок тижня, /month — підсумок місяця, /kyiv — книги в Києві за пріоритетом, /rotterdam — зведення книг у Роттердамі.\n" +
   "• Сама нагадую про релізи, позичені книги і замовлення, які вийшли, але ще не відправлені.\n" +
   "Кнопка <b>Бібліотека</b> внизу відкриває весь додаток.";

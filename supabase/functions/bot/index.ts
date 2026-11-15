@@ -1,11 +1,11 @@
 // Телеграм-бот «Моєї бібліотеки» на вебхуку (замість опитування lbBotPoll в Apps Script).
-// Пошук «чи є в мене», /week /month /kyiv /help, скриншот / посилання / голосове → картка «У бажанки / Замовила / ✕» з уточненнями.
+// Пошук «чи є в мене», /week /month /kyiv /rotterdam /help, скриншот / посилання / голосове → картка «У бажанки / Замовила / ✕» з уточненнями.
 // Відповідає лише вам (LB_TG_USER_ID). Телеграм підписує кожен запит секретом, виведеним з ключа бота.
 // Налаштування вебхука: POST {setup:true} із заголовком x-import-token (з самої бази) або функція lbSwitchToDb в Apps Script.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { tgApi, tgSend, tgChat, tgToken, esc, hookSecret } from "../_shared/tg.ts";
 import { looksPrivate, redact, parseRelease, todayKyiv } from "../_shared/ai.ts";
-import { findText, weekText, monthText, kyivText, helpText, human } from "../_shared/texts.ts";
+import { findText, weekText, monthText, kyivText, rotterdamText, helpText, human } from "../_shared/texts.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const BASE = Deno.env.get("SUPABASE_URL")!;
@@ -178,6 +178,7 @@ async function text(m: Row) {
   if (/^\/(week|тиждень)\b/.test(cmd)) return tgSend(weekText(data, td, true));
   if (/^\/(month|місяць)\b/.test(cmd)) return tgSend(monthText(data, td, true));
   if (/^\/(kyiv|київ)\b/.test(cmd)) return tgSend(kyivText(data));
+  if (/^\/(rotterdam|роттердам)(?![\p{L}])/u.test(cmd)) return tgSend(rotterdamText(data));
   const q = t.replace(/^\/(є|e|find|пошук)\s*/i, "").trim();
   if (q.length < 2) return tgSend("Напишіть назву, автора або серію, наприклад: <b>Четверте крило</b>");
   return tgSend(findText(q, data));
@@ -211,7 +212,7 @@ async function setup() {
   const hook = await tgApi("setWebhook", { url: BASE + "/functions/v1/bot", secret_token: await hookSecret(), allowed_updates: ["message", "callback_query"], drop_pending_updates: false });
   const chat = tgChat();
   const menu = chat ? await tgApi("setChatMenuButton", { chat_id: Number(chat), menu_button: { type: "web_app", text: "Бібліотека", web_app: { url: PAGE + "?tg=1&db=1" } } }) : { ok: false };
-  await tgApi("setMyCommands", { commands: [{ command: "week", description: "Підсумок тижня" }, { command: "month", description: "Підсумок місяця" }, { command: "kyiv", description: "Що чекає в Києві" }, { command: "help", description: "Що я вмію" }] });
+  await tgApi("setMyCommands", { commands: [{ command: "week", description: "Підсумок тижня" }, { command: "month", description: "Підсумок місяця" }, { command: "kyiv", description: "Що чекає в Києві" }, { command: "rotterdam", description: "Книги в Роттердамі" }, { command: "help", description: "Що я вмію" }] });
   return { ok: !!hook.ok, bot: "@" + me.result.username, webhook: hook.description || hook.ok, menu: menu.ok };
 }
 
