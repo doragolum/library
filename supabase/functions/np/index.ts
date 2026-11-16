@@ -4,6 +4,7 @@
 // Ключ — секрет NP_API_KEY у Supabase (Edge Functions → Secrets). У журнал не пишуться ні ключ, ні відповіді НП.
 // Виклик: лише з самої бази (pg_cron / net.http_post) із заголовком x-import-token. Тіло {dry:true} — перевірка без запису; {ids:[…]} — лише ці книги.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { pushTo } from "../_shared/push.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 type Row = Record<string, any>;
@@ -80,6 +81,21 @@ Deno.serve(async (req) => {
       if (dry) continue;
       chk(await db.from("books").update(upd).eq("id", b.id).eq("stage", b.stage), "books");
       if (upd.stage) await db.from("log").insert({ action: "🚚 Нова пошта: " + NAME[upd.stage], book_id: b.id, owner_id: b.owner_id ?? 1, title: b.title, author: b.author, details: `${NAME[b.stage]} → ${NAME[upd.stage]} (${r!.status})` });
+    }
+    // 16.11: «Посилка у відділенні» — сповіщенням з додатку, коли НП каже «прибув у відділення / поштомат» (коди 7, 8)
+    if (!dry) {
+      const arrived = new Map<string, Row[]>();
+      for (const b of books) {
+        const st = statuses.get(norm(b.ttn));
+        if (!st || st.error || !["7", "8"].includes(st.code) || b.np_status === st.status) continue;
+        const k = (b.owner_id ?? 1) + "|" + norm(b.ttn);
+        arrived.set(k, [...(arrived.get(k) || []), b]);
+      }
+      for (const [k, xs] of arrived) {
+        const [owner, ttn] = k.split("|"), st = statuses.get(ttn)!;
+        const place = String(st.status).replace(/^.*?(відділенн\S*|поштомат\S*)/i, "$1").slice(0, 80);
+        await pushTo(db, Number(owner), { kind: "parcel", id: xs[0].id, title: "Посилка у відділенні", body: "«" + xs[0].title + "»" + (xs.length > 1 ? " і ще " + (xs.length - 1) : "") + ". " + (place && place !== st.status ? "Нова пошта, " + place + "." : "Можна забирати."), tag: "parcel-" + ttn }).catch((e) => console.error(e));
+      }
     }
     return json({ ok: true, dry, books: books.length, ttn: numbers.length, errors, changes });
   } catch (e) {

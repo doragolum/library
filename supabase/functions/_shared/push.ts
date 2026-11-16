@@ -79,8 +79,16 @@ export function fromHtml(html: string) {
   return { title: title.slice(0, 120), body };
 }
 
-/** Усім пристроям людини. Підписки, що вже не діють, прибираються. */
-export async function pushTo(db: any, uid: number, msg: { title: string; body?: string; tag?: string; open?: string }) {
+/* Види сповіщень → перемикачі в «Я» → «Сповіщення» (kv push_prefs, особистий; за замовчуванням усе ввімкнено). */
+export const PUSH_GROUPS: Record<string, string> = { release: "release", onsale: "release", ttn: "parcel", parcel: "parcel", lent: "lent", streak: "streak", week: "summary", month: "summary", news: "news" };
+export async function pushPrefs(db: any, uid: number): Promise<Record<string, boolean>> {
+  const r = await db.from("kv").select("value").eq("key", uid === 1 ? "push_prefs" : `push_prefs@u${uid}`).maybeSingle();
+  return { release: true, parcel: true, lent: true, streak: true, summary: true, news: true, ...(r.data?.value || {}) };
+}
+/** Усім пристроям людини. Підписки, що вже не діють, прибираються. Вид, вимкнений у перемикачах, не надсилається. */
+export async function pushTo(db: any, uid: number, msg: { title: string; body?: string; tag?: string; open?: string; kind?: string; id?: number; actions?: Row[] }) {
+  const g = msg.kind ? PUSH_GROUPS[msg.kind] : "";
+  if (g && (await pushPrefs(db, uid))[g] === false) return { sent: 0, devices: -1, off: g };
   const subs = ((await db.from("push_subs").select("id,endpoint,p256dh,auth,fails").eq("owner_id", uid)).data || []) as Row[];
   let sent = 0;
   for (const s of subs) {
@@ -93,3 +101,15 @@ export async function pushTo(db: any, uid: number, msg: { title: string; body?: 
 }
 /** Те саме з HTML-тексту бота. */
 export const pushHtml = (db: any, uid: number, html: string, extra: Row = {}) => pushTo(db, uid, { ...fromHtml(html), ...extra });
+
+/** «Нагадати пізніше»: коли саме (за часом людини). when: 1h | 22 | tomorrow | week. */
+export function snoozeAt(when: string, tz: string, now = new Date()) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now).map((p) => [p.type, p.value]));
+  const localNow = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour % 24, +parts.minute);
+  const off = localNow - Math.floor(now.getTime() / 60000) * 60000; // різниця «місцевий час − UTC»
+  const at = (dayShift: number, h: number) => new Date(Date.UTC(+parts.year, +parts.month - 1, +parts.day + dayShift, h, 0) - off);
+  if (when === "1h") return new Date(now.getTime() + 3600e3);
+  if (when === "22") { const d = at(0, 22); return d.getTime() > now.getTime() + 10 * 60e3 ? d : new Date(now.getTime() + 3600e3); }
+  if (when === "week") return at(7, 9);
+  return at(1, 9); // tomorrow
+}

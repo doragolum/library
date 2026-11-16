@@ -7,7 +7,7 @@ export const person = new AsyncLocalStorage<Person>();
 export const curUid = () => person.getStore()?.uid ?? 1;
 
 /** Особисті ключі kv: у друзів — «ключ@u<id>», у власниці — без суфікса. Той самий список в api. */
-export const PERSONAL_KV = new Set(["places", "goals", "shelf_marks", "news", "news_state", "options", "profile", "streak", "series_catalog", "streak_sent", "streak_ask", "bot_pending", "onsale_today", "last_remind"]);
+export const PERSONAL_KV = new Set(["places", "goals", "shelf_marks", "news", "news_state", "options", "profile", "streak", "series_catalog", "streak_sent", "streak_ask", "bot_pending", "onsale_today", "last_remind", "push_prefs", "push_mute"]);
 export const kvKey = (k: string, uid: number) => (PERSONAL_KV.has(k) && uid !== 1 ? `${k}@u${uid}` : k);
 
 export function validTz(z: unknown) { const t = String(z ?? "").trim(); if (!t) return ""; try { new Intl.DateTimeFormat("en", { timeZone: t }); return t; } catch { return ""; } }
