@@ -185,6 +185,20 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .wlp .wrow{background:transparent}
 .wlg{font-size:12px;font-weight:600;color:var(--muted);padding:10px 8px 4px}
 .wdet{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;position:sticky;top:16px}
+.shh{display:flex;align-items:baseline;gap:6px;font-size:16px;font-family:inherit;font-weight:600;margin:18px 0 8px}
+.shtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+.shtile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer}
+.shtile:hover{border-color:var(--accent)}
+.shth{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}.shth b{font-size:15px}
+.shth .chip{float:none!important;margin:0!important}
+.shmini{display:flex;align-items:flex-end;gap:2px;overflow:hidden;height:54px}
+.shmini i{display:block;flex:none;border-radius:2px 2px 0 0;position:relative}
+.shmini i b{position:absolute;top:0;right:2px;width:4px;height:9px;background:#e9c46a;clip-path:polygon(0 0,100% 0,100% 100%,50% 75%,0 100%)}
+.shfan{display:flex;padding-left:10px;height:54px}.shfan img,.shfan .ph{width:36px;height:54px;border-radius:3px;margin-left:-10px;object-fit:cover;box-shadow:-2px 2px 5px rgba(0,0,0,.18);border:2px solid var(--card);font-size:0;padding:0}
+.shjump{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.shjump button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}.shjump button:hover{border-color:var(--accent)}
+.shopen{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;scroll-margin-top:12px}.shopen .shth{margin-bottom:10px}
+.shplank{height:3px;background:var(--line);border-radius:2px}
 .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;align-items:start;padding-bottom:10px}
 .col{min-width:0;background:var(--line);border-radius:12px;padding:8px;max-height:75vh;overflow-y:auto}
 .col h4{margin:2px 4px 8px;font-size:13px;display:flex;justify-content:space-between}
@@ -558,7 +572,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
   var SAVED_KEY = 'lb.view.v3';
   try { var sv = JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); if (sv.f) view.f = sv.f; if (sv.sort) view.sort = sv.sort; if (sv.bookMode) view.bookMode = sv.bookMode; } catch (e) {}
-  try { view.shelfMode = localStorage.getItem('lb.shm') || 'spines'; } catch (e) {}
+  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; } catch (e) {}
   // після оновлення сторінки відкривається та сама вкладка
   try { view.hseg = localStorage.getItem('lb.hseg') || 'today'; } catch (e) { view.hseg = 'today'; }
   try { var lt = localStorage.getItem('lb.tab'); if (lt && TABS.some(function (t) { return t[0] === lt; })) view.tab = lt; } catch (e) {}
@@ -1505,8 +1519,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       else { var a = inKyiv(b) ? 'Київ' : b.avail; (away[a] = away[a] || []).push(b); }
     });
     var srt = function (a, b) { return a.author.localeCompare(b.author, 'uk') || a.series.localeCompare(b.series, 'uk') || (partNum(a.num) || 0) - (partNum(b.num) || 0); };
-    var fm = view.shelfMode === 'covers';
-    var h = '<div class="row" style="align-items:center;margin-bottom:10px"><div class="pick grow" style="margin:0"><button data-shm="spines" class="' + (fm ? '' : 'on') + '">📚 Корінці</button><button data-shm="covers" class="' + (fm ? 'on' : '') + '">🖼 Обкладинки</button></div>' +
+    // вигляд (16.11): Плитки (кожна полиця — картка з міні-корінцями) · Корінці / Обкладинки (усі полиці відкриті, без дерева)
+    var mode = view.shelfMode === 'covers' || view.shelfMode === 'spines' ? view.shelfMode : 'tiles', fm = mode === 'covers';
+    var h = '<div class="row" style="align-items:center;margin-bottom:10px"><div class="wseg" role="group" aria-label="Вигляд">' +
+      [['tiles', 'Плитки'], ['spines', 'Корінці'], ['covers', 'Обкладинки']].map(function (m) { return '<button data-shm="' + m[0] + '" class="' + (mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div><span class="grow"></span>' +
       '<button class="tbtn" data-action="shmore-toggle" aria-label="Ще" aria-expanded="' + (view.shelfMoreOpen ? 'true' : 'false') + '">⋯</button></div>';
     var mv = movePlan().length;
     // підказка про перестановку видна, лише коли є що переставити; решта службового — у «⋯»
@@ -1516,27 +1532,45 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var noTr = S.inLib.filter(function (x) { return !(x._t || []).length; }).length;
       h += '<div class="chips" style="margin:0 0 10px">' + (mv ? '' : '<button class="chip" data-action="move-open">⇄ Перестановка</button>') + (window.LB_DB ? '' : '<button class="chip" data-action="auto-fill">⚡ Автозвірка у фоні</button>') + (noTr && !NO_TROPES ? '<button class="chip" data-action="mt-open">🏷 Без тропів: ' + noTr + ' — підказати</button>' : '') + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
     }
-    h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисни на книгу, щоб відкрити її.</p>';
+    h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : mode === 'tiles' ? 'Натисни на полицю, щоб побачити всі її книги.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана. Натисни на книгу, щоб відкрити її.') + '</p>';
     if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#c8c3bb"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
     var cases = { 'Відкрита шафа': keys.filter(function (k) { return !isClosed(k); }), 'Закрита шафа': keys.filter(function (k) { return isClosed(k); }) };
+    var ak = Object.keys(away).sort();
+    var labelOf = function (k) { var l = String(k).replace(/^(закрита\s+)?ша[фк]а,?\s*/i, ''); return l ? l.charAt(0).toUpperCase() + l.slice(1) : k; };
+    var sid = function (k) { return 'sh-' + hashN(k); };
+    var mini = function (b) { var w = Math.max(7, Math.min(15, Math.round((b.pages || 320) / 30))); return '<i style="width:' + w + 'px;height:' + (44 + hashN(b.title) % 9) + 'px;' + spineBg(b) + '">' + (isRead(b) ? '<b></b>' : '') + '</i>'; };
+    var sum = function (arr) { return arr.reduce(function (a, k) { return a + home[k].length; }, 0); };
+    if (mode === 'tiles') {
+      Object.keys(cases).forEach(function (cname) {
+        if (!cases[cname].length) return;
+        h += '<h3 class="shh">' + esc(cname) + ' <span class="muted small">· ' + sum(cases[cname]) + ' ' + bookWord(sum(cases[cname])) + '</span></h3><div class="shtiles">' + cases[cname].map(function (k) {
+          var list = home[k].sort(srt);
+          return '<div class="shtile" data-shjump="' + esc(k) + '"><div class="shth"><b>' + esc(labelOf(k)) + '</b><span class="muted small">' + list.length + ' кн.</span><span class="grow"></span>' + (k !== 'Без полиці' ? markChip(k) : '') + '</div><div class="shmini">' + list.slice(0, 60).map(mini).join('') + '</div></div>';
+        }).join('') + '</div>';
+      });
+      if (ak.length) h += '<h3 class="shh">Не вдома</h3><div class="shtiles">' + ak.map(function (k) {
+        var list = away[k].sort(srt);
+        return '<div class="shtile" data-shjump="' + esc('away|' + k) + '"><div class="shth"><b>' + (k === 'Київ' ? '📍 ' : '') + esc(k) + '</b><span class="muted small">' + list.length + ' кн.</span><span class="grow"></span><span class="muted">›</span></div><div class="shfan">' + list.slice(0, 8).map(function (b) { return cover(b, 'x'); }).join('') + '</div></div>';
+      }).join('') + '</div>';
+      return h;
+    }
+    // Корінці / Обкладинки: швидкий перехід, далі всі полиці одна під одною
+    h += '<div class="shjump">' + keys.map(function (k) { return '<button data-shjump="' + esc(k) + '">' + esc((isClosed(k) ? 'Закрита · ' : '') + labelOf(k)) + ' · ' + home[k].length + '</button>'; }).join('') +
+      ak.map(function (k) { return '<button data-shjump="' + esc('away|' + k) + '">' + esc(k) + ' · ' + away[k].length + '</button>'; }).join('') + '</div>';
+    var shelfBlock = function (id, title, list, extra, more) {
+      return '<div class="shopen" id="' + id + '"><div class="shth"><b>' + title + '</b><span class="muted small">' + list.length + ' кн.</span><span class="grow"></span>' + (extra || '') + '</div>' +
+        (fm ? '<div class="facing">' + list.map(facing).join('') : '<div class="spines">' + list.map(spine).join('')) + '</div><div class="shplank"></div>' + (more || '') + '</div>';
+    };
     Object.keys(cases).forEach(function (cname) {
       if (!cases[cname].length) return;
-      h += '<h3>' + esc(cname) + '</h3><div class="case">' + cases[cname].map(function (k) {
-        var list = home[k].sort(srt);
-        var label = String(k).replace(/^(закрита\s+)?ша[фк]а,?\s*/i, '');
-        label = label ? label.charAt(0).toUpperCase() + label.slice(1) : k;
-        var op = view.shelfOpen === k;
-        return '<div class="plank' + (op ? ' op' : '') + '"><div class="shrow" data-shopen="' + esc(k) + '"><b class="shcar">' + (op ? '▾' : '▸') + '</b><span class="grow">' + esc(label) + ' <span class="muted">· ' + list.length + ' кн.</span></span>' + (k !== 'Без полиці' ? markChip(k) : '') + '</div>' +
-          (op ? (fm ? '<div class="facing">' + list.map(facing).join('') : '<div class="spines">' + list.map(spine).join('')) + '</div><div class="board-floor"></div>' + (k !== 'Без полиці' ? '<button class="more" data-go="' + esc('shelf|' + k) + '">Відкрити полицю списком ›</button>' : '') : '') + '</div>';
-      }).join('') + '</div>';
+      h += '<h3 class="shh">' + esc(cname) + '</h3>' + cases[cname].map(function (k) {
+        return shelfBlock(sid(k), esc(labelOf(k)), home[k].sort(srt), k !== 'Без полиці' ? markChip(k) : '', k !== 'Без полиці' ? '<button class="more" data-go="' + esc('shelf|' + k) + '">Відкрити полицю списком ›</button>' : '');
+      }).join('');
     });
-    var ak = Object.keys(away).sort();
-    if (ak.length) h += '<h3>Не вдома</h3><div class="cols">' + ak.map(function (k) {
-      var list = away[k].sort(srt);
-      return '<div class="card"><details><summary>' + esc(k) + ' <span class="muted">· ' + list.length + '</span></summary><div class="list" style="margin-top:8px">' + list.map(bookItem).join('') + '</div></details>' +
-        (k === 'Київ' ? '<button class="more" data-tab="kyiv">Відкрити «Київ»</button>' : '') + '</div>';
-    }).join('') + '</div>';
+    if (ak.length) h += '<h3 class="shh">Не вдома</h3>' + ak.map(function (k) {
+      return shelfBlock(sid('away|' + k), esc(k), away[k].sort(srt), '', k === 'Київ' ? '<button class="more" data-tab="kyiv">Відкрити «Київ»</button>' : '');
+    }).join('');
     return h;
   };
 
@@ -4466,6 +4500,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var lst = t.closest('[data-list]'); if (lst) return showList(lst.getAttribute('data-list'), !!t.closest('.sheet'));
     var yr = t.closest('[data-year]'); if (yr) { view.year = yr.getAttribute('data-year'); return render(); }
     var sho = t.closest('[data-shopen]'); if (sho && !t.closest('[data-action],[data-go]')) { var sk = sho.getAttribute('data-shopen'); view.shelfOpen = view.shelfOpen === sk ? '' : sk; render(); var el = document.querySelector('.plank.op'); if (el) el.scrollIntoView({ block: 'nearest' }); return; }
+    var shj = t.closest('[data-shjump]'); if (shj && !t.closest('[data-action],[data-go]')) { var jk = shj.getAttribute('data-shjump'); if (view.shelfMode !== 'spines' && view.shelfMode !== 'covers') { view.shelfMode = 'spines'; try { localStorage.setItem('lb.shm', 'spines'); } catch (e) {} render(); } var je = document.getElementById('sh-' + hashN(jk)); if (je) je.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     var shm = t.closest('[data-shm]'); if (shm) { view.shelfMode = shm.getAttribute('data-shm'); try { localStorage.setItem('lb.shm', view.shelfMode); } catch (e) {} return render(); }
     var stt = t.closest('[data-st]'); if (stt) { view.st = stt.getAttribute('data-st'); return render(); }
     var spp = t.closest('[data-sp]'); if (spp) { view.sp = spp.getAttribute('data-sp'); return render(); }
@@ -5059,7 +5094,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   });
 
   // клавіатура на комп'ютері: рядки книг, бажанок і списків можна вибрати Tab і відкрити Enter або пробілом
-  var CLICKY = '[data-book],[data-wish],[data-list],[data-go],[data-tab],[data-shopen],[data-action]';
+  var CLICKY = '[data-book],[data-wish],[data-list],[data-go],[data-tab],[data-shopen],[data-shjump],[data-action]';
   function makeFocusable(root) {
     if (!root) return;
     root.querySelectorAll(CLICKY).forEach(function (e) {
