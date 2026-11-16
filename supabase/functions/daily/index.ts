@@ -55,7 +55,7 @@ async function remind(test: boolean) {
   // і в Телеграм (поки він є), і сповіщенням у додатку (16.11)
   // 16.11: нагадування — лише сповіщеннями з додатку; у Телеграм тільки поки в людини немає жодного пристрою зі сповіщеннями
   const tg = !(await pushDevices(curUid()));
-  for (const m of msgs) { if (tg) await tgSend(m); await pushHtml(db, curUid(), m, { tag: "day-" + today }).catch((e) => console.error(e)); }
+  for (const [i, m] of msgs.entries()) { if (tg) await tgSend(m); await pushHtml(db, curUid(), m, { tag: "day-" + today + "-" + i }).catch((e) => console.error(e)); }
   if (!test) await kvSet("last_remind", today);
   return { sent: msgs.length };
 }
