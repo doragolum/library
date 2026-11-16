@@ -39,12 +39,9 @@ alter table sessions enable row level security;
 alter table ai_usage enable row level security;
 create index sessions_user_idx on sessions(user_id);
 
--- той самий ISBN чи серія можуть бути в різних людей
-drop index if exists books_isbn_active;
-create unique index books_isbn_active on books(owner_id, isbn) where isbn is not null and stage <> all (array['sold','gifted']);
-alter table series drop constraint if exists series_name_author_key;
-drop index if exists series_name_author_key;
-create unique index series_name_author_key on series(owner_id, name, author);
+-- той самий ISBN чи серія можуть бути в різних людей: нові правила в межах людини (старі глобальні прибирає 20261116000600)
+create unique index books_owner_isbn_active on books(owner_id, isbn) where isbn is not null and stage <> all (array['sold','gifted']);
+create unique index series_owner_name_author_key on series(owner_id, name, author);
 create index reading_log_owner_book_idx on reading_log(owner_id, book_id);
 
 insert into log (action, details, owner_id) values ('👥 Етап 4: вхід за запрошенням',
