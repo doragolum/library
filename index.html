@@ -4977,7 +4977,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var t = ev.target;
     if (t.hasAttribute('data-filter')) { view.f[t.getAttribute('data-filter')] = t.value; view.limit = 60; saveView(); render(); }
     if (t.hasAttribute('data-plan')) { var pb = bookByRow(t.getAttribute('data-plan')); if (pb) saveSet('library', pb, { plan: t.value }); return; }
-    if (t.hasAttribute('data-sort')) { view.sort = t.value; saveView(); render(); }
+    // «нещодавно прочитані» має сенс лише серед прочитаних: інший статус (напр. «не читала») міняємо на «прочитано» (16.11)
+    if (t.hasAttribute('data-sort')) { view.sort = t.value; if (view.sort === 'readDesc' && view.f.status && view.f.status !== 'прочитано') view.f.status = 'прочитано'; saveView(); render(); }
     if (t.id && t.id.indexOf('f-') === 0) {
       if (t.id === 'f-lang') t.setAttribute('data-touched', '1');
       var nb = t.closest('.need,.lack,.err'); if (nb && String(t.value).trim()) { nb.classList.remove('need'); nb.classList.remove('lack'); nb.classList.remove('err'); }
