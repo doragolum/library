@@ -483,6 +483,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .ly span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ly small{opacity:.9;flex:none;white-space:nowrap}
 .ly em{font-style:normal;background:var(--card);color:var(--bad);border-radius:6px;font-size:12px;padding:0 5px;margin-left:6px}
 .mpbar{position:relative;display:flex;height:22px;border-radius:6px;background:var(--line);margin:30px 0 6px}
+.mpbar i.hov{box-shadow:inset 0 0 0 2px var(--ink)}
 .mpbar i{display:block;height:100%;border-right:2px solid var(--card);cursor:pointer;min-width:3px}.mpbar i:first-child{border-radius:6px 0 0 6px}.mpbar i:last-of-type{border-right:0;border-radius:0 6px 6px 0}
 .mpln{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink,currentColor);pointer-events:none}
 .mplt{position:absolute;top:-24px;font-size:12px;color:var(--muted);transform:translateX(-50%);white-space:nowrap;pointer-events:none}
@@ -3713,7 +3714,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var read = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === ym; });
     var now = ym === curYm() ? readingNow() : [];
     var pg = function (b) { return b.pages || 350; };
-    var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">У плані на ' + MONTHS_ON[mIdx(ym)] + '</h3><a class="link small" data-action="plan-open">Увесь план ›</a></div>';
+    var h = '<div class="card" data-capbox><div class="row"><h3 class="grow" style="margin:0">У плані на ' + MONTHS_ON[mIdx(ym)] + '</h3><a class="link small" data-action="plan-open">Увесь план ›</a></div>';
     var parts = read.map(function (b) { return [b, 'r']; }).concat(now.map(function (b) { return [b, 'n']; }), pile.map(function (b) { return [b, 'p']; }));
     if (parts.length) {
       var total = parts.reduce(function (a, x) { return a + pg(x[0]); }, 0);
@@ -3722,9 +3723,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       h += '<div class="mpbar">' + parts.map(function (x) {
         var b = x[0], c = genreColor(b.genre), w = (pg(b) / total * 100).toFixed(2);
         var bg = x[1] === 'n' && b.page ? 'linear-gradient(90deg,' + c + ' ' + Math.round(Math.min(b.page, pg(b)) / pg(b) * 100) + '%,color-mix(in srgb,' + c + ' 40%,transparent) 0)' : x[1] === 'p' ? 'color-mix(in srgb,' + c + ' 40%,transparent)' : c;
-        return '<i data-book="' + b.row + '" title="' + esc(b.title + ' · ' + (x[1] === 'r' ? 'прочитано' : x[1] === 'n' ? 'читаю' : 'у плані') + ' · ' + pg(b) + ' стор.') + '" style="width:' + w + '%;background:' + bg + '"></i>';
+        return '<i data-book="' + b.row + '" data-cap="' + esc(b.title + (b.author ? ' · ' + b.author : '') + ' · ' + (x[1] === 'r' ? 'прочитано' : x[1] === 'n' ? 'читаю' : 'у плані') + ' · ' + pg(b) + ' стор.') + '" style="width:' + w + '%;background:' + bg + '"></i>';
       }).join('') + (line < 100 ? '<span class="mpln" style="left:' + line + '%"></span><span class="mplt" style="left:' + Math.max(12, Math.min(88, line)) + '%">до кінця місяця</span>' : '') + '</div>' +
-        '<div class="muted small">' + (line < 100 ? 'Кожна частина — книга, ширина — сторінки. Усе, що правіше риски, у твоєму темпі (~' + Math.round(pace) + ' стор. на день) не встигаєш.' : 'Кожна частина — книга, ширина — сторінки. У твоєму темпі встигаєш усе.') + '</div>';
+        '<div class="shcap muted small" style="margin-top:4px">Наведи на частину, щоб побачити назву</div><div class="muted small">' + (line < 100 ? 'Кожна частина — книга, ширина — сторінки. Усе, що правіше риски, у твоєму темпі (~' + Math.round(pace) + ' стор. на день) не встигаєш.' : 'Кожна частина — книга, ширина — сторінки. У твоєму темпі встигаєш усе.') + '</div>';
     }
     if (view.tipHide !== ym && pile.length) {
       if (f.fits) h += '<div class="tip ok">Встигаєш: ще ~' + f.left.toLocaleString('uk-UA') + ' стор., це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.</div>';
@@ -5233,9 +5234,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 
   // «Корінці» без назв: назва книжки рядком під полицею при наведенні (16.11)
   document.addEventListener('mouseover', function (e) {
-    var sp = e.target.closest && e.target.closest('.fsp[data-cap]'); if (!sp) return;
+    var sp = e.target.closest && e.target.closest('.fsp[data-cap],.mpbar i[data-cap]'); if (!sp) return;
     var box = sp.closest('.shopen,[data-capbox]'), cap = box && box.querySelector('.shcap'); if (!cap) return;
-    var prev = box.querySelector('.fsp.hov'); if (prev) prev.classList.remove('hov');
+    var prev = box.querySelector('.hov'); if (prev) prev.classList.remove('hov');
     sp.classList.add('hov'); cap.textContent = sp.getAttribute('data-cap'); cap.classList.add('on');
   });
   var CLICKY = '[data-book],[data-wish],[data-list],[data-go],[data-tab],[data-shopen],[data-shjump],[data-action]';
