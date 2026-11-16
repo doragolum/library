@@ -1,11 +1,11 @@
 // Телеграм-бот «Моєї бібліотеки» на вебхуку (замість опитування lbBotPoll в Apps Script).
-// Пошук «чи є в мене», /week /month /kyiv /rotterdam /help, скриншот / посилання / голосове → картка «У бажанки / Замовила / ✕» з уточненнями.
+// З 16.11 лише додавання: скриншот / посилання / голосове (пошук, підсумки й нагадування — у додатку й сповіщеннями), /help, → картка «У бажанки / Замовила / ✕» з уточненнями.
 // Відповідає власниці (LB_TG_USER_ID) і друзям, які увійшли через Телеграм (app_users.tg_id; етап 6) — кожному з його даними. Телеграм підписує кожен запит секретом, виведеним з ключа бота.
 // Налаштування вебхука: POST {setup:true} із заголовком x-import-token (з самої бази) або функція lbSwitchToDb в Apps Script.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { tgApi, tgSend, tgChat, tgToken, esc, hookSecret } from "../_shared/tg.ts";
 import { looksPrivate, redact, parseRelease, todayKyiv } from "../_shared/ai.ts";
-import { findText, weekText, monthText, kyivText, rotterdamText, helpText, human } from "../_shared/texts.ts";
+import { helpText, human } from "../_shared/texts.ts";
 import { person, personByTg, curUid, kvKey } from "../_shared/people.ts";
 import { streakMessage, streakInfo, currentBook, dayWord, STREAK_DEFAULT } from "../_shared/streak.ts";
 
@@ -223,24 +223,10 @@ async function link(m: Row, url: string) {
   await card(m.chat.id, r.items);
 }
 async function text(m: Row) {
-  const t = String(m.text).trim(), cmd = t.toLowerCase();
+  const cmd = String(m.text).trim().toLowerCase();
   if (/^\/(start|help|допомога)\b/.test(cmd)) return tgSend(helpText(curUid() === 1));
-  const data = await api("lbApiData", null);
-  const td = todayKyiv();
-  if (/^\/(week|тиждень)\b/.test(cmd)) return tgSend(weekText(data, td, true));
-  if (/^\/(month|місяць)\b/.test(cmd)) return tgSend(monthText(data, td, true));
-  if (/^\/(kyiv|київ|away|друге)(?![\p{L}])/u.test(cmd)) return tgSend(kyivText(data));
-  if (/^\/(home|вдома|удома|дім)(?![\p{L}])/u.test(cmd)) return tgSend(rotterdamText(data));
-  if (/^\/(rotterdam|роттердам)(?![\p{L}])/u.test(cmd)) return tgSend(rotterdamText(data));
-  if (/^\/(streak|серія)(?![\p{L}])/u.test(cmd)) {
-    const i = await streakNow(data);
-    if (i.readToday) return tgSend("🔥 Серія: <b>" + i.n + " " + dayWord(i.n) + "</b>. Сьогодні вже зараховано. Пропусків лишилось: " + i.left + ".");
-    const sm = streakMessage(data, td, esc);
-    return tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: sm.text, reply_markup: { inline_keyboard: sm.kb } });
-  }
-  const q = t.replace(/^\/(є|e|find|пошук)\s*/i, "").trim();
-  if (q.length < 2) return tgSend("Напиши назву, автора або серію, наприклад: <b>Четверте крило</b>");
-  return tgSend(findText(q, data));
+  // 16.11: пошук, /week, /month, /kyiv, /rotterdam, /streak прибрано на її прохання — це є в додатку; бот лише додає книги
+  return tgSend("Я додаю книги: надішли скриншот, посилання або голосове, і я складу картку. Пошук і підсумки — у додатку (кнопка <b>Nookly</b> внизу).");
 }
 
 /** Вхід на сайт через бота (етап 4): /start login_<код>. Працює для всіх; нова людина — лише із запрошенням. */
@@ -256,7 +242,7 @@ async function loginConfirm(m: Row, nonce: string) {
     if (String(tgId) === String(Deno.env.get("LB_TG_USER_ID") || "") && r.user_id !== 1) return say("Цей Телеграм належить власниці Nookly.");
     await db.from("app_users").update({ tg_id: tgId }).eq("id", r.user_id);
     await db.from("login_requests").update({ confirmed_at: new Date().toISOString(), taken_at: new Date().toISOString(), tg_name: name }).eq("nonce", nonce);
-    return say("Готово! Телеграм підключено 📚\nТепер можна писати мені назви книг, кидати скриншоти й отримувати нагадування. /help — що я вмію.");
+    return say("Готово! Телеграм підключено 📚\nТепер можна кидати мені скриншоти, посилання й голосові, щоб додавати книги. /help — що я вмію.");
   }
   let user: Row | null = null, fresh = false;
   if (String(tgId) === String(Deno.env.get("LB_TG_USER_ID") || "")) {
@@ -317,10 +303,10 @@ async function setup() {
   const hook = await tgApi("setWebhook", { url: BASE + "/functions/v1/bot", secret_token: await hookSecret(), allowed_updates: ["message", "callback_query"], drop_pending_updates: false });
   const chat = tgChat();
   const menu = chat ? await tgApi("setChatMenuButton", { chat_id: Number(chat), menu_button: { type: "web_app", text: "Бібліотека", web_app: { url: PAGE + "?tg=1&db=1" } } }) : { ok: false };
-  // меню для всіх (друзі) і окреме — у чаті власниці (Київ / Роттердам)
+  // меню команд: лише /help (16.11: решта — у додатку); прибираємо й окреме меню з чату власниці
   const cmd = (c: string, d: string) => ({ command: c, description: d });
-  await tgApi("setMyCommands", { commands: [cmd("week", "Підсумок тижня"), cmd("month", "Підсумок місяця"), cmd("home", "Книги вдома"), cmd("away", "Друге місце"), cmd("streak", "Серія читання"), cmd("help", "Що я вмію")] });
-  if (chat) await tgApi("setMyCommands", { scope: { type: "chat", chat_id: Number(chat) }, commands: [cmd("week", "Підсумок тижня"), cmd("month", "Підсумок місяця"), cmd("kyiv", "Що чекає в Києві"), cmd("rotterdam", "Книги в Роттердамі"), cmd("streak", "Серія читання"), cmd("help", "Що я вмію")] });
+  await tgApi("setMyCommands", { commands: [cmd("help", "Що я вмію")] });
+  if (chat) await tgApi("deleteMyCommands", { scope: { type: "chat", chat_id: Number(chat) } });
   await tgApi("setChatMenuButton", { menu_button: { type: "web_app", text: "Nookly", web_app: { url: PAGE + "?tg=1&db=1" } } });
   return { ok: !!hook.ok, bot: "@" + me.result.username, webhook: hook.description || hook.ok, menu: menu.ok };
 }

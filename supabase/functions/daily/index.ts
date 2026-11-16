@@ -18,6 +18,7 @@ async function api(fn: string, arg: unknown) {
   if (!j.ok) throw new Error(j.error || "Не вдалося");
   return j.data;
 }
+async function pushDevices(uid: number) { return ((await db.from("push_subs").select("id").eq("owner_id", uid)).data || []).length; }
 const REMIND_HOUR = 9; // за часом людини
 const here = () => person.getStore() as Person;
 /** Робота для кожної людини по черзі (етап 6); помилка в одного не зупиняє інших. */
@@ -52,7 +53,9 @@ async function remind(test: boolean) {
     if (today.slice(8) === "01") msgs.push(monthText(data, today, false));
   }
   // і в Телеграм (поки він є), і сповіщенням у додатку (16.11)
-  for (const m of msgs) { await tgSend(m); await pushHtml(db, curUid(), m, { tag: "day-" + today }).catch((e) => console.error(e)); }
+  // 16.11: нагадування — лише сповіщеннями з додатку; у Телеграм тільки поки в людини немає жодного пристрою зі сповіщеннями
+  const tg = !(await pushDevices(curUid()));
+  for (const m of msgs) { if (tg) await tgSend(m); await pushHtml(db, curUid(), m, { tag: "day-" + today }).catch((e) => console.error(e)); }
   if (!test) await kvSet("last_remind", today);
   return { sent: msgs.length };
 }
@@ -71,7 +74,7 @@ async function streak(test: boolean) {
   if (curUid() !== 1 && !(data.books || []).length) return { skipped: "ще немає книг" };
   const m = streakMessage(data, today, esc, late);
   if (!test && (m.info.readToday || m.info.skipToday)) return { skipped: "сьогодні вже читала" };
-  if (tgChat()) await tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: m.text, reply_markup: { inline_keyboard: m.kb } });
+  if (tgChat() && !(await pushDevices(curUid()))) await tgSend(m.text); // запасний варіант без кнопок, поки сповіщення не ввімкнені
   // у сповіщенні кнопок немає: натиск відкриває додаток одразу на «Серії читання»
   const plain = m.text.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
   await pushTo(db, curUid(), { title: "🔥 " + plain.split("\n")[0], body: plain.split("\n").slice(1).join("\n").trim(), tag: "streak", open: "streak" }).catch((e) => console.error(e));

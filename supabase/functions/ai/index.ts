@@ -195,8 +195,9 @@ async function apiNews(req: Row) {
       const msg = "📰 <b>Новини серій</b> (" + r.added.length + ")\n" + r.added.slice(0, 15).map((it) =>
         "• " + esc(it.ch.title || it.t) + (it.s ? " <i>(" + esc(it.s) + (it.p ? " #" + esc(it.p) : "") + ")</i>" : "") + " — " + esc(newsText(it))).join("\n") +
         "\n\nПідтвердити або сховати можна в додатку: Бажанки → «Новини серій».";
-      await tgSend(msg);
-      await pushHtml(db, uid(), msg, { tag: "news" }).catch((e) => console.error(e));
+      // 16.11: лише сповіщенням; у Телеграм — тільки поки сповіщення не ввімкнені
+      const r2 = await pushHtml(db, uid(), msg, { tag: "news" }).catch((e) => { console.error(e); return { devices: 0 }; });
+      if (!(r2 as any).devices) await tgSend(msg);
     }
     return { checked: r.checked, added: r.added.length };
   }
