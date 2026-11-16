@@ -5038,6 +5038,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;background:#fff;color:#000;font:12px/1.4 monospace;padding:8px;border:2px solid #c00;max-width:90vw;max-height:60vh;overflow:auto;white-space:pre-wrap';
     box.textContent = 'вікно ' + innerWidth + ' · html ' + document.documentElement.scrollWidth + ' · body ' + Math.round(b.getBoundingClientRect().width) + ' · main ' + (m ? Math.round(m.getBoundingClientRect().width) : '-') + ' · dpr ' + devicePixelRatio + ' · колонки ' + getComputedStyle(b).gridTemplateColumns + '\nзум ' + Math.round(outerWidth / innerWidth * 100) + '% · ' + navigator.userAgent.replace(/.*(Chrome\/[0-9]+).*/, '$1') + '\n' + (out.length ? out.slice(0, 12).map(function (x) { return x[0] + '  ' + x[1]; }).join('\n') : 'нічого не вилазить');
   }
+  // на комп'ютері: жест «розвести пальці» на тачпаді не збільшує сторінку (вона від цього їхала вбік); Cmd + / Cmd − працюють як завжди
+  if (window.matchMedia('(min-width:1000px) and (pointer:fine)').matches) {
+    addEventListener('wheel', function (e) { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+    ['gesturestart', 'gesturechange'].forEach(function (t) { addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
+  }
   addEventListener('load', function () { setTimeout(show, 1500); });
   addEventListener('hashchange', show);
   addEventListener('resize', function () { setTimeout(show, 300); });
