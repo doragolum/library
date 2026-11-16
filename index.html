@@ -282,6 +282,8 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .lgc{max-width:380px;width:100%;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 22px}
 .lgc h2{margin:6px 0 4px;font-size:28px}.lgc p{margin:8px 0}
 .lglogo{width:64px;height:64px}
+.lgor{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:16px 0 10px}.lgor:before,.lgor:after{content:"";flex:1;height:1px;background:var(--line)}
+#lgmail input{width:100%;text-align:center}#lgmail .lgb{margin-top:8px}
 .lgb{display:flex;justify-content:center;width:100%;margin:14px 0 6px;text-decoration:none;padding:12px}
 /* журнал читання (16.11) */
 .jline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -992,6 +994,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (msg && !/Немає доступу/.test(msg) ? '<div class="note">' + esc(msg) + '</div>' : '') +
       '<div id="lgbtn"><button class="btn p lgb" disabled>Готую вхід…</button></div>' +
       '<p class="muted small">Відкриється Телеграм, натисни там «Start» (або «Почати»). Потім повертайся сюди, сторінка відкриється сама.</p>' +
+      '<div class="lgor"><span>або поштою</span></div><div id="lgmail"><input type="email" id="lg-email" inputmode="email" autocomplete="email" placeholder="твоя@пошта" enterkeyhint="send"><button class="btn lgb" data-action="login-mail">Надіслати посилання на пошту</button></div>' +
       (INVITE ? '' : '<p class="muted small">Поки Shelfie працює за запрошенням. Якщо ти тут уперше, попроси посилання.</p>') + '</div></div>';
     api('lbAuthStart', { invite: INVITE }).then(function (r) {
       LOGIN = { nonce: r.nonce, t0: Date.now() };
@@ -1013,6 +1016,23 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       setTimeout(loginPoll, document.hidden ? 4000 : 2000);
     }).catch(function (e) { LOGIN = null; loginScreen(e.message); });
   }
+  function loginMail() {
+    var em = fval('lg-email'), box = document.getElementById('lgmail');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) return toast('Перевір адресу пошти', true);
+    if (box) box.innerHTML = '<p class="muted small">Надсилаю…</p>';
+    api('lbAuthEmailStart', { email: em, invite: INVITE }).then(function () {
+      if (box) box.innerHTML = '<div class="note">Лист надіслано на <b>' + esc(em) + '</b>. Відкрий його й натисни посилання, Shelfie відкриється вже з входом. Якщо листа немає кілька хвилин, глянь у «Спам».</div>';
+    }).catch(function (e) { if (box) box.innerHTML = '<div class="note">' + esc(e.message) + '</div><button class="btn lgb" data-action="login-retry">Спробувати ще раз</button>'; });
+  }
+  // повернулась із листа: у адресі #access_token=… від Supabase
+  function loginMailFinish(tok) {
+    document.getElementById('app').innerHTML = '<div class="login"><div class="lgc"><p>Входжу…</p></div></div>';
+    history.replaceState(null, '', location.pathname);
+    api('lbAuthEmailFinish', { access_token: tok, agent: navigator.userAgent }).then(function (r) {
+      try { localStorage.setItem('lb.s', r.session); localStorage.removeItem('lb.data.s1'); } catch (e) {}
+      location.replace(location.pathname);
+    }).catch(function (e) { loginScreen(e.message); });
+  }
   function logout() {
     api('lbApiLogout').catch(function () {}).then(function () {
       try { localStorage.removeItem('lb.s'); localStorage.removeItem('lb.data.s1'); } catch (e) {}
@@ -1024,7 +1044,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function invitesDialog(r) {
     if (r) INV = r;
     nav = []; modalStack = null;
-    var h = '<button class="close" data-action="close">×</button><h2>Друзі в Shelfie</h2><p class="muted small">Надішли людині посилання. Вона відкриє його й увійде через Телеграм. Кожне посилання — для однієї людини. У кожного свої книги, спільний лише каталог видань.</p>' +
+    var h = '<button class="close" data-action="close">×</button><h2>Друзі в Shelfie</h2><p class="muted small">Надішли людині посилання. Вона відкриє його й увійде через Телеграм або поштою. Кожне посилання — для однієї людини. У кожного свої книги, спільний лише каталог видань.</p>' +
       '<div class="row" style="gap:8px;flex-wrap:wrap"><input id="inv-note" placeholder="Кому (для себе), напр. Оля" style="flex:1 1 180px"><button class="btn p" data-action="inv-new">＋ Нове запрошення</button></div>';
     if (!INV) h += '<p class="muted small">Завантажую…</p>';
     else {
@@ -4513,7 +4533,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       '<div class="mrow mtheme mic">' + meIc('app') + '<span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div>']);
     var gCon = grp('Підключено', [info('Телеграм-бот', '', 'tg', 'пошук, скриншоти, нагадування о 9:00' + (SI.on ? ' і про серію о ' + SI.hour + ':00' : '')), info('Нова пошта', 'щогодини', 'np', 'статуси ТТН'), info('Копія в Google-таблицю', 'щоночі', 'tbl')]);
     var ME = D.me || { uid: 1, role: 'owner' };
-    var gPeople = ME.role === 'owner' ? grp('Друзі', [row('data-action="invites"', 'Запросити друзів', 'посилання', 'people', 'вхід через Телеграм, у кожного свої книги')]) : grp('Акаунт', [row('data-action="logout"', 'Вийти', '', 'out', 'на цьому пристрої')]);
+    var gPeople = ME.role === 'owner' ? grp('Друзі', [row('data-action="invites"', 'Запросити друзів', 'посилання', 'people', 'вхід через Телеграм або пошту, у кожного свої книги')]) : grp('Акаунт', [row('data-action="logout"', 'Вийти', '', 'out', 'на цьому пристрої')]);
     var gData = grp('Дані', [row('data-action="me-log"', 'Журнал змін', 'останні ' + (D.log || []).length, 'log'), row('data-action="me-csv"', 'Завантажити копію', 'CSV', 'dl')]);
     return '<div class="mewrap">' + profileCard() + (SI.on ? '<div class="stcols">' + streakBlock() + streakBadges() + '</div>' : '') + '<div class="mecols"><div>' + gOff + gMore + gRead + gPlace + '</div><div>' + gLook + gCon + gPeople + gData + '</div></div></div>';
   };
@@ -5279,6 +5299,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'inv-copy') { var iu = act.getAttribute('data-url'); if (navigator.share && !WIDE) { navigator.share({ title: 'Shelfie', text: 'Запрошую тебе в Shelfie 📚', url: iu }).catch(function () {}); } else if (navigator.clipboard) navigator.clipboard.writeText(iu).then(function () { toast('Посилання скопійовано ✓'); }, function () { toast(iu); }); else toast(iu); return; }
     if (a === 'inv-revoke') { if (act.getAttribute('data-sure') !== '1') { act.setAttribute('data-sure', '1'); act.textContent = '?'; act.setAttribute('aria-label', 'Точно скасувати?'); return toast('Натисни ще раз, щоб скасувати запрошення'); } return invitesApi({ act: 'revoke', code: act.getAttribute('data-code') }); }
     if (a === 'logout') return logout();
+    if (a === 'login-mail') return loginMail();
+    if (a === 'login-retry') return loginScreen();
     if (a === 'jr-more') { JR.n += 14; return journalDialog(); }
     if (a === 'jr-add' || a === 'jr-edit') {
       var inBook = t.closest('#modal') && document.querySelector('#modal .bhero'), jid = Number(act.getAttribute('data-id'));
@@ -5726,7 +5748,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (again) { again.focus(); try { again.setSelectionRange(pos, pos); } catch (e) {} }
     }, 200);
   });
-  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') softClose(); if (ev.key === 'Enter' && ev.target.id === 'plus-text') { ev.preventDefault(); plusGo(String(ev.target.value || '').trim()); return; } if (ev.key === 'Enter' && ev.target.id === 'pg-val') { ev.preventDefault(); var sv = document.querySelector('[data-action="pg-save"]'); if (sv) sv.click(); } });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') softClose(); if (ev.key === 'Enter' && ev.target.id === 'plus-text') { ev.preventDefault(); plusGo(String(ev.target.value || '').trim()); return; } if (ev.key === 'Enter' && ev.target.id === 'lg-email') { ev.preventDefault(); loginMail(); return; } if (ev.key === 'Enter' && ev.target.id === 'pg-val') { ev.preventDefault(); var sv = document.querySelector('[data-action="pg-save"]'); if (sv) sv.click(); } });
 
   /* ---------- картка знизу: потягнути вниз, щоб закрити ----------
      Закривається лише тоді, коли картка вже прокручена в самий верх і палець тягне вниз.
@@ -5855,7 +5877,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('role') === 'button' && ev.target.tagName !== 'BUTTON') { ev.preventDefault(); ev.target.click(); }
   });
 
-  if (window.LB_DB && !ON_GAS && !IN_TG && !KEY && (!SESSION || INVITE)) loginScreen(); else load();
+  var MAIL_TOK = (location.hash.match(/[#&]access_token=([^&]+)/) || [])[1];
+  var MAIL_ERR = (location.hash.match(/[#&]error_description=([^&]+)/) || [])[1];
+  if (window.LB_DB && !ON_GAS && MAIL_TOK) loginMailFinish(decodeURIComponent(MAIL_TOK));
+  else if (window.LB_DB && !ON_GAS && MAIL_ERR) { history.replaceState(null, '', location.pathname); loginScreen('Посилання з листа не спрацювало: воно діє недовго й лише один раз. Надішли новий лист.'); }
+  else if (window.LB_DB && !ON_GAS && !IN_TG && !KEY && (!SESSION || INVITE)) loginScreen(); else load();
 })();
 </script>
 <script>
