@@ -261,6 +261,8 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .bhero .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) saturate(1.5);opacity:.3;z-index:0}
 .bhero .link{color:var(--ink)} /* посилання на кольоровій шапці — кольором тексту, щоб читалось у темній темі */
 .bhero>*{position:relative;z-index:1}
+/* комп'ютер: фон шапки картки з самого верху вікна, хрестик і «‹ назад» лежать поверх (16.11) */
+@media (min-width:700px){.hd{position:relative;z-index:2}.hd+.bhero{margin-top:-66px;padding-top:62px}}
 .bhero .shelf{background:var(--plate)}
 .link{color:var(--accent);cursor:pointer;text-decoration:none;border-bottom:1px dashed currentColor}
 .hero{background:linear-gradient(160deg,var(--hero-a),var(--accent-fill));color:#fff;border-radius:16px;padding:16px;margin:0 0 12px;position:relative;overflow:hidden}
