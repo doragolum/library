@@ -191,6 +191,27 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .shth .chip{font-size:12px!important;padding:2px 10px!important;min-height:0!important}
 .shopen .facing{margin-bottom:0}
 .shopen .more{display:block;width:auto;margin:8px 0 0 auto;padding:2px 0;min-height:0;border:0;background:none;color:var(--accent);font-size:13px}
+.bfrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bfrow>.sbox{min-width:200px}
+.bfbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:0 14px;min-height:40px;font:inherit;font-size:15px;cursor:pointer;flex:none}
+.bfbtn.on{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.bfcnt{background:var(--accent);color:var(--card);border-radius:999px;padding:0 7px;font-size:12px;line-height:18px}
+.bfsort{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:0 4px 0 12px;min-height:40px;color:var(--muted);flex:none}
+.bfsort select{border:0;background:transparent;width:auto;padding:6px 4px;font-size:15px;color:var(--ink);min-height:0;box-shadow:none}
+.bfseg{display:inline-flex;background:var(--line);border-radius:999px;padding:3px;flex:none}
+.bfseg button{border:0;background:transparent;color:var(--muted);border-radius:999px;width:38px;height:34px;display:grid;place-items:center;cursor:pointer}
+.bfseg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.bfact{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0}
+.bfpill{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 10px;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.bfpill span{font-size:11px;opacity:.8}
+.lnk{border:0;background:none;padding:2px 4px;font:inherit;font-size:13px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.bfpop{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px auto;max-width:640px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:8px}
+.bfl{font-size:12px;font-weight:600;color:var(--muted)}
+.bfsw{display:inline-flex;flex-wrap:wrap;align-self:flex-start;background:var(--line);border-radius:999px;padding:3px;gap:2px}
+.bfsw button{border:0;background:transparent;color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.bfsw button.on{background:var(--card);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.bfsel{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:8px;margin-top:4px}
+.bfbot{display:flex;align-items:center;gap:10px;margin-top:4px}
 .shh{display:flex;align-items:baseline;gap:6px;font-size:16px;font-family:inherit;font-weight:600;margin:18px 0 8px}
 .shtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
 .shtile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer}
@@ -1083,28 +1104,30 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (D.cols.rating) sortOpts.push(['ratingDesc', 'за оцінкою']);
     if (D.cols.readOn) sortOpts.push(['readDesc', 'нещодавно прочитані']);
     if (D.cols.bought) sortOpts.push(['boughtDesc', 'нещодавно куплені']);
-    var h = '<div class="row">' + sbox('<input type="search" data-input="bq" placeholder="Пошук: назва, автор, серія, видавництво" value="' + esc(view.q) + '">', 'grow') +
-      (WIDE ? '<div class="pick" style="margin:0"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '<button class="tbtn" data-action="bmore-toggle" aria-label="Вигляд">⋯</button>') + '</div>' +
-      (!WIDE && view.bookMoreOpen ? '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Вигляд:</span><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '">Обкладинки</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '">Список</button></div>' : '');
-    var chips = [['status', 'не читала'], ['status', 'читаю'], ['status', 'прочитано'], ['place', 'Роттердам'], ['place', 'Київ'], ['avail', 'позичена']]
-      .concat(topList(count(S.inLib, function (b) { return b.genre; }), WIDE ? 6 : 3).map(function (r) { return ['genre', r[0]]; }));
-    var chipKey = {}; chips.forEach(function (c) { chipKey[c[0] + '|' + c[1]] = 1; });
+    // фільтри (16.11, варіант B): один рядок — пошук · «Фільтри N» · сортування · вигляд; під ним лише ввімкнене; решта у віконці
+    var SVGI = function (d) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
     var names = {}; FILTERS.forEach(function (f) { names[f[0]] = f[1]; });
-    h += '<div class="fchips">' + chips.map(function (c, i) {
-      return (i === 3 || i === 6 ? '<span class="sep"></span>' : '') + '<button data-fc="' + esc(c[0] + '|' + c[1]) + '" class="' + (view.f[c[0]] === c[1] ? 'on' : '') + '">' + esc(c[1] === 'Роттердам' ? '📍 Роттердам' : c[1] === 'Київ' ? '🏠 Київ' : c[1] === 'позичена' ? '🤝 позичені' : c[1]) + '</button>';
-    }).join('') + Object.keys(view.f).filter(function (k) { return view.f[k] && !chipKey[k + '|' + view.f[k]]; }).map(function (k) {
-      return '<button class="x" data-fc="' + esc(k + '|' + view.f[k]) + '">' + esc(names[k] + ': ' + view.f[k]) + ' ✕</button>';
-    }).join('') + '</div>';
-    h += '<details' + (active ? ' open' : '') + '><summary>Фільтри' + (active ? ' (' + active + ')' : '') + '</summary><div class="filters">' + FILTERS.filter(function (f) { return f[0] !== 'rating' || D.cols.rating; }).map(function (f) {
-      return '<select data-filter="' + f[0] + '" aria-label="' + esc(f[1]) + '"><option value="">' + f[1] + ': усі</option>' + filterOptions(f[0]).map(function (o) {
-        return '<option' + (view.f[f[0]] === o ? ' selected' : '') + ' value="' + esc(o) + '">' + esc(o) + '</option>';
-      }).join('') + '</select>';
-    }).join('') +
-      '</div>' + (active ? '<button class="more" data-action="clear">Скинути фільтри</button>' : '') + '</details>';
-    // сортування окремо від фільтрів, щоб не шукати його в розгорнутому списку
-    h += '<div class="row" style="justify-content:space-between;margin:8px 0"><span class="muted small">Знайдено: ' + list.length + (list.length ? ' · сторінок разом: ' + list.reduce(function (a, b) { return a + (b.pages || 0); }, 0).toLocaleString('uk-UA') : '') +
-      (gone ? ' · <a class="link" data-action="gone-toggle">ще ' + gone + ' продані й подаровані</a>' : view.showGone ? ' · <a class="link" data-action="gone-toggle">сховати продані</a>' : '') + '</span>' +
-      '<select data-sort aria-label="Сортування" style="width:auto;padding:7px 10px;font-size:15px">' + sortOpts.map(function (o) { return '<option value="' + o[0] + '"' + (view.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>';
+    var h = '<div class="bfrow">' + sbox('<input type="search" data-input="bq" placeholder="Пошук: назва, автор, серія" value="' + esc(view.q) + '">', 'grow') +
+      '<button class="bfbtn' + (active || view.bfOpen ? ' on' : '') + '" data-action="bf-toggle" aria-expanded="' + (view.bfOpen ? 'true' : 'false') + '">' + SVGI('<path d="M4 6h16M7 12h10M10 18h4"/>') + '<span>Фільтри</span>' + (active ? '<b class="bfcnt">' + active + '</b>' : '') + '</button>' +
+      '<label class="bfsort">' + SVGI('<path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/>') + '<select data-sort aria-label="Сортування">' + sortOpts.map(function (o) { return '<option value="' + o[0] + '"' + (view.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
+      '<div class="bfseg" role="group" aria-label="Вигляд"><button data-bmode="covers" class="' + (view.bookMode === 'covers' ? 'on' : '') + '" aria-label="Обкладинки" title="Обкладинки">' + SVGI('<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>') + '</button><button data-bmode="list" class="' + (view.bookMode === 'list' ? 'on' : '') + '" aria-label="Список" title="Список">' + SVGI('<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>') + '</button></div></div>';
+    var pages = list.reduce(function (a, b) { return a + (b.pages || 0); }, 0);
+    h += '<div class="bfact">' + Object.keys(view.f).filter(function (k) { return view.f[k]; }).map(function (k) {
+      var v = view.f[k], lab = k === 'place' ? '📍 ' + v : k === 'avail' && v === 'позичена' ? 'позичені' : k === 'status' || k === 'genre' || k === 'size' ? v : names[k] + ': ' + v;
+      return '<button class="bfpill" data-fc="' + esc(k + '|' + v) + '" aria-label="Прибрати фільтр">' + esc(lab) + ' <span aria-hidden="true">✕</span></button>';
+    }).join('') + (active ? '<button class="lnk" data-action="clear">Скинути</button>' : '') + '<span class="grow"></span><span class="muted small">' + list.length + ' ' + bookWord(list.length) + (pages ? ' · ' + pages.toLocaleString('uk-UA') + ' сторінок' : '') +
+      (gone ? ' · <a class="link" data-action="gone-toggle">ще ' + gone + ' продані й подаровані</a>' : view.showGone ? ' · <a class="link" data-action="gone-toggle">сховати продані</a>' : '') + '</span></div>';
+    if (view.bfOpen) {
+      var seg = function (items) { return '<div class="bfsw">' + items.map(function (it) { return '<button data-fset="' + esc(it[0]) + '" class="' + (it[2] ? 'on' : '') + '">' + esc(it[1]) + '</button>'; }).join('') + '</div>'; };
+      var st = view.f.status || '', pl = view.f.avail === 'позичена' ? 'позичені' : view.f.place || '';
+      h += '<div class="bfpop"><div class="bfl">Статус читання</div>' + seg([['status|', 'усі', !st]].concat(['не читала', 'читаю', 'прочитано', 'закинула'].map(function (v) { return ['status|' + v, v, st === v]; }))) +
+        '<div class="bfl">Де</div>' + seg([['where|', 'усі', !pl], ['where|Роттердам', 'Роттердам', pl === 'Роттердам'], ['where|Київ', 'Київ', pl === 'Київ'], ['where|позичені', 'позичені', pl === 'позичені']]) +
+        '<div class="bfsel">' + FILTERS.filter(function (f) { return f[0] !== 'status' && f[0] !== 'place' && (f[0] !== 'rating' || D.cols.rating); }).map(function (f) {
+          return '<select data-filter="' + f[0] + '" aria-label="' + esc(f[1]) + '"><option value="">' + f[1] + ': усі</option>' + filterOptions(f[0]).map(function (o) {
+            return '<option' + (view.f[f[0]] === o ? ' selected' : '') + ' value="' + esc(o) + '">' + esc(o) + '</option>';
+          }).join('') + '</select>';
+        }).join('') + '</div><div class="bfbot"><span class="grow"></span>' + (active ? '<button class="lnk" data-action="clear">Скинути все</button>' : '') + '<button class="btn p" data-action="bf-toggle">Показати ' + list.length + '</button></div></div>';
+    }
     var shown = list.slice(0, view.limit);
     h += view.bookMode === 'covers' ? '<div class="covers">' + shown.map(coverItem).join('') + '</div>' : '<div class="list grid">' + shown.map(bookItem).join('') + '</div>';
     if (list.length > view.limit) h += '<button class="more" data-action="more">Показати ще (' + (list.length - view.limit) + ')</button>';
@@ -4509,6 +4532,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var yr = t.closest('[data-year]'); if (yr) { view.year = yr.getAttribute('data-year'); return render(); }
     var sho = t.closest('[data-shopen]'); if (sho && !t.closest('[data-action],[data-go]')) { var sk = sho.getAttribute('data-shopen'); view.shelfOpen = view.shelfOpen === sk ? '' : sk; render(); var el = document.querySelector('.plank.op'); if (el) el.scrollIntoView({ block: 'nearest' }); return; }
     var shj = t.closest('[data-shjump]'); if (shj && !t.closest('[data-action],[data-go]')) { var jk = shj.getAttribute('data-shjump'); if (view.shelfMode !== 'spines' && view.shelfMode !== 'covers') { view.shelfMode = 'spines'; try { localStorage.setItem('lb.shm', 'spines'); } catch (e) {} render(); } var je = document.getElementById('sh-' + hashN(jk)); if (je) je.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+    var fse = t.closest('[data-fset]'); if (fse) { var fp2 = fse.getAttribute('data-fset').split('|'), fk2 = fp2[0], fv2 = fp2.slice(1).join('|'); if (fk2 === 'where') { view.f.place = fv2 === 'Роттердам' || fv2 === 'Київ' ? fv2 : ''; if (fv2 === 'позичені') view.f.avail = 'позичена'; else if (view.f.avail === 'позичена') view.f.avail = ''; } else view.f[fk2] = fv2; view.limit = 60; saveView(); return render(); }
     var shm = t.closest('[data-shm]'); if (shm) { view.shelfMode = shm.getAttribute('data-shm'); try { localStorage.setItem('lb.shm', view.shelfMode); } catch (e) {} return render(); }
     var stt = t.closest('[data-st]'); if (stt) { view.st = stt.getAttribute('data-st'); return render(); }
     var spp = t.closest('[data-sp]'); if (spp) { view.sp = spp.getAttribute('data-sp'); return render(); }
@@ -4645,6 +4669,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'move-read') { moveAllRead = !moveAllRead; return moveOpen(); }
     if (a === 'shmore-toggle') { view.shelfMoreOpen = !view.shelfMoreOpen; return render(); }
     if (a === 'gone-toggle') { view.showGone = !view.showGone; return render(); }
+    if (a === 'bf-toggle') { view.bfOpen = !view.bfOpen; return render(); }
     if (a === 'bmore-toggle') { view.bookMoreOpen = !view.bookMoreOpen; return render(); }
     if (a === 'wfx-toggle') { view.wishFxOpen = !view.wishFxOpen; view.wishMoreOpen = false; return render(); }
     if (a === 'wmore-toggle') { view.wishMoreOpen = !view.wishMoreOpen; view.wishFxOpen = false; return render(); }
