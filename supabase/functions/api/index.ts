@@ -218,11 +218,50 @@ async function authPoll(p: Row) {
   if (!r || Date.now() - new Date(r.created_at).getTime() > 15 * 60e3) fail("Код входу застарів. Спробуй ще раз.");
   if (r.taken_at) fail("Цей вхід уже використано. Спробуй ще раз.");
   if (!r.confirmed_at || !r.user_id) return { wait: true };
-  const token = randomToken(32);
-  chk(await raw.from("sessions").insert({ user_id: r.user_id, token_hash: await sha256(token), agent: s(p?.agent).slice(0, 200) || null }), "sessions");
   await raw.from("login_requests").update({ taken_at: new Date().toISOString() }).eq("nonce", nonce);
-  const u = (await raw.from("app_users").select("id,name,role").eq("id", r.user_id).maybeSingle()).data;
+  return newSession(r.user_id, p?.agent);
+}
+/** Видає сесію людині (спільне для Телеграму й пошти). */
+async function newSession(userId: number, agent: unknown) {
+  const token = randomToken(32);
+  chk(await raw.from("sessions").insert({ user_id: userId, token_hash: await sha256(token), agent: s(agent).slice(0, 200) || null }), "sessions");
+  const u = (await raw.from("app_users").select("id,name,role").eq("id", userId).maybeSingle()).data;
   return { session: token, user: u };
+}
+/** Вхід поштою, крок 1: Supabase надсилає лист із посиланням (вбудована пошта Supabase, кілька листів на годину).
+    Нова людина — лише із запрошенням; той, хто вже є, — просто за поштою. */
+async function authEmailStart(p: Row) {
+  const email = s(p?.email).toLowerCase(), code = s(p?.invite);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail("Перевір адресу пошти.");
+  const known = (await raw.from("app_users").select("id").ilike("email", email).maybeSingle()).data;
+  if (!known) {
+    if (!code) fail("Shelfie поки працює за запрошенням. Відкрий посилання-запрошення й увійди звідти.");
+    const inv = (await raw.from("invites").select("code,used_by,revoked").eq("code", code).maybeSingle()).data;
+    if (!inv || inv.revoked || inv.used_by) fail("Запрошення вже використане або скасоване. Попроси нове посилання.");
+  }
+  chk(await raw.from("login_requests").insert({ nonce: randomToken(18), invite: known ? null : code, email }), "login_requests");
+  const r = await raw.auth.signInWithOtp({ email, options: { emailRedirectTo: PAGE, shouldCreateUser: true } });
+  if (r.error) fail(/rate|limit/i.test(r.error.message) ? "Забагато листів за годину. Спробуй трохи пізніше або увійди через Телеграм." : "Лист не надіслано: " + r.error.message);
+  return { sent: true };
+}
+/** Крок 2: людина натиснула посилання в листі; сайт передає токен Supabase, ми перевіряємо його й видаємо свою сесію. */
+async function authEmailFinish(p: Row) {
+  const g = await raw.auth.getUser(s(p?.access_token));
+  const email = s(g.data?.user?.email).toLowerCase();
+  if (g.error || !email) fail("Посилання з листа застаріло. Надішли новий лист.");
+  let user = (await raw.from("app_users").select("id,name").ilike("email", email).maybeSingle()).data as Row | null;
+  if (!user) {
+    const reqs = (await raw.from("login_requests").select("invite,created_at").ilike("email", email).not("invite", "is", null).order("created_at", { ascending: false }).limit(1)).data || [];
+    const inv = reqs[0] ? (await raw.from("invites").select("*").eq("code", reqs[0].invite).maybeSingle()).data : null;
+    if (!inv || inv.revoked || inv.used_by) fail("Shelfie поки працює за запрошенням, а це запрошення вже використане або скасоване.");
+    const name = email.split("@")[0].slice(0, 40);
+    user = chk(await raw.from("app_users").insert({ name, role: "user", email, invited_by: inv.created_by }).select("id,name").single(), "app_users") as Row;
+    await raw.from("invites").update({ used_by: user.id, used_at: new Date().toISOString() }).eq("code", inv.code);
+    await raw.from("log").insert({ action: "👥 Нова людина в Shelfie", title: name, details: "Увійшла поштою за запрошенням" + (inv.note ? " (" + inv.note + ")" : ""), owner_id: 1 });
+    const tok = Deno.env.get("LB_TG_TOKEN"), chat = Deno.env.get("LB_TG_CHAT_ID") || Deno.env.get("LB_TG_USER_ID");
+    if (tok && chat) await fetch(`https://api.telegram.org/bot${tok}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: Number(chat), text: "👥 У Shelfie нова людина (пошта): " + name + (inv.note ? " (запрошення «" + inv.note + "»)" : "") }) }).catch(() => {});
+  }
+  return newSession(user!.id, p?.agent);
 }
 function ownerOnly() { if (me().role !== "owner") fail("Це може лише власниця Shelfie."); }
 /** Запрошення (лише власниця): list / create {note} / revoke {code}. */
@@ -839,6 +878,8 @@ Deno.serve(async (req) => {
     const args = Array.isArray(body.args) ? body.args : [];
     if (fn === "lbAuthStart") return reply({ ok: true, data: await authStart(args[0] || {}) });
     if (fn === "lbAuthPoll") return reply({ ok: true, data: await authPoll(args[0] || {}) });
+    if (fn === "lbAuthEmailStart") return reply({ ok: true, data: await authEmailStart(args[0] || {}) });
+    if (fn === "lbAuthEmailFinish") return reply({ ok: true, data: await authEmailFinish(args[0] || {}) });
     if (!API[fn] && !PROXY.includes(fn) && fn !== "lbApiLogout") fail("Невідома дія.");
     // службова перевірка (лише з самої бази через pg_net): заголовок x-import-token = kv.import_token; тоді — від імені власниці
     const svc = req.headers.get("x-import-token");
