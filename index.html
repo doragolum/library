@@ -1791,7 +1791,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   // компактний рядок бажанки для дошки й списку «Картка поруч» (комп'ютер, 16.11): ціна й реліз праворуч
   function wishRelTxt(w) {
     var near = w.release && w.release >= D.today && w.release <= addDays(D.today, 14);
-    if (near) return '<span class="chip w">вийде ' + dmy(w.release).slice(0, 5) + '</span>';
+    if (near) return '<span class="chip w">вийде ' + dmy(w.release) + '</span>';
     // коротко, щоб влізло праворуч: дата релізу, а якщо її немає — наявність («Анонс», «Не видана»)
     if (w.release && w.release >= D.today) return 'вийде ' + dmy(w.release);
     if (!w.release && w.releaseText) return esc(w.releaseText);
@@ -1859,7 +1859,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         sorted.slice(0, view.limit).map(function (w) {
           var ser = w.series && w.series !== 'нонфік' && w.series !== '-' ? esc(w.series) + (w.part ? ' #' + esc(w.part) : '') : '';
           var near = w.release && w.release >= D.today && w.release <= addDays(D.today, 14);
-          var rel = near ? '<span class="chip w">' + dmy(w.release).slice(0, 5) + '</span>' : w.release ? dmy(w.release) : esc(w.releaseText || '');
+          // усі дати повністю й однаково; найближчі (до 14 днів) — та сама дата в жовтій пігулці, що вже вийшли — сірим
+          var rel = w.release ? (near ? '<span class="chip w">' + dmy(w.release) + '</span>' : w.release < D.today ? '<span class="muted">' + dmy(w.release) + '</span>' : dmy(w.release)) : esc(w.releaseText || '');
           return '<div class="wtr" data-wish="' + w.row + '">' + cover(w) + '<div class="g"><b>' + esc(w.title) + '</b><small>' + esc(w.author) + '</small></div><span class="el">' + ser + '</span><span class="el">' + esc(w.status) + '</span><span class="el muted">' + esc(w.avail || '') + '</span><span>' + rel + '</span><span class="r">' + (w.price != null ? '<b>' + money(w.price) + '</b>' : '') + '</span></div>';
         }).join('') + '</div>';
       if (sorted.length > view.limit) h += '<button class="more" data-action="more">Показати ще (' + (sorted.length - view.limit) + ')</button>';
