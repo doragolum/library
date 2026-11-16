@@ -1,6 +1,6 @@
 // «Моя бібліотека» як додаток на телефоні: спершу завжди мережа (оновлення сайту з'являються одразу),
 // а без інтернету — остання збережена копія сторінки. Дані з таблиці (Apps Script) не кешуються.
-var CACHE = 'lb-shell-v36';
+var CACHE = 'lb-shell-v37';
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
@@ -18,12 +18,12 @@ self.addEventListener('fetch', function (e) {
   }));
 });
 
-// Сповіщення з додатку (16.11.2026): нагадування про релізи, посилки, серію читання — замість Телеграму.
+// Сповіщення з додатку (16.11.2026; renotify — щоб нове з тією ж позначкою знову вискакувало банером, а не тихо замінювало старе): нагадування про релізи, посилки, серію читання — замість Телеграму.
 self.addEventListener('push', function (e) {
   var m = {};
   try { m = e.data ? e.data.json() : {}; } catch (err) { m = { title: 'Nookly', body: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.registration.showNotification(m.title || 'Nookly', {
-    body: m.body || '', tag: m.tag || undefined, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { open: m.open || '' }
+    body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { open: m.open || '' }
   }));
 });
 self.addEventListener('notificationclick', function (e) {
