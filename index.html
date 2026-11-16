@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Моя бібліотека</title>
+<title>Shelfie</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" type="image/png" href="icons/icon-192.png?v=2">
+<link rel="icon" type="image/png" id="lbFav" href="icons/icon-192.png?v=3">
 <script src="config.js"></script>
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" id="lbMan" href="manifest.webmanifest">
 <meta name="theme-color" content="#2c4a6e">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&display=swap">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
+<link rel="apple-touch-icon" id="lbTouch" href="icons/apple-touch-icon.png?v=3">
+<script>/* значок додатку: «Пастель» (звичайний) або «Класика», вибирається в «Я» */try{if(localStorage.getItem('lb.icon')==='classic'){document.getElementById('lbFav').href='icons/classic/icon-192.png?v=3';document.getElementById('lbTouch').href='icons/classic/apple-touch-icon.png?v=3';document.getElementById('lbMan').href='manifest-classic.webmanifest';}}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Бібліотека">
+<meta name="apple-mobile-web-app-title" content="Shelfie">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>if ('serviceWorker' in navigator && location.protocol === 'https:' && !/script\.google/.test(location.host)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });</script>
 <style>
@@ -463,7 +464,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#2a2622;font-size:12px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
 .tl .now{position:absolute;top:16px;bottom:0;width:2px;background:var(--accent)}
 .seg3{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.mtheme{cursor:default}.seg3.mini{margin:0;padding:3px;gap:2px;background:var(--bg);box-shadow:none;border-radius:12px}.seg3.mini button{padding:0 12px;min-height:40px;font-size:15px}
+.mtheme{cursor:default}.mtheme .aic{border-radius:5px;flex:none}.mic{flex-wrap:wrap}.mic .seg3 button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.mic .mhint{flex-basis:100%;color:var(--muted);font-size:13px}.seg3.mini{margin:0;padding:3px;gap:2px;background:var(--bg);box-shadow:none;border-radius:12px}.seg3.mini button{padding:0 12px;min-height:40px;font-size:15px}
 .seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent-fill);color:#fff}
 .pick.scroll button{flex:none}
 .tbtn{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;min-width:44px;min-height:40px;padding:0 12px;font:inherit;cursor:pointer;position:relative}.tbtn.on{border-color:var(--accent);color:var(--accent)}.tbtn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
@@ -591,6 +592,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function setTheme(v) {
     try { if (v) localStorage.setItem('lb.theme', v); else localStorage.removeItem('lb.theme'); } catch (e) {}
     if (v) document.documentElement.setAttribute('data-theme', v); else document.documentElement.removeAttribute('data-theme');
+  }
+  function setAppIcon(v) {
+    try { if (v === 'classic') localStorage.setItem('lb.icon', v); else localStorage.removeItem('lb.icon'); } catch (e) {}
+    var d = v === 'classic' ? 'icons/classic/' : 'icons/';
+    var f = document.getElementById('lbFav'), t = document.getElementById('lbTouch'), m = document.getElementById('lbMan');
+    if (f) f.href = d + 'icon-192.png?v=3'; if (t) t.href = d + 'apple-touch-icon.png?v=3';
+    if (m) m.href = v === 'classic' ? 'manifest-classic.webmanifest' : 'manifest.webmanifest';
   }
   try { var th0 = localStorage.getItem('lb.theme'); if (th0) document.documentElement.setAttribute('data-theme', th0); } catch (e) {}
   var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? (function () { try { return localStorage.getItem('lb.wmode') || 'board'; } catch (e) { return 'board'; } })() : 'list', seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '' };
@@ -3894,7 +3902,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' у людей' : 'нікому не позичено', ['🤝', 'g4']) +
       row('data-list="sold"', 'Продані', D.sold.length + ' ' + bookWord(D.sold.length), ['🏷', 'g6']) +
       '</div>';
-    h += '<div class="mlist"><div class="mrow mtheme"><span class="g"><b>Тема</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div></div>';
+    h += '<div class="mlist"><div class="mrow mtheme"><span class="g"><b>Тема</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>';
+    var ic = (function () { try { return localStorage.getItem('lb.icon') || ''; } catch (e) { return ''; } })();
+    h += '<div class="mrow mtheme mic"><span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div></div>';
     return h;
   };
 
@@ -4624,6 +4634,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'plus-shot') { closeModal(); openOrder('wish'); document.getElementById('orderfile').click(); return; }
     if (a === 'hseg') { view.hseg = act.getAttribute('data-v'); try { localStorage.setItem('lb.hseg', view.hseg); } catch (e) {} return render(); }
     if (a === 'theme') { setTheme(act.getAttribute('data-v')); return render(); }
+    if (a === 'appicon') { setAppIcon(act.getAttribute('data-v')); return render(); }
     if (a === 'order-open') openOrder();
     if (a === 'news-hide' || a === 'news-apply') {
       var nid = act.getAttribute('data-id'), nit = (D.news || []).filter(function (x) { return x.id === nid; })[0];
