@@ -221,6 +221,21 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .shsw{display:inline-flex;align-items:center;gap:8px;border:0;background:none;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;padding:4px}
 .shsw i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}.shsw i::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s}
 .shsw.on i{background:var(--accent-fill)}.shsw.on i::after{left:16px;background:#fff}
+.msh{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.msh-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.msh-t b{font-size:15px}
+.msh-g{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.msh-n{font-size:28px;font-weight:600;line-height:1;white-space:nowrap}.msh-n .muted{font-weight:500}
+.msh-bar{height:8px;background:var(--line);border-radius:999px;margin:6px 0;overflow:hidden}.msh-bar i{display:block;height:100%;background:var(--accent-fill);border-radius:999px}
+.msh-sp{min-height:104px}
+.msh-e{flex:none;width:20px;border:1.5px dashed var(--line);border-bottom:0;background:transparent;color:var(--muted);border-radius:2px 2px 0 0;cursor:pointer;font:inherit;font-size:14px;padding:0}
+.msh-cv{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:12px}
+.msh-c{min-width:0;cursor:pointer;border:0;background:none;padding:0;text-align:left;font:inherit;color:inherit}
+.msh-c .im{position:relative;display:block}
+.msh-c .im img,.msh-c .im .ph{width:100%;height:auto;aspect-ratio:2/3;border-radius:6px;object-fit:cover;display:flex;font-size:12px;padding:8px}
+.msh-add .im{aspect-ratio:2/3;border:1.5px dashed var(--line);border-radius:6px;display:grid;place-items:center;color:var(--muted);font-size:20px}
+.msh-c .ck{position:absolute;right:5px;bottom:5px;width:18px;height:18px;border-radius:50%;background:var(--ok);color:var(--card);font-size:11px;font-style:normal;display:grid;place-items:center}
+.msh-c .pb{display:block;height:4px;background:var(--line);border-radius:999px;margin-top:5px;overflow:hidden}.msh-c .pb i{display:block;height:100%;background:var(--accent-fill)}
+.msh-c .ct{font-size:13px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.msh-c .ca{font-size:12px;color:var(--muted)}
 .shh{display:flex;align-items:baseline;gap:6px;font-size:16px;font-family:inherit;font-weight:600;margin:18px 0 8px}
 .shtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
 .shtile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer}
@@ -615,7 +630,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
   var SAVED_KEY = 'lb.view.v3';
   try { var sv = JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); if (sv.f) view.f = sv.f; if (sv.sort) view.sort = sv.sort; if (sv.bookMode) view.bookMode = sv.bookMode; } catch (e) {}
-  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; view.shTitles = false; /* перемикач «Назви» прибрано 16.11 */ } catch (e) {}
+  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; view.shTitles = false; /* перемикач «Назви» прибрано 16.11 */ view.msMode = localStorage.getItem('lb.msm') || 'spines'; } catch (e) {}
   // після оновлення сторінки відкривається та сама вкладка
   try { view.hseg = localStorage.getItem('lb.hseg') || 'today'; } catch (e) { view.hseg = 'today'; }
   try { var lt = localStorage.getItem('lb.tab'); if (lt && TABS.some(function (t) { return t[0] === lt; })) view.tab = lt; } catch (e) {}
@@ -3585,20 +3600,37 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = new Date().getHours();
     return h >= 5 && h < 12 ? 'Доброго ранку ☀️' : h < 18 && h >= 12 ? 'Доброго дня 📚' : h >= 18 && h < 23 ? 'Доброго вечора 🌆' : 'Доброї ночі 🌙';
   }
+  // «Полиця місяця» (16.11): перемикач «Корінці» (мета великими цифрами + плоскі корінці, назва під полицею при наведенні) · «Обкладинки»
   function monthShelfHtml(ym) {
     var read = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === ym; }).sort(function (a, b) { return a.readOn < b.readOn ? -1 : 1; });
     var now = ym === curYm() ? readingNow() : [];
     var goal = (D.goals && D.goals.month) || 0;
-    var slots = Math.max(goal, read.length + now.length, 4);
-    var sp = function (b, part) {
-      var hgt = 64 + hashN(b.title) % 26, w = Math.max(20, Math.min(34, Math.round((b.pages || 320) / 22)));
-      return '<button class="mspine' + (part != null ? ' part' : '') + '" data-book="' + b.row + '" title="' + esc(b.title) + '" style="height:' + hgt + 'px;width:' + w + 'px;' + spineBg(b, part) + '"><span>' + esc(b.title) + '</span></button>';
-    };
-    var h = '<div class="mshelf"><div class="t"><span>Полиця ' + MONTHS_FROM[mIdx(ym)].replace(/а$/, 'а') + '</span><button class="lnk" data-action="goal">' + (goal ? read.length + ' з ' + goal + ' · мета ✎' : 'поставити мету ✎') + '</button></div><div class="sp">';
-    h += read.map(function (b) { return sp(b); }).join('');
-    h += now.map(function (b) { return sp(b, b.pages && b.page ? Math.min(95, Math.round(b.page / b.pages * 100)) : 15); }).join('');
-    for (var i = read.length + now.length; i < slots; i++) h += '<button class="mspine e" data-action="plan-open" style="height:' + (70 + (i * 7) % 18) + 'px">' + (i === read.length + now.length ? '＋' : '') + '</button>';
-    return h + '</div><div class="board"></div></div>';
+    var pct = function (b) { return b.pages && b.page ? Math.min(95, Math.round(b.page / b.pages * 100)) : 15; };
+    var cv = view.msMode === 'covers';
+    var left = goal ? Math.max(0, goal - read.length) : 0;
+    var empty = Math.max(0, (goal || 0) - read.length - now.length);
+    var h = '<div class="msh" data-capbox><div class="msh-t"><b>Полиця ' + MONTHS_FROM[mIdx(ym)] + '</b><span class="grow"></span><div class="wseg" role="group" aria-label="Вигляд"><button data-msm="spines" class="' + (cv ? '' : 'on') + '">Корінці</button><button data-msm="covers" class="' + (cv ? 'on' : '') + '">Обкладинки</button></div></div>';
+    if (!cv) {
+      h += '<div class="msh-g"><div class="msh-n"><b>' + read.length + '</b>' + (goal ? '<span class="muted"> / ' + goal + '</span>' : '') + '</div><div class="grow"><div class="muted small">прочитано в ' + ['січні', 'лютому', 'березні', 'квітні', 'травні', 'червні', 'липні', 'серпні', 'вересні', 'жовтні', 'листопаді', 'грудні'][mIdx(ym)] + '</div>' +
+        (goal ? '<div class="msh-bar"><i style="width:' + Math.min(100, Math.round(read.length / goal * 100)) + '%"></i></div>' : '') +
+        '<div class="muted small">' + (goal ? (left ? 'ще ' + left + ' до мети · ' : 'мету виконано · ') : '') + '<button class="lnk" data-action="goal">' + (goal ? 'змінити мету' : 'поставити мету') + '</button></div></div></div>';
+      var sp = function (b, part) {
+        var w = Math.max(14, Math.min(26, Math.round((b.pages || 320) / 20))), c = genreColor(b.genre);
+        var bg = part != null ? 'linear-gradient(to top,' + c + ' ' + part + '%,color-mix(in srgb,' + c + ' 35%,transparent) ' + part + '%)' : c;
+        var cap = [b.title, b.author, part != null ? 'читаю · ' + part + '%' : 'прочитано'].join(' · ');
+        return '<button class="fsp" data-book="' + b.row + '" data-cap="' + esc(cap) + '" aria-label="' + esc(b.title) + '" style="width:' + w + 'px;height:' + (88 + hashN(b.title) % 14) + 'px;background:' + bg + '">' + (part == null ? '<b></b>' : '') + '</button>';
+      };
+      h += '<div class="fsps msh-sp">' + read.map(function (b) { return sp(b); }).join('') + now.map(function (b) { return sp(b, pct(b)); }).join('');
+      for (var i = 0; i < empty; i++) h += '<button class="msh-e" data-action="plan-open" aria-label="Додати з плану" style="height:' + (90 + (i * 5) % 12) + 'px">' + (i === 0 ? '+' : '') + '</button>';
+      if (!read.length && !now.length && !empty) h += '<button class="msh-e" data-action="plan-open" aria-label="Додати з плану" style="height:90px">+</button>';
+      h += '</div><div class="shplank"></div><div class="shcap muted small">' + (read.length || now.length ? 'Наведи на книжку, щоб побачити назву' : 'Цього місяця ще нічого не прочитано') + '</div>';
+    } else {
+      h += '<div class="muted small" style="margin:-2px 0 10px">' + read.length + (goal ? ' з ' + goal + ' · ' : ' прочитано · ') + '<button class="lnk" data-action="goal">' + (goal ? 'змінити мету' : 'поставити мету') + '</button></div><div class="msh-cv">' +
+        read.map(function (b) { return '<div class="msh-c" data-book="' + b.row + '"><span class="im">' + cover(b, 'x') + '<i class="ck">✓</i></span><div class="ct">' + esc(b.title) + '</div><div class="ca">прочитано</div></div>'; }).join('') +
+        now.map(function (b) { var p = pct(b); return '<div class="msh-c" data-book="' + b.row + '"><span class="im">' + cover(b, 'x') + '</span><span class="pb"><i style="width:' + p + '%"></i></span><div class="ct">' + esc(b.title) + '</div><div class="ca">читаю · ' + p + '%</div></div>'; }).join('') +
+        (empty || (!read.length && !now.length) ? '<button class="msh-c msh-add" data-action="plan-open"><span class="im">+</span><div class="ct muted">Додати з плану</div></button>' : '') + '</div>';
+    }
+    return h + '</div>';
   }
   function feedNowLink() {
     var now = readingNow(), pile = pileFor(curYm());
@@ -4558,6 +4590,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var sho = t.closest('[data-shopen]'); if (sho && !t.closest('[data-action],[data-go]')) { var sk = sho.getAttribute('data-shopen'); view.shelfOpen = view.shelfOpen === sk ? '' : sk; render(); var el = document.querySelector('.plank.op'); if (el) el.scrollIntoView({ block: 'nearest' }); return; }
     var shj = t.closest('[data-shjump]'); if (shj && !t.closest('[data-action],[data-go]')) { var jk = shj.getAttribute('data-shjump'); if (view.shelfMode !== 'spines' && view.shelfMode !== 'covers') { view.shelfMode = 'spines'; try { localStorage.setItem('lb.shm', 'spines'); } catch (e) {} render(); } var je = document.getElementById('sh-' + hashN(jk)); if (je) je.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     var fse = t.closest('[data-fset]'); if (fse) { var fp2 = fse.getAttribute('data-fset').split('|'), fk2 = fp2[0], fv2 = fp2.slice(1).join('|'); if (fk2 === 'where') { view.f.place = fv2 === 'Роттердам' || fv2 === 'Київ' ? fv2 : ''; if (fv2 === 'позичені') view.f.avail = 'позичена'; else if (view.f.avail === 'позичена') view.f.avail = ''; } else view.f[fk2] = fv2; view.limit = 60; saveView(); return render(); }
+    var msm = t.closest('[data-msm]'); if (msm) { view.msMode = msm.getAttribute('data-msm'); try { localStorage.setItem('lb.msm', view.msMode); } catch (e) {} return render(); }
     var shm = t.closest('[data-shm]'); if (shm) { view.shelfMode = shm.getAttribute('data-shm'); try { localStorage.setItem('lb.shm', view.shelfMode); } catch (e) {} return render(); }
     var stt = t.closest('[data-st]'); if (stt) { view.st = stt.getAttribute('data-st'); return render(); }
     var spp = t.closest('[data-sp]'); if (spp) { view.sp = spp.getAttribute('data-sp'); return render(); }
@@ -5159,7 +5192,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   // «Корінці» без назв: назва книжки рядком під полицею при наведенні (16.11)
   document.addEventListener('mouseover', function (e) {
     var sp = e.target.closest && e.target.closest('.fsp[data-cap]'); if (!sp) return;
-    var box = sp.closest('.shopen'), cap = box && box.querySelector('.shcap'); if (!cap) return;
+    var box = sp.closest('.shopen,[data-capbox]'), cap = box && box.querySelector('.shcap'); if (!cap) return;
     var prev = box.querySelector('.fsp.hov'); if (prev) prev.classList.remove('hov');
     sp.classList.add('hov'); cap.textContent = sp.getAttribute('data-cap'); cap.classList.add('on');
   });
