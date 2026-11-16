@@ -596,10 +596,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     reading: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6v14"/></svg>',
     shelves: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M3 20h18M3 11h18"/><path d="M5 11V5h3v6M9 11V4h3v7M14 20v-6h3v6M18 20v-7h2.5v7"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>',
+    delivery: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12v10H2zM14 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>',
+    kyiv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
     money: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>'
   };
-  // комп'ютер (16.11): «Що почитати», «Полиці», «План», «Статистика», «Фінанси» — окремими пунктами бокового меню
-  var SIDE_SOLO = ['reading', 'shelves', 'plan', 'stats', 'money'];
+  // комп'ютер (16.11): «Замовлені», «У Києві», «Що почитати», «Полиці», «План», «Статистика», «Фінанси» — окремими пунктами бокового меню
+  var SIDE_SOLO = ['delivery', 'kyiv', 'reading', 'shelves', 'plan', 'stats', 'money'];
   var GROUPS = [
     { id: 'home', t: 'Головна', views: [['home', 'Головна']] },
     { id: 'wishg', t: 'Бажанки', views: [['wish', 'Бажанки'], ['delivery', 'Замовлені'], ['kyiv', 'У Києві']] },
@@ -1001,7 +1003,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var solo = SIDE_SOLO.indexOf(view.tab) !== -1;
       var item = function (tab, gid, t, on) { return '<button class="tab' + (on ? ' on' : '') + '" data-tab="' + tab + '">' + IC[gid] + '<span>' + t + '</span></button>'; };
       var libTab = lastSub.lib === 'series' ? 'series' : 'books';
-      btns = [item('home', 'home', 'Головна', view.tab === 'home'), item(lastSub.wishg || 'wish', 'wishg', 'Бажанки', cur.id === 'wishg'), item(libTab, 'lib', 'Бібліотека', cur.id === 'lib' && !solo), '<span class="tabsep"></span>',
+      btns = [item('home', 'home', 'Головна', view.tab === 'home'), item('wish', 'wishg', 'Бажанки', view.tab === 'wish'), item('delivery', 'delivery', 'Замовлені', view.tab === 'delivery'), item('kyiv', 'kyiv', 'У Києві', view.tab === 'kyiv'), item(libTab, 'lib', 'Бібліотека', cur.id === 'lib' && !solo), '<span class="tabsep"></span>',
         item('reading', 'reading', 'Що почитати', view.tab === 'reading'), item('shelves', 'shelves', 'Полиці', view.tab === 'shelves'), item('plan', 'plan', 'План', view.tab === 'plan'), '<span class="tabsep"></span>',
         item('stats', 'stats', 'Статистика', view.tab === 'stats'), item('money', 'money', 'Фінанси', view.tab === 'money'), item('me', 'me', 'Я', cur.id === 'me' && !solo)];
     }
@@ -1011,6 +1013,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var g = groupOf(view.tab);
     if (WIDE && SIDE_SOLO.indexOf(view.tab) !== -1) return '';
     if (g.id === 'me') return view.tab === 'me' ? '' : '<button class="backme" data-tab="me">‹ Я</button>';
+    if (WIDE && g.id === 'wishg') return '';
     if (WIDE && g.id === 'lib') return '<div class="subtabs">' + [['books', 'Книги'], ['series', 'Серії']].map(function (v) { return '<button class="' + (v[0] === view.tab ? 'on' : '') + '" data-tab="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>';
     if (g.views.length < 2) return '';
     return '<div class="subtabs">' + g.views.map(function (v) { return '<button class="' + (v[0] === view.tab ? 'on' : '') + '" data-tab="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>';
