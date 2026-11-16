@@ -2743,8 +2743,23 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var sub = [x.author, x.seriesName ? x.seriesName + (x.seriesNum ? ' #' + numTxt(x.seriesNum) : '') : '', x.pub].filter(Boolean).map(esc).join(' · ');
         return '<button class="catr" data-action="cat-pick" data-i="' + i + '">' + (x.cover ? '<img class="thumb" referrerpolicy="no-referrer" src="' + esc(x.cover) + '" alt="">' : '<span class="thumb"></span>') +
           '<span class="g"><b>' + esc(x.title) + '</b><small>' + sub + '</small></span>' + (x.mine ? '<span class="pill2 ok">' + (x.mine === 'library' ? 'уже є' : 'у бажанках') + '</span>' : '') + '</button>';
-      }).join('') : '<p class="muted small">У каталозі такої книги ще немає. Впиши ISBN або заповни вручну, і вона з\'явиться в каталозі.</p>';
+      }).join('') : '<p class="muted small">У каталозі Shelfie такої книги ще немає.</p>';
+      box.innerHTML += '<button class="btn sm" data-action="cat-web" style="align-self:flex-start">Шукати в інтернеті</button><p class="muted small" style="margin:0">MEGOGO, Goodreads та інші. Що знайду, заповню сама, а після збереження книга з\'явиться в каталозі для всіх.</p>';
     }).catch(function (e) { if (my === catSeq) box.innerHTML = '<p class="msg small">' + esc(e.message) + '</p>'; });
+  }
+  // в каталозі немає → той самий пошук в інтернеті, що й «Підтягнути» (ISBN або назва з автором)
+  function catWeb() {
+    var q = fval('f-cat'), digits = q.replace(/[^0-9Xx]/g, '');
+    if (digits.length >= 10 && digits.length === q.replace(/[\s-]/g, '').length) { var ie = document.getElementById('f-isbn'); if (ie) ie.value = digits; }
+    var box = document.getElementById('f-catres'); if (box) box.innerHTML = '';
+    if (fval('f-isbn')) return doLookup(false);
+    // назва й автор разом: пошук сам розбирається, нічого не вписуємо в поля, доки не знайде
+    showLookPreview({ msg: 'Шукаю в інтернеті…' });
+    api('lbApiLookup', { title: q, author: fval('f-author') }).then(function (r) {
+      if (!document.getElementById('f-title')) return;
+      if (!r || r.notFound) { showLookPreview({ msg: 'В інтернеті теж не знайшла. Спробуй ISBN зі звороту книги або заповни вручну.' }); return; }
+      applyLookup(r); addState.cover = r.cover || addState.cover; showLookPreview(r); addDupeCheck();
+    }).catch(function (err) { showLookPreview({ msg: err.message }); });
   }
   function catPick(i) {
     var x = (addState.cat || [])[i]; if (!x) return;
@@ -4962,6 +4977,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'me-photo-del') return meSave({ photo: '' }, 'Фото прибрано');
     if (a === 'me-log') return meLog();
     if (a === 'streak-open') return streakDialog();
+    if (a === 'cat-web') return catWeb();
     if (a === 'cat-pick') return catPick(Number(act.getAttribute('data-i')));
     if (a === 'streak-set') return streakSetDialog();
     if (a === 'streak-read') { act.disabled = true; return streakApi({ act: 'read' }, 'Зараховано 🔥').then(function () { if (document.querySelector('#modal .stk')) streakDialog(); }); }
