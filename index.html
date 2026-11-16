@@ -154,6 +154,37 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;margin:6px 0 12px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 /* дошка бажанок */
+.wtb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wtb .sbox.wq{width:300px;max-width:100%;flex:none}.wtb .wfx{margin:0}
+.wseg{display:inline-flex;flex-wrap:wrap;background:var(--line);border-radius:999px;padding:3px;gap:2px}
+.wseg button{border:0;background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.wseg button.on{background:var(--card);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.cnt{font-size:12px;font-weight:500;background:var(--card);color:var(--muted);border-radius:999px;padding:0 8px}
+.wboard{display:grid;gap:10px;align-items:start}
+.wcol{background:var(--line);border-radius:12px;padding:8px;min-width:0}
+.wcol h4{margin:2px 4px 8px;font-size:13px;display:flex;gap:6px;align-items:center}
+.wlist{display:flex;flex-direction:column;gap:5px;max-height:75vh;overflow-y:auto}
+.wrow{display:flex;gap:10px;align-items:center;background:var(--card);border-radius:10px;padding:6px 10px 6px 6px;cursor:pointer;min-width:0}
+.wrow:hover{box-shadow:inset 0 0 0 1px var(--accent)}
+.wrow img,.wrow .ph{width:30px;height:45px;border-radius:3px;font-size:5px;padding:1px;flex:none;object-fit:cover}
+.wrow .g,.wtr .g{flex:1;min-width:0;display:flex;flex-direction:column}
+.wrow .g b,.wtr .g b{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow .g small,.wtr .g small{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow .rt{flex:none;min-width:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:13px;text-align:right;max-width:40%}
+.wrow .rt small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wrow.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.wtbl{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wtr{display:grid;grid-template-columns:26px minmax(0,2.4fr) minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) 100px 90px;gap:12px;align-items:center;padding:6px 12px;border-top:1px solid var(--line);font-size:13px;cursor:pointer}
+.wtr:hover{background:var(--bg)}.wtr.wthr{border-top:0;cursor:default;color:var(--muted);font-weight:600;font-size:12px;padding:8px 12px}.wtr.wthr:hover{background:none}
+.wtr img,.wtr .ph{width:26px;height:39px;border-radius:3px;font-size:4px;padding:1px;object-fit:cover}
+.wtr .el{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wtr .r{text-align:right}
+.wth{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}.wth.r{text-align:right}.wth.on{color:var(--accent)}
+.wgh{display:flex;align-items:center;gap:8px;font-size:16px;font-family:inherit;font-weight:600;margin:18px 0 10px}.wgh:first-of-type{margin-top:6px}
+.wsplit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:start}
+.wlp{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;max-height:78vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.wlp .wrow{background:transparent}
+.wlg{font-size:12px;font-weight:600;color:var(--muted);padding:10px 8px 4px}
+.wdet{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;position:sticky;top:16px}
 .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;align-items:start;padding-bottom:10px}
 .col{min-width:0;background:var(--line);border-radius:12px;padding:8px;max-height:75vh;overflow-y:auto}
 .col h4{margin:2px 4px 8px;font-size:13px;display:flex;justify-content:space-between}
@@ -519,7 +550,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (v) document.documentElement.setAttribute('data-theme', v); else document.documentElement.removeAttribute('data-theme');
   }
   try { var th0 = localStorage.getItem('lb.theme'); if (th0) document.documentElement.setAttribute('data-theme', th0); } catch (e) {}
-  var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? 'board' : 'list', seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '' };
+  var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? (function () { try { return localStorage.getItem('lb.wmode') || 'board'; } catch (e) { return 'board'; } })() : 'list', seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '' };
   var modalStack = null; // що зараз відкрито у вікні, щоб перемалювати після збереження
   var nav = [];           // історія карток у вікні: книга → серія → автор …, для кнопки «‹ Назад»
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
@@ -1752,44 +1783,114 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (view.wishFx === '_sale') { if (w.avail !== 'Є у продажу') return false; }
       if (view.wishStatus === '_soon') { if (!(w.release && w.release >= D.today)) return false; }
       else if (view.wishStatus === '_sale') { if (w.avail !== 'Є у продажу' || ORDERED.indexOf(w.status) !== -1 || w.status === 'В бібліотеці') return false; }
-      else if (view.wishStatus && view.wishMode === 'list' && w.status !== view.wishStatus) return false;
+      else if (view.wishStatus && (view.wishMode === 'list' || view.wishMode === 'table') && w.status !== view.wishStatus) return false;
       if (q && !q.split(' ').every(function (x) { return w._q.indexOf(x) !== -1; })) return false;
       return true;
     });
   }
+  // компактний рядок бажанки для дошки й списку «Картка поруч» (комп'ютер, 16.11): ціна й реліз праворуч
+  function wishRelTxt(w) {
+    var near = w.release && w.release >= D.today && w.release <= addDays(D.today, 14);
+    if (near) return '<span class="chip w">вийде ' + dmy(w.release).slice(0, 5) + '</span>';
+    // коротко, щоб влізло праворуч: дата релізу, а якщо її немає — наявність («Анонс», «Не видана»)
+    if (w.release && w.release >= D.today) return 'вийде ' + dmy(w.release);
+    if (!w.release && w.releaseText) return esc(w.releaseText);
+    return w.avail && w.avail !== 'Є у продажу' ? esc(w.avail) : '';
+  }
+  function wishRow(w, attr) {
+    var ser = w.series && w.series !== 'нонфік' && w.series !== '-' ? esc(w.series) + (w.part ? ' #' + esc(w.part) : '') : '';
+    var rt = wishRelTxt(w);
+    return '<div class="wrow' + (attr === 'sel' ? ' on' : '') + '" ' + (attr ? 'data-wsel="' + w.row + '"' : 'data-wish="' + w.row + '"') + '>' + cover(w) +
+      '<div class="g"><b>' + esc(w.title) + '</b><small>' + esc(w.author) + (ser ? ' · ' + ser : '') + '</small></div>' +
+      '<div class="rt">' + (w.price != null ? '<b>' + money(w.price) + '</b>' : '') + (rt ? '<small>' + rt + '</small>' : '') + (w._lib ? '<span class="chip b">вже є</span>' : '') + '</div></div>';
+  }
+  function wishSorted(list) {
+    var k = view.wishSort || '', dir = view.wishDir === -1 ? -1 : 1;
+    if (!k) return list;
+    var val = function (w) { return k === 'price' ? (w.price == null ? Infinity : w.price) : k === 'release' ? (w.release || (w.releaseText ? '9998' : '9999')) : norm(w.title); };
+    return list.slice().sort(function (a, b) { var x = val(a), y = val(b); if (x === Infinity && y === Infinity) return 0; if (x === Infinity) return 1; if (y === Infinity) return -1; return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+  }
+  var WMODES = [['board', 'Дошка'], ['table', 'Таблиця'], ['covers', 'Обкладинки'], ['split', 'Картка поруч']];
   VIEWS.wish = function () {
     var mine = D.wish.filter(isWishOnly);
     var counts = count(mine, function (w) { return w.status; });
     var statuses = WISH_ORDER.filter(function (s) { return counts[s]; });
     Object.keys(counts).forEach(function (s) { if (statuses.indexOf(s) === -1) statuses.push(s); });
-    if (!WIDE && view.wishMode === 'board') view.wishMode = 'list';
+    if (!WIDE && view.wishMode !== 'list') view.wishMode = 'list';
+    if (WIDE && view.wishMode === 'list') view.wishMode = 'table';
     var list = wishFiltered();
     if (view.wishFx === '_soon') list.sort(function (a, b) { return a.release < b.release ? -1 : 1; });
-    var h = '<div class="row" style="flex-wrap:nowrap">' + sbox('<input type="search" data-input="wq" placeholder="Пошук у бажанках" value="' + esc(view.wq) + '">', 'grow') +
-      '<button class="tbtn' + (view.wishFxOpen || view.wishFx ? ' on' : '') + '" data-action="wfx-toggle" aria-label="Фільтри" title="Фільтри"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>' + (view.wishFx ? '<span class="dot"></span>' : '') + '</button>' +
-      '<button class="tbtn" data-action="wmore-toggle" aria-label="Ще">⋯</button>' +
-      (WIDE ? '<div class="pick" style="margin:0;flex:none"><button data-wmode="board" class="' + (view.wishMode === 'board' ? 'on' : '') + '">Дошка</button><button data-wmode="list" class="' + (view.wishMode === 'list' ? 'on' : '') + '">Список</button></div>' : '') + '</div>';
-    if (view.wishMoreOpen) h += '<div class="card" style="margin:8px 0;display:flex;flex-direction:column;gap:6px;padding:10px"><button class="btn" data-action="order-open">🧾 Додати замовлення</button><button class="btn" data-action="vf-start" data-kind="wish">🔎 Звірити бажанки з книгарнями</button><button class="btn" data-action="news-run">📰 Пошукати новини серій зараз</button><button class="btn" data-action="ser-check">🔗 Перевірити серії й авторів</button></div>';
-    if (view.wishFxOpen) h += '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Показати лише:</span>' +
-      '<button data-wfx="_soon" class="' + (view.wishFx === '_soon' ? 'on' : '') + '">Релізи попереду</button>' +
-      '<button data-wfx="_sale" class="' + (view.wishFx === '_sale' ? 'on' : '') + '">Є у продажу</button></div>';
-    h += newsHtml();
-    if (view.wishMode === 'list') h += '<div class="pick scroll"><button data-ws="" class="' + (!view.wishStatus ? 'on' : '') + '">Усі · ' + mine.length + '</button>' +
-      statuses.map(function (s) { return '<button data-ws="' + esc(s) + '" class="' + (view.wishStatus === s ? 'on' : '') + '">' + esc(s) + ' · ' + counts[s] + '</button>'; }).join('') + '</div>';
     var priced = list.filter(function (w) { return w.price != null; });
-    h += '<p class="muted small">Показано: ' + list.length + (priced.length ? ' · з ціною ' + priced.length + ' на ' + money(priced.reduce(function (a, w) { return a + w.price; }, 0)) : '') + '</p>';
-    if (view.wishMode === 'board') {
-      h += '<div class="board">' + statuses.map(function (s) {
-        var col = list.filter(function (w) { return w.status === s; });
-        var sum = col.reduce(function (a, w) { return a + (w.price || 0); }, 0);
-        return '<div class="col"><h4><span>' + esc(s) + ' · ' + col.length + '</span><span class="muted">' + (sum ? money(sum) : '') + '</span></h4><div class="list">' + col.map(function (w) { return wishItem(w, true); }).join('') + '</div></div>';
-      }).join('') + '</div>';
+    var shown = 'Показано: ' + list.length + (priced.length ? ' · з ціною ' + priced.length + ' на ' + money(priced.reduce(function (a, w) { return a + w.price; }, 0)) : '');
+    var more = view.wishMoreOpen ? '<div class="card" style="margin:8px 0;display:flex;flex-direction:column;gap:6px;padding:10px"><button class="btn" data-action="order-open">🧾 Додати замовлення</button><button class="btn" data-action="vf-start" data-kind="wish">🔎 Звірити бажанки з книгарнями</button><button class="btn" data-action="news-run">📰 Пошукати новини серій зараз</button><button class="btn" data-action="ser-check">🔗 Перевірити серії й авторів</button></div>' : '';
+    var fx = '<button data-wfx="_soon" class="' + (view.wishFx === '_soon' ? 'on' : '') + '">Релізи попереду</button><button data-wfx="_sale" class="' + (view.wishFx === '_sale' ? 'on' : '') + '">Є у продажу</button>';
+    var h;
+    if (WIDE) {
+      // комп'ютер: один рядок керування — пошук, фільтри, 4 види, ⋯
+      h = '<div class="wtb">' + sbox('<input type="search" data-input="wq" placeholder="Пошук у бажанках" value="' + esc(view.wq) + '">', 'wq') +
+        '<div class="pick wfx">' + fx + '</div><span class="grow"></span>' +
+        '<div class="wseg" role="group" aria-label="Вигляд">' + WMODES.map(function (m) { return '<button data-wmode="' + m[0] + '" class="' + (view.wishMode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div>' +
+        '<button class="tbtn" data-action="wmore-toggle" aria-label="Ще">⋯</button></div>' + more;
     } else {
-      h += '<div class="list grid">' + list.slice(0, view.limit).map(wishItem).join('') + '</div>';
+      h = '<div class="row" style="flex-wrap:nowrap">' + sbox('<input type="search" data-input="wq" placeholder="Пошук у бажанках" value="' + esc(view.wq) + '">', 'grow') +
+        '<button class="tbtn' + (view.wishFxOpen || view.wishFx ? ' on' : '') + '" data-action="wfx-toggle" aria-label="Фільтри" title="Фільтри"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>' + (view.wishFx ? '<span class="dot"></span>' : '') + '</button>' +
+        '<button class="tbtn" data-action="wmore-toggle" aria-label="Ще">⋯</button></div>' + more;
+      if (view.wishFxOpen) h += '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Показати лише:</span>' + fx + '</div>';
+    }
+    h += newsHtml();
+    var statusPick = '<div class="pick scroll"><button data-ws="" class="' + (!view.wishStatus ? 'on' : '') + '">Усі · ' + mine.length + '</button>' +
+      statuses.map(function (s) { return '<button data-ws="' + esc(s) + '" class="' + (view.wishStatus === s ? 'on' : '') + '">' + esc(s) + ' · ' + counts[s] + '</button>'; }).join('') + '</div>';
+    var byStatus = function (s) { return list.filter(function (w) { return w.status === s; }); };
+    var sumOf = function (arr) { var s = arr.reduce(function (a, w) { return a + (w.price || 0); }, 0); return s ? money(s) : ''; };
+    var m = view.wishMode;
+    if (m === 'list') {
+      h += statusPick + '<p class="muted small">' + shown + '</p><div class="list grid">' + list.slice(0, view.limit).map(wishItem).join('') + '</div>';
       if (list.length > view.limit) h += '<button class="more" data-action="more">Показати ще (' + (list.length - view.limit) + ')</button>';
+    } else if (m === 'board') {
+      h += '<div class="wboard" style="grid-template-columns:repeat(' + Math.max(1, Math.min(statuses.length, 4)) + ',minmax(0,1fr))">' + statuses.map(function (s) {
+        var col = byStatus(s);
+        return '<div class="wcol"><h4><span>' + esc(s) + '</span><span class="cnt">' + col.length + '</span><span class="grow"></span><span class="muted">' + sumOf(col) + '</span></h4><div class="wlist">' + col.map(function (w) { return wishRow(w); }).join('') + '</div></div>';
+      }).join('') + '</div>';
+    } else if (m === 'table') {
+      var sorted = wishSorted(list);
+      var th = function (k, t, cls) { var on = view.wishSort === k; return '<button class="wth' + (cls ? ' ' + cls : '') + (on ? ' on' : '') + '" data-wsort="' + k + '">' + t + (on ? (view.wishDir === -1 ? ' ↓' : ' ↑') : ' ↕') + '</button>'; };
+      h += '<div class="row" style="align-items:center">' + statusPick.replace('pick scroll', 'pick scroll grow') + '<span class="muted small">' + shown + '</span></div>' +
+        '<div class="wtbl"><div class="wtr wthr"><span></span>' + th('title', 'Назва') + '<span>Серія</span><span>Етап</span><span>Наявність</span>' + th('release', 'Реліз') + th('price', 'Ціна', 'r') + '</div>' +
+        sorted.slice(0, view.limit).map(function (w) {
+          var ser = w.series && w.series !== 'нонфік' && w.series !== '-' ? esc(w.series) + (w.part ? ' #' + esc(w.part) : '') : '';
+          var near = w.release && w.release >= D.today && w.release <= addDays(D.today, 14);
+          var rel = near ? '<span class="chip w">' + dmy(w.release).slice(0, 5) + '</span>' : w.release ? dmy(w.release) : esc(w.releaseText || '');
+          return '<div class="wtr" data-wish="' + w.row + '">' + cover(w) + '<div class="g"><b>' + esc(w.title) + '</b><small>' + esc(w.author) + '</small></div><span class="el">' + ser + '</span><span class="el">' + esc(w.status) + '</span><span class="el muted">' + esc(w.avail || '') + '</span><span>' + rel + '</span><span class="r">' + (w.price != null ? '<b>' + money(w.price) + '</b>' : '') + '</span></div>';
+        }).join('') + '</div>';
+      if (sorted.length > view.limit) h += '<button class="more" data-action="more">Показати ще (' + (sorted.length - view.limit) + ')</button>';
+    } else if (m === 'covers') {
+      statuses.forEach(function (s) {
+        var col = byStatus(s); if (!col.length) return;
+        h += '<h3 class="wgh">' + esc(s) + ' <span class="cnt">' + col.length + '</span><span class="grow"></span><span class="muted small">' + sumOf(col) + '</span></h3><div class="covers">' +
+          col.map(function (w) { var rt = wishRelTxt(w); return '<div class="cov" data-wish="' + w.row + '">' + cover(w, 'x') + '<div class="ct">' + esc(w.title) + '</div><div class="ca">' + esc(w.author) + '</div>' + (w.price != null || rt ? '<div class="ca">' + (w.price != null ? '<b style="color:var(--ink)">' + money(w.price) + '</b>' : '') + (rt ? ' ' + rt : '') + '</div>' : '') + '</div>'; }).join('') + '</div>';
+      });
+      if (!list.length) h += '<p class="muted">Нічого не знайшла.</p>';
+    } else if (m === 'split') {
+      var sel = list.filter(function (w) { return w.row === view.wishSel; })[0] || list[0];
+      var left = statuses.map(function (s) {
+        var col = byStatus(s); if (!col.length) return '';
+        return '<div class="wlg">' + esc(s) + ' · ' + col.length + (sumOf(col) ? ' · ' + sumOf(col) : '') + '</div>' + col.map(function (w) { return wishRow(w, sel && w.row === sel.row ? 'sel' : 'pick'); }).join('');
+      }).join('');
+      h += '<div class="wsplit"><div class="wlp" id="wlp">' + (left || '<p class="muted" style="padding:8px">Нічого не знайшла.</p>') + '</div><div class="wdet">' + (sel ? wishPanel(sel) : '') + '</div></div>';
     }
     return h;
   };
+  // деталі бажанки праворуч (вид «Картка поруч»)
+  function wishPanel(w) {
+    var hasSer = w.series && w.series !== 'нонфік' && w.series !== '-';
+    var rows = [['Реліз', w.release ? dmy(w.release) : w.releaseText], ['Ціна', w.price != null ? money(w.price) : ''], ['Наявність', w.avail], ['Видавництво', w.pub], ['Жанр', w.genre], ['Де замовлено', w.where], ['ISBN', w.isbn], ['Оригінальна назва', w.orig]].filter(function (r) { return r[1] !== '' && r[1] != null; });
+    return '<div class="bookhead">' + (w.cover ? '<img class="cover" referrerpolicy="no-referrer" src="' + esc(w.cover) + '" alt="">' : '<div class="ph" style="background:' + genreColor(w.genre) + '">' + esc(w.title) + '</div>') +
+      '<div class="grow"><h2 style="margin-top:0">' + esc(w.title) + '</h2><div>' + lk('author', w.author) + '</div>' + (hasSer ? '<div class="small">' + lk('series', w.series) + (w.part ? ' · #' + esc(numTxt(w.part)) : '') + '</div>' : '') +
+      '<div class="chips" style="margin-top:6px">' + wishChip(w.status) + (w._lib ? '<a class="chip b" data-go="' + esc('book|' + w._lib.row) + '">📚 за ISBN уже є в бібліотеці ›</a>' : '') + '</div></div></div>' +
+      '<div class="row" style="margin:12px 0">' + (ORDERED.indexOf(w.status) === -1 && !w.order && w.status !== 'В бібліотеці' ? '<button class="btn p" data-action="wish-ordered" data-row="' + w.row + '">🛒 Замовила</button>' : '') + wishGotBtn(w) +
+      '<button class="btn" data-action="wish-edit" data-row="' + w.row + '">✎ Редагувати</button><button class="btn" data-wish="' + w.row + '">Усі деталі</button></div>' +
+      '<table class="kv">' + rows.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</table>';
+  }
 
   /* ---------- Доставки: за сайтом ---------- */
   function deliveryRows() { return D.wish.filter(function (w) { return ORDERED.indexOf(w.status) !== -1 || (w.ttn && w.status !== 'В бібліотеці'); }); }
@@ -4370,7 +4471,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var bk = t.closest('[data-book]'); if (bk && !t.closest('select,input,button.btn,button.chip')) return showBook(Number(bk.getAttribute('data-book')));
     var wi = t.closest('[data-wish]'); if (wi && !t.closest('select,input,button.btn,button[data-action]')) return showWish(Number(wi.getAttribute('data-wish')));
     var sm = t.closest('[data-smode]'); if (sm) { view.seriesMode = sm.getAttribute('data-smode'); return render(); }
-    var wm = t.closest('[data-wmode]'); if (wm) { view.wishMode = wm.getAttribute('data-wmode'); if (view.wishMode === 'board' && view.wishStatus && view.wishStatus[0] !== '_') view.wishStatus = ''; return render(); }
+    var wm = t.closest('[data-wmode]'); if (wm) { view.wishMode = wm.getAttribute('data-wmode'); if (view.wishMode !== 'table' && view.wishMode !== 'list' && view.wishStatus && view.wishStatus[0] !== '_') view.wishStatus = ''; view.limit = 60; try { localStorage.setItem('lb.wmode', view.wishMode); } catch (e) {} return render(); }
+    var wso = t.closest('[data-wsort]'); if (wso) { var sk = wso.getAttribute('data-wsort'); if (view.wishSort === sk) view.wishDir = view.wishDir === -1 ? 1 : -1; else { view.wishSort = sk; view.wishDir = 1; } return render(); }
+    var wsl = t.closest('[data-wsel]'); if (wsl) { var lp = document.getElementById('wlp'), st0 = lp ? lp.scrollTop : 0; view.wishSel = Number(wsl.getAttribute('data-wsel')); render(); lp = document.getElementById('wlp'); if (lp) lp.scrollTop = st0; return; }
     var bm = t.closest('[data-bmode]'); if (bm) { view.bookMode = bm.getAttribute('data-bmode'); saveView(); return render(); }
     var wfx = t.closest('[data-wfx]'); if (wfx) { var fv = wfx.getAttribute('data-wfx'); view.wishFx = view.wishFx === fv ? '' : fv; view.limit = 60; return render(); }
     var ws = t.closest('[data-ws]'); if (ws) { view.wishStatus = ws.getAttribute('data-ws'); view.limit = 60; return render(); }
