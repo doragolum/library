@@ -308,6 +308,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
   header .top{flex-direction:column;align-items:stretch;padding:18px 16px 10px}
   .tabs{flex-direction:column;overflow:visible;padding:6px 10px}
   .tab{padding:9px 14px;border-radius:10px}
+  .tabsep{display:block;height:1px;background:var(--line);margin:6px 14px}
   main{max-width:1500px;width:100%;min-width:0;margin:0;box-sizing:border-box;padding:22px 28px 60px}
   .list.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
@@ -591,8 +592,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     wishg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>',
     lib: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 2.5 15.5-3.5 1z"/></svg>',
     plan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
-    me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>'
+    me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+    reading: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6v14"/></svg>',
+    shelves: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M3 20h18M3 11h18"/><path d="M5 11V5h3v6M9 11V4h3v7M14 20v-6h3v6M18 20v-7h2.5v7"/></svg>',
+    stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>',
+    money: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>'
   };
+  // комп'ютер (16.11): «Що почитати», «Полиці», «План», «Статистика», «Фінанси» — окремими пунктами бокового меню
+  var SIDE_SOLO = ['reading', 'shelves', 'plan', 'stats', 'money'];
   var GROUPS = [
     { id: 'home', t: 'Головна', views: [['home', 'Головна']] },
     { id: 'wishg', t: 'Бажанки', views: [['wish', 'Бажанки'], ['delivery', 'Замовлені'], ['kyiv', 'У Києві']] },
@@ -990,11 +997,21 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       return '<button class="tab' + (g === cur ? ' on' : '') + '" data-tab="' + (g.id === 'me' ? 'me' : (lastSub[g.id] || g.views[0][0])) + '">' + IC[g.id] + '<span>' + g.t + '</span></button>';
     });
     btns.splice(2, 0, '<button class="tab fab" data-action="plus" aria-label="Додати"><b>＋</b></button>');
+    if (WIDE) {
+      var solo = SIDE_SOLO.indexOf(view.tab) !== -1;
+      var item = function (tab, gid, t, on) { return '<button class="tab' + (on ? ' on' : '') + '" data-tab="' + tab + '">' + IC[gid] + '<span>' + t + '</span></button>'; };
+      var libTab = lastSub.lib === 'series' ? 'series' : 'books';
+      btns = [item('home', 'home', 'Головна', view.tab === 'home'), item(lastSub.wishg || 'wish', 'wishg', 'Бажанки', cur.id === 'wishg'), item(libTab, 'lib', 'Бібліотека', cur.id === 'lib' && !solo), '<span class="tabsep"></span>',
+        item('reading', 'reading', 'Що почитати', view.tab === 'reading'), item('shelves', 'shelves', 'Полиці', view.tab === 'shelves'), item('plan', 'plan', 'План', view.tab === 'plan'), '<span class="tabsep"></span>',
+        item('stats', 'stats', 'Статистика', view.tab === 'stats'), item('money', 'money', 'Фінанси', view.tab === 'money'), item('me', 'me', 'Я', cur.id === 'me' && !solo)];
+    }
     document.getElementById('tabs').innerHTML = btns.join('');
   }
   function subTabs() {
     var g = groupOf(view.tab);
+    if (WIDE && SIDE_SOLO.indexOf(view.tab) !== -1) return '';
     if (g.id === 'me') return view.tab === 'me' ? '' : '<button class="backme" data-tab="me">‹ Я</button>';
+    if (WIDE && g.id === 'lib') return '<div class="subtabs">' + [['books', 'Книги'], ['series', 'Серії']].map(function (v) { return '<button class="' + (v[0] === view.tab ? 'on' : '') + '" data-tab="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>';
     if (g.views.length < 2) return '';
     return '<div class="subtabs">' + g.views.map(function (v) { return '<button class="' + (v[0] === view.tab ? 'on' : '') + '" data-tab="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>';
   }
@@ -3944,8 +3961,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var cur = (function () { try { return localStorage.getItem('lb.theme') || ''; } catch (e) { return ''; } })();
     var row = function (attr, t, s, ic) { return '<button class="mrow" ' + attr + '>' + (ic ? '<span class="mi ' + ic[1] + '" aria-hidden="true">' + ic[0] + '</span>' : '') + '<span class="g"><b>' + t + '</b><small>' + s + '</small></span><span class="chev">›</span></button>'; };
     var h = '<div class="mlist">' +
-      row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, ['💸', 'g1']) +
-      row('data-tab="stats"', 'Статистика', 'прочитано ' + readY.length + ' ' + bookWord(readY.length) + ' за ' + y, ['📊', 'g2']) +
+      (WIDE ? '' : row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, ['💸', 'g1']) +
+      row('data-tab="stats"', 'Статистика', 'прочитано ' + readY.length + ' ' + bookWord(readY.length) + ' за ' + y, ['📊', 'g2'])) +
       row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' у людей' : 'нікому не позичено', ['🤝', 'g4']) +
       row('data-list="sold"', 'Продані', D.sold.length + ' ' + bookWord(D.sold.length), ['🏷', 'g6']) +
       '</div>';
