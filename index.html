@@ -213,6 +213,14 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .bfsw button.on{background:var(--card);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .bfsel{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:8px;margin-top:4px}
 .bfbot{display:flex;align-items:center;gap:10px;margin-top:4px}
+.tsp{position:relative;display:block;flex:none;width:34px;height:150px;border:0;padding:0;border-radius:2px 2px 0 0;overflow:hidden;cursor:pointer;color:#2a2622;transition:transform .15s}.tsp:hover{transform:translateY(-4px)}
+.tsp>span{position:absolute;inset:8px 3px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;line-height:14px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:left}
+.tsp b{position:absolute;top:0;right:3px;width:5px;height:10px;background:#d9b44a;clip-path:polygon(0 0,100% 0,100% 100%,50% 75%,0 100%);z-index:1}
+.fsp.hov{transform:translateY(-6px);box-shadow:0 0 0 2px var(--accent)}
+.shcap{min-height:20px;margin-top:8px}.shcap.on{color:var(--ink)}
+.shsw{display:inline-flex;align-items:center;gap:8px;border:0;background:none;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;padding:4px}
+.shsw i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}.shsw i::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s}
+.shsw.on i{background:var(--accent-fill)}.shsw.on i::after{left:16px;background:#fff}
 .shh{display:flex;align-items:baseline;gap:6px;font-size:16px;font-family:inherit;font-weight:600;margin:18px 0 8px}
 .shtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
 .shtile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer}
@@ -607,7 +615,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
   var SAVED_KEY = 'lb.view.v3';
   try { var sv = JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); if (sv.f) view.f = sv.f; if (sv.sort) view.sort = sv.sort; if (sv.bookMode) view.bookMode = sv.bookMode; } catch (e) {}
-  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; } catch (e) {}
+  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; view.shTitles = !!localStorage.getItem('lb.shtitles'); } catch (e) {}
   // після оновлення сторінки відкривається та сама вкладка
   try { view.hseg = localStorage.getItem('lb.hseg') || 'today'; } catch (e) { view.hseg = 'today'; }
   try { var lt = localStorage.getItem('lb.tab'); if (lt && TABS.some(function (t) { return t[0] === lt; })) view.tab = lt; } catch (e) {}
@@ -1559,7 +1567,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     // вигляд (16.11): Плитки (кожна полиця — картка з міні-корінцями) · Корінці / Обкладинки (усі полиці відкриті, без дерева)
     var mode = view.shelfMode === 'covers' || view.shelfMode === 'spines' ? view.shelfMode : 'tiles', fm = mode === 'covers';
     var h = '<div class="row" style="align-items:center;margin-bottom:10px"><div class="wseg" role="group" aria-label="Вигляд">' +
-      [['tiles', 'Плитки'], ['spines', 'Корінці'], ['covers', 'Обкладинки']].map(function (m) { return '<button data-shm="' + m[0] + '" class="' + (mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div><span class="grow"></span>' +
+      [['tiles', 'Плитки'], ['spines', 'Корінці'], ['covers', 'Обкладинки']].map(function (m) { return '<button data-shm="' + m[0] + '" class="' + (mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div>' +
+      (mode === 'spines' ? '<button class="shsw' + (view.shTitles ? ' on' : '') + '" data-action="sh-titles" role="switch" aria-checked="' + (view.shTitles ? 'true' : 'false') + '"><i></i>Назви</button>' : '') + '<span class="grow"></span>' +
       '<button class="tbtn" data-action="shmore-toggle" aria-label="Ще" aria-expanded="' + (view.shelfMoreOpen ? 'true' : 'false') + '">⋯</button></div>';
     var mv = movePlan().length;
     // підказка про перестановку видна, лише коли є що переставити; решта службового — у «⋯»
@@ -1578,7 +1587,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var sid = function (k) { return 'sh-' + hashN(k); };
     // плоскі корінці як на макеті (16.11): чистий колір жанру, без тіней і написів; назва — підказкою при наведенні
     var mini = function (b) { var w = Math.max(7, Math.min(15, Math.round((b.pages || 320) / 30))); return '<i style="width:' + w + 'px;height:' + (44 + hashN(b.title) % 9) + 'px;background:' + genreColor(b.genre) + '">' + (isRead(b) ? '<b></b>' : '') + '</i>'; };
-    var flat = function (b) { var w = Math.max(10, Math.min(24, Math.round((b.pages || 320) / 20))); return '<button class="fsp" data-book="' + b.row + '" title="' + esc(b.title + ' — ' + b.author) + '" aria-label="' + esc(b.title) + '" style="width:' + w + 'px;height:' + (92 + hashN(b.title) % 14) + 'px;background:' + genreColor(b.genre) + '">' + (isRead(b) ? '<b></b>' : '') + '</button>'; };
+    // «Назви» вимкнено (C): чисті корінці, назва рядком під полицею при наведенні; увімкнено (A): назва у два рядки вздовж корінця
+    var capOf = function (b) { return [b.title, b.author, isRead(b) ? 'прочитано' : low(b.status) === 'читаю' ? 'читаю' : ''].filter(Boolean).join(' · '); };
+    var flat = function (b) {
+      if (view.shTitles) return '<button class="tsp" data-book="' + b.row + '" title="' + esc(b.title + ' — ' + b.author) + '" style="background:' + genreColor(b.genre) + '">' + (isRead(b) ? '<b></b>' : '') + '<span>' + esc(String(b.title).replace(/[’ʼ]/g, "'")) + '</span></button>';
+      var w = Math.max(10, Math.min(24, Math.round((b.pages || 320) / 20)));
+      return '<button class="fsp" data-book="' + b.row + '" data-cap="' + esc(capOf(b)) + '" aria-label="' + esc(b.title) + '" style="width:' + w + 'px;height:' + (92 + hashN(b.title) % 14) + 'px;background:' + genreColor(b.genre) + '">' + (isRead(b) ? '<b></b>' : '') + '</button>';
+    };
     var sum = function (arr) { return arr.reduce(function (a, k) { return a + home[k].length; }, 0); };
     if (mode === 'tiles') {
       Object.keys(cases).forEach(function (cname) {
@@ -1599,7 +1614,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       ak.map(function (k) { return '<button data-shjump="' + esc('away|' + k) + '">' + esc(k) + ' · ' + away[k].length + '</button>'; }).join('') + '</div>';
     var shelfBlock = function (id, title, list, extra, more) {
       return '<div class="shopen" id="' + id + '"><div class="shth"><b>' + title + '</b><span class="muted small">' + list.length + ' кн.</span><span class="grow"></span>' + (extra || '') + '</div>' +
-        (fm ? '<div class="facing">' + list.map(facing).join('') : '<div class="fsps">' + list.map(flat).join('')) + '</div><div class="shplank"></div>' + (more || '') + '</div>';
+        (fm ? '<div class="facing">' + list.map(facing).join('') : '<div class="fsps">' + list.map(flat).join('')) + '</div><div class="shplank"></div>' + (fm || view.shTitles ? '' : '<div class="shcap muted small">Наведи на книжку, щоб побачити назву</div>') + (more || '') + '</div>';
     };
     Object.keys(cases).forEach(function (cname) {
       if (!cases[cname].length) return;
@@ -4680,6 +4695,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'move-read') { moveAllRead = !moveAllRead; return moveOpen(); }
     if (a === 'shmore-toggle') { view.shelfMoreOpen = !view.shelfMoreOpen; return render(); }
     if (a === 'gone-toggle') { view.showGone = !view.showGone; return render(); }
+    if (a === 'sh-titles') { view.shTitles = !view.shTitles; try { localStorage.setItem('lb.shtitles', view.shTitles ? '1' : ''); } catch (e) {} return render(); }
     if (a === 'bf-toggle') { view.bfOpen = !view.bfOpen; return render(); }
     if (a === 'bmore-toggle') { view.bookMoreOpen = !view.bookMoreOpen; return render(); }
     if (a === 'wfx-toggle') { view.wishFxOpen = !view.wishFxOpen; view.wishMoreOpen = false; return render(); }
@@ -5138,6 +5154,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   });
 
   // клавіатура на комп'ютері: рядки книг, бажанок і списків можна вибрати Tab і відкрити Enter або пробілом
+
+  // «Корінці» без назв: назва книжки рядком під полицею при наведенні (16.11)
+  document.addEventListener('mouseover', function (e) {
+    var sp = e.target.closest && e.target.closest('.fsp[data-cap]'); if (!sp) return;
+    var box = sp.closest('.shopen'), cap = box && box.querySelector('.shcap'); if (!cap) return;
+    var prev = box.querySelector('.fsp.hov'); if (prev) prev.classList.remove('hov');
+    sp.classList.add('hov'); cap.textContent = sp.getAttribute('data-cap'); cap.classList.add('on');
+  });
   var CLICKY = '[data-book],[data-wish],[data-list],[data-go],[data-tab],[data-shopen],[data-shjump],[data-action]';
   function makeFocusable(root) {
     if (!root) return;
