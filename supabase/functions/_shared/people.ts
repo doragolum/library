@@ -33,11 +33,12 @@ export async function personByTg(db: any, tgId: number): Promise<Person | null> 
   const r = (await db.from("app_users").select("id").eq("tg_id", tgId).maybeSingle()).data;
   return r && r.id !== 1 ? { uid: r.id, chat: String(tgId), tz: await tzOf(db, r.id) } : null;
 }
-/** Усі, кому бот може писати: власниця + друзі з Телеграмом. */
+/** Усі, кому слати нагадування: власниця + друзі з Телеграмом або зі сповіщеннями в додатку (push_subs, 16.11). chat порожній — лише сповіщення. */
 export async function people(db: any): Promise<Person[]> {
   const out: Person[] = [];
-  if (ownerChat()) out.push({ uid: 1, chat: ownerChat(), tz: await tzOf(db, 1) });
-  const r = await db.from("app_users").select("id,tg_id").neq("id", 1).not("tg_id", "is", null).order("id");
-  for (const u of (r.data || []) as Row[]) out.push({ uid: u.id, chat: String(u.tg_id), tz: await tzOf(db, u.id) });
+  const push = new Set<number>((((await db.from("push_subs").select("owner_id")).data || []) as Row[]).map((x) => Number(x.owner_id)));
+  if (ownerChat() || push.has(1)) out.push({ uid: 1, chat: ownerChat(), tz: await tzOf(db, 1) });
+  const r = await db.from("app_users").select("id,tg_id").neq("id", 1).order("id");
+  for (const u of (r.data || []) as Row[]) if (u.tg_id || push.has(u.id)) out.push({ uid: u.id, chat: u.tg_id ? String(u.tg_id) : "", tz: await tzOf(db, u.id) });
   return out;
 }

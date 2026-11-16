@@ -3,7 +3,8 @@ import { person } from "./people.ts";
 type Row = Record<string, any>;
 export const tgToken = () => (Deno.env.get("LB_TG_TOKEN") || "").trim();
 /** Кому писати: у боті й кронах — людина, для якої зараз робота (етап 6), інакше власниця. */
-export const tgChat = () => person.getStore()?.chat || (Deno.env.get("LB_TG_CHAT_ID") || Deno.env.get("LB_TG_USER_ID") || "").trim();
+// Якщо робота для людини без Телеграму (лише сповіщення в додатку), chat порожній — і нікому не пишемо (не власниці!).
+export const tgChat = () => { const p = person.getStore(); return p ? p.chat : (Deno.env.get("LB_TG_CHAT_ID") || Deno.env.get("LB_TG_USER_ID") || "").trim(); };
 export const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export async function tgApi(method: string, payload: Row = {}): Promise<Row> {

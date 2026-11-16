@@ -524,6 +524,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .pav img{width:64px;height:64px;border-radius:50%;object-fit:cover;display:block}.pav span{font:600 26px/64px var(--head)}
 .pav i{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--accent-fill);color:#fff;font-style:normal;font-size:13px;line-height:22px;border:2px solid var(--card)}
 .pnm{font:600 20px/1.2 var(--head)}
+.pushl{margin:8px 0 0;padding-left:20px}.pushl li{margin:4px 0}
 .pchs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pchs span{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--bg);border:1px solid var(--line)}
 .pyr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
 .pyr>*{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0;border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;display:block;width:100%}.pyr small{display:block}.pyr b{display:block;font-size:20px}.pyr small{color:var(--muted);font-size:12px}
@@ -990,6 +991,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) { try { localStorage.removeItem(CACHE_KEY); } catch (e2) {} }
       if (had && shown) refresh(); else render();
       maybeOnboard();
+      pushSync();
     }).catch(function (err) {
       if (shown) { document.getElementById('sync').textContent = 'офлайн'; toast(err.message, true); }
       else fail(err.message);
@@ -4082,7 +4084,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function streakSetDialog() {
     var I = streakInfo();
-    openModal('<button class="close" data-action="close">×</button><h2>Серія читання</h2><p class="muted small">Увечері бот нагадає, якщо ти сьогодні ще не читала. Час — за твоїм поясом (' + esc(tzLabel(myTz())) + '), змінити можна в «Я» → «Мої місця».</p>' +
+    openModal('<button class="close" data-action="close">×</button><h2>Серія читання</h2><p class="muted small">Увечері нагадаю сповіщенням, якщо ти сьогодні ще не читала. Час — за твоїм поясом (' + esc(tzLabel(myTz())) + '), змінити можна в «Я» → «Мої місця».</p>' +
       '<div class="seg3" style="flex-wrap:wrap">' + [['off', 'Вимкнено']].concat([19, 20, 21, 22].map(function (h) { return [String(h), h + ':00']; })).map(function (x) {
         var on = x[0] === 'off' ? !I.on : I.on && String(I.hour) === x[0];
         return '<button data-action="streak-hour" data-v="' + x[0] + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + x[1] + '</button>';
@@ -4616,9 +4618,73 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
     app: '<rect x="4" y="4" width="16" height="16" rx="4"/>', tg: '<path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/>',
     np: '<path d="M2 6h12v10H2zM14 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
-    tbl: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>', log: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+    tbl: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>', bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>', log: '<path d="M4 6h16M4 12h16M4 18h10"/>',
     dl: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', flame: '<path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2.5-5 .5 1.5 1.5 2 2.5 2 0-2.5-1-4.5 0-7z"/>'
   };
+  /* ---------- сповіщення з додатку (16.11, замість Телеграму) ----------
+     Підписка цього пристрою зберігається в базі (push_subs), нагадування шле функція daily за часом людини.
+     На iPhone працює лише з екрана «Додому» (iOS 16.4+). */
+  var PUSH = { reg: null, sub: null, key: '', synced: false };
+  var IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  function pushCan() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && window.LB_DB; }
+  function pushState() {
+    if (!pushCan()) return IOS && !STANDALONE ? 'home' : 'no';
+    if (Notification.permission === 'denied') return 'denied';
+    return PUSH.sub ? 'on' : 'off';
+  }
+  function pushLabel() { return { on: 'увімкнено', off: 'вимкнено', denied: 'заборонено', home: 'з екрана «Додому»', no: 'недоступно' }[pushState()]; }
+  function pushReg() {
+    if (PUSH.reg) return Promise.resolve(PUSH.reg);
+    return navigator.serviceWorker.register('sw.js').then(function () { return navigator.serviceWorker.ready; }).then(function (r) { PUSH.reg = r; return r; });
+  }
+  function pushAgent() { var u = navigator.userAgent; return (/iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || IOS ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Пристрій') + (/Edg\//.test(u) ? ' · Edge' : /Firefox/.test(u) ? ' · Firefox' : /Chrome/.test(u) && !IOS ? ' · Chrome' : /Safari/.test(u) ? ' · Safari' : ''); }
+  // раз на відкриття: якщо пристрій уже підписаний — нагадати базі (адреса підписки іноді змінюється сама)
+  function pushSync() {
+    if (PUSH.synced || !pushCan()) return; PUSH.synced = true;
+    pushReg().then(function (r) { return r.pushManager.getSubscription(); }).then(function (sub) {
+      PUSH.sub = sub;
+      if (sub && Notification.permission === 'granted') api('lbApiPush', { act: 'sub', sub: sub.toJSON(), agent: pushAgent() }).catch(function () {});
+    }).catch(function () {});
+  }
+  function pushB64(s) { var t = s.replace(/-/g, '+').replace(/_/g, '/'); var r = atob(t + '==='.slice((t.length + 3) % 4)); var o = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+  function pushDialog() {
+    var st = pushState(), SI = streakInfo();
+    var what = '<ul class="pushl muted small"><li>о 9:00 — релізи сьогодні й завтра, «вийшло, а ТТН немає», хто має повернути книгу</li><li>щопонеділка — підсумок тижня, 1-го — місяця</li>' + (SI.on ? '<li>о ' + SI.hour + ':00 — серія читання, якщо ще не читала</li>' : '') + '<li>новини серій, коли щось знайду</li></ul>';
+    var body = '';
+    if (st === 'home') body = '<p>На iPhone сповіщення працюють, лише коли Nookly відкритий зі значка на екрані «Додому».</p><ol class="pushl small"><li>У Safari натисни «Поділитися» (квадрат зі стрілкою вгору) унизу.</li><li>Обери «На екран „Додому“».</li><li>Відкрий Nookly зі значка й повернись сюди: «Я» → «Сповіщення».</li></ol>';
+    else if (st === 'no') body = '<p>Цей браузер не вміє показувати сповіщення. Спробуй з телефона (значок на екрані «Додому») або в Chrome / Safari на комп\'ютері.</p>';
+    else if (st === 'denied') body = '<p>Сповіщення для Nookly заборонені в налаштуваннях.</p><p class="muted small">' + (IOS ? 'Відкрий «Параметри» → «Сповіщення» → Nookly → увімкни «Дозволити сповіщення». Потім повернись сюди.' : 'Натисни на замок біля адреси сайту → «Сповіщення» → «Дозволити». Потім онови сторінку.') + '</p>';
+    else if (st === 'off') body = '<p>Увімкни, і нагадування приходитимуть на цей пристрій, навіть коли додаток закритий.</p>' + what + '<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn p" data-action="push-on">Увімкнути сповіщення</button></div>';
+    else body = '<p><span class="chip" style="background:var(--ok-soft);color:var(--ok)">увімкнено</span> на цьому пристрої</p>' + what + '<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn p" data-action="push-test">Надіслати пробне</button><button class="btn" data-action="push-off">Вимкнути тут</button></div>';
+    openModal('<button class="close" data-action="close">×</button><h2>Сповіщення</h2>' + body + '<p class="muted small" style="margin-top:12px">Час — за твоїм поясом (' + esc(tzLabel(myTz())) + '). Можна ввімкнути на кількох пристроях.</p>', false, 'mid');
+    if (pushCan()) { pushReg().catch(function () {}); if (!PUSH.key) api('lbApiPush', { act: 'key' }).then(function (r) { PUSH.key = r.key; }).catch(function () {}); }
+  }
+  function pushOn() {
+    // на iPhone дозвіл питається лише прямо з натиску кнопки — тому спершу дозвіл, потім усе інше
+    var ask = Notification.permission === 'granted' ? Promise.resolve('granted') : Notification.requestPermission();
+    return Promise.resolve(ask).then(function (p) {
+      if (p !== 'granted') { pushDialog(); throw new Error(p === 'denied' ? 'Сповіщення заборонені' : 'Дозвіл не дано'); }
+      return Promise.all([pushReg(), PUSH.key ? PUSH.key : api('lbApiPush', { act: 'key' }).then(function (r) { return (PUSH.key = r.key); })]);
+    }).then(function (x) {
+      return x[0].pushManager.getSubscription().then(function (old) { return old || x[0].pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushB64(x[1]) }); });
+    }).then(function (sub) {
+      PUSH.sub = sub;
+      return api('lbApiPush', { act: 'sub', sub: sub.toJSON(), agent: pushAgent() });
+    }).then(function () { return api('lbApiPush', { act: 'test' }).catch(function () {}); })
+      .then(function () { toast('Сповіщення увімкнено ✓'); pushDialog(); render(); })
+      .catch(function (e) { toast(e.message || 'Не вдалося', true); });
+  }
+  function pushOff() {
+    var sub = PUSH.sub; if (!sub) return pushDialog();
+    var ep = sub.endpoint;
+    return sub.unsubscribe().catch(function () {}).then(function () { PUSH.sub = null; return api('lbApiPush', { act: 'unsub', endpoint: ep }); })
+      .then(function () { toast('Сповіщення на цьому пристрої вимкнено'); pushDialog(); render(); }).catch(function (e) { toast(e.message, true); });
+  }
+  // натиск на сповіщення про серію відкриває «Серію читання»
+  function pushOpen(what) { if (what === 'streak' && D) setTimeout(streakDialog, 300); }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.open) pushOpen(e.data.open); });
+  (function () { var m = /[#&]open=(\w+)/.exec(location.hash); if (m) { var w = m[1]; history.replaceState(null, '', location.pathname + location.search); var t = setInterval(function () { if (D) { clearInterval(t); pushOpen(w); } }, 300); setTimeout(function () { clearInterval(t); }, 15000); } })();
   function meIc(k) { return '<span class="mi g5" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + MEI[k] + '</svg></span>'; }
   function meAgo(from) {
     var m = (Number(D.today.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(D.today.slice(5, 7)) - Number(from.slice(5, 7)), y = Math.floor(m / 12); m = m % 12;
@@ -4676,14 +4742,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var gOff = grp('Книги поза полицями', [row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' у людей' : 'нікому', 'lent'), row('data-list="sold"', 'Продані', D.sold.length, 'tag'), row('data-list="gifted"', 'Подаровані', gifted.length, 'gift')]);
     var gMore = WIDE ? '' : grp('Ще', [row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, 'money'), row('data-tab="stats"', 'Статистика', readY.length + ' ' + bookWord(readY.length) + ' за ' + y, 'stats')]);
     var SI = streakInfo();
-    var gRead = grp('Читання', [row('data-action="goal"', 'Мета на місяць', goal ? goal + ' ' + bookWord(goal) : 'не задана', 'goal'), row('data-action="streak-set"', 'Серія читання', SI.on ? 'нагадаю о ' + SI.hour + ':00' : 'вимкнено', 'flame', 'вечірнє нагадування в боті'), info('Мій темп', '~' + Math.round(S.pace || 50) + ' стор. на день', 'pace', 'рахується сам з твоїх закладок')]);
+    var gRead = grp('Читання', [row('data-action="goal"', 'Мета на місяць', goal ? goal + ' ' + bookWord(goal) : 'не задана', 'goal'), row('data-action="streak-set"', 'Серія читання', SI.on ? 'нагадаю о ' + SI.hour + ':00' : 'вимкнено', 'flame', 'вечірнє нагадування'), info('Мій темп', '~' + Math.round(S.pace || 50) + ' стор. на день', 'pace', 'рахується сам з твоїх закладок')]);
     var gPlace = grp('Мої місця', [row('data-list="where|' + esc(HOMEP()) + '"', esc(HOMEP()), inR + ' ' + bookWord(inR), 'pin', 'удома, тут полиці')].concat(AWAYP() ? [row('data-tab="kyiv"', esc(AWAYP()), inK + ' ' + bookWord(inK), 'pin', 'друге місце, книги приїжджають посилкою')] : [], [row('data-action="places"', 'Змінити місця', '', 'edit', 'назви, друге місце, часовий пояс')]));
     var gLook = grp('Вигляд', ['<div class="mrow mtheme">' + meIc('sun') + '<span class="g"><b>Світла чи темна</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="mrow mtheme mic">' + meIc('paint') + '<span class="g"><b>Колір</b></span><span class="pals">' + PALS.map(function (x) { return '<button data-action="pal" data-v="' + x[0] + '" class="' + (pal === x[0] ? 'on' : '') + '" aria-pressed="' + (pal === x[0]) + '" title="' + x[1] + '"><i style="background:linear-gradient(135deg,' + x[2] + ' 50%,' + x[3] + ' 50%)"></i>' + x[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="mrow mtheme mic">' + meIc('app') + '<span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div>']);
     var ME = D.me || { uid: 1, role: 'owner' };
     var tgRow = ME.uid !== 1 && !ME.tg ? row('data-action="tg-link"', 'Телеграм-бот', 'підключити', 'tg', 'пошук, скриншоти, нагадування в чаті') : info('Телеграм-бот', '', 'tg', 'пошук, скриншоти, нагадування о 9:00' + (SI.on ? ' і про серію о ' + SI.hour + ':00' : ''));
-    var gCon = grp('Підключено', [tgRow, info('Нова пошта', 'щогодини', 'np', ME.role === 'owner' ? 'статуси ТТН' : 'статуси ТТН: впиши номер у замовленні, далі стежу сама')].concat(ME.role === 'owner' ? [info('Копія в Google-таблицю', 'щоночі', 'tbl')] : []));
+    var pushRow = row('data-action="push"', 'Сповіщення', pushLabel(), 'bell', 'релізи, посилки, серія читання — на цей пристрій');
+    var gCon = grp('Підключено', [pushRow, tgRow, info('Нова пошта', 'щогодини', 'np', ME.role === 'owner' ? 'статуси ТТН' : 'статуси ТТН: впиши номер у замовленні, далі стежу сама')].concat(ME.role === 'owner' ? [info('Копія в Google-таблицю', 'щоночі', 'tbl')] : []));
     var gPeople = ME.role === 'owner' ? grp('Друзі', [row('data-action="invites"', 'Запросити друзів', 'посилання', 'people', 'вхід через Телеграм або пошту, у кожного свої книги')]) : grp('Акаунт', [row('data-action="logout"', 'Вийти', '', 'out', 'на цьому пристрої')]);
     var gData = grp('Дані', [row('data-action="gr-import"', 'Імпорт з Goodreads', 'CSV', 'dl', 'прочитані, читаю, хочу прочитати'), row('data-action="me-log"', 'Журнал змін', 'останні ' + (D.log || []).length, 'log'), row('data-action="me-csv"', 'Завантажити копію', 'CSV', 'dl')]);
     return '<div class="mewrap">' + profileCard() + (SI.on ? '<div class="stcols">' + streakBlock() + streakBadges() + '</div>' : '') + '<div class="mecols"><div>' + gOff + gMore + gRead + gPlace + '</div><div>' + gLook + gCon + gPeople + gData + '</div></div></div>';
@@ -5451,6 +5518,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'inv-revoke') { if (act.getAttribute('data-sure') !== '1') { act.setAttribute('data-sure', '1'); act.textContent = '?'; act.setAttribute('aria-label', 'Точно скасувати?'); return toast('Натисни ще раз, щоб скасувати запрошення'); } return invitesApi({ act: 'revoke', code: act.getAttribute('data-code') }); }
     if (a === 'logout') return logout();
     if (a === 'places') return placesDialog();
+    if (a === 'push') return pushDialog();
+    if (a === 'push-on') return pushOn();
+    if (a === 'push-off') return pushOff();
+    if (a === 'push-test') return api('lbApiPush', { act: 'test' }).then(function () { toast('Надіслала. Глянь угорі екрана'); }).catch(function (e) { toast(e.message, true); });
     if (a === 'places-save') return placesSave(act);
     if (a === 'onb-goal') { onbKeep(); ONB.goal = Number(act.getAttribute('data-v')); onbAbout(); return onbRestore(); }
     if (a === 'onb-away') { onbKeep(); ONB.away = true; onbAbout(); onbRestore(); var aw = document.getElementById('ob-away'); if (aw) aw.focus(); return; }

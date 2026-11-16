@@ -1,10 +1,11 @@
-// Розклад (pg_cron): нагадування в Телеграм о 9:00 за часом людини (у Даші — Роттердам; етап 6: кожному, хто має Телеграм), нічне «вийшли з друку → Є у продажу», новини серій щопонеділка.
+// Розклад (pg_cron): нагадування в Телеграм і сповіщеннями в додатку (push, 16.11) о 9:00 за часом людини (у Даші — Роттердам; етап 6: кожному, хто має Телеграм), нічне «вийшли з друку → Є у продажу», новини серій щопонеділка.
 // Тіло: {job:"remind"} | {job:"night"} | {job:"news"} | {job:"streak"} (щогодини: вечірнє нагадування про серію читання); {job:"remind", test:true} — надіслати зараз релізи на 14 днів і тиждень (перевірка).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { tgSend, tgApi, tgChat, esc } from "../_shared/tg.ts";
 import { streakMessage, STREAK_DEFAULT } from "../_shared/streak.ts";
 import { todayKyiv } from "../_shared/ai.ts";
 import { person, people, curUid, kvKey, hourIn, type Person } from "../_shared/people.ts";
+import { pushHtml, pushTo } from "../_shared/push.ts";
 import { dailyText, weekText, monthText, weekday, addDays, reminderLine } from "../_shared/texts.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -17,8 +18,6 @@ async function api(fn: string, arg: unknown) {
   if (!j.ok) throw new Error(j.error || "Не вдалося");
   return j.data;
 }
-// Поки бот працює з Apps Script (до lbSwitchToDb), нагадування й новини шле Apps Script — тут пропускаємо, щоб не було дублів.
-async function switched() { const w = await tgApi("getWebhookInfo"); return !!(w.ok && String(w.result?.url || "").includes("/functions/v1/bot")); }
 const REMIND_HOUR = 9; // за часом людини
 const here = () => person.getStore() as Person;
 /** Робота для кожної людини по черзі (етап 6); помилка в одного не зупиняє інших. */
@@ -52,7 +51,8 @@ async function remind(test: boolean) {
     if (weekday(today) === 1) msgs.push(weekText(data, today, false));
     if (today.slice(8) === "01") msgs.push(monthText(data, today, false));
   }
-  for (const m of msgs) await tgSend(m);
+  // і в Телеграм (поки він є), і сповіщенням у додатку (16.11)
+  for (const m of msgs) { await tgSend(m); await pushHtml(db, curUid(), m, { tag: "day-" + today }).catch((e) => console.error(e)); }
   if (!test) await kvSet("last_remind", today);
   return { sent: msgs.length };
 }
@@ -71,7 +71,10 @@ async function streak(test: boolean) {
   if (curUid() !== 1 && !(data.books || []).length) return { skipped: "ще немає книг" };
   const m = streakMessage(data, today, esc, late);
   if (!test && (m.info.readToday || m.info.skipToday)) return { skipped: "сьогодні вже читала" };
-  await tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: m.text, reply_markup: { inline_keyboard: m.kb } });
+  if (tgChat()) await tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: m.text, reply_markup: { inline_keyboard: m.kb } });
+  // у сповіщенні кнопок немає: натиск відкриває додаток одразу на «Серії читання»
+  const plain = m.text.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  await pushTo(db, curUid(), { title: "🔥 " + plain.split("\n")[0], body: plain.split("\n").slice(1).join("\n").trim(), tag: "streak", open: "streak" }).catch((e) => console.error(e));
   if (!test) await kvSet("streak_sent", late ? { ...sent, late: today } : { ...sent, date: today });
   return { sent: 1, late };
 }
@@ -98,11 +101,10 @@ Deno.serve(async (req) => {
   try {
     if (req.headers.get("x-import-token") !== String(await kvGet("import_token", ""))) return json({ ok: false }, 403);
     const b = await req.json().catch(() => ({}));
-    if ((b.job === "remind" || b.job === "streak") && !b.test && !(await switched())) return json({ ok: true, skipped: "бот ще в Apps Script" });
     if (b.job === "remind") return json({ ok: true, ...(await forEach(() => remind(!!b.test), !!b.test)) });
     if (b.job === "streak") return json({ ok: true, ...(await forEach(() => streak(!!b.test), !!b.test)) });
     if (b.job === "night") return json({ ok: true, ...(await night()) });
-    if (b.job === "news") return json(await switched() ? { ok: true, ...(await api("lbApiNews", { action: "cron" })) } : { ok: true, skipped: "бот ще в Apps Script" });
+    if (b.job === "news") return json({ ok: true, ...(await api("lbApiNews", { action: "cron" })) });
     return json({ ok: false, error: "невідома робота" });
   } catch (e) {
     return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
