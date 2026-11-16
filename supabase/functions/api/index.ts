@@ -8,6 +8,7 @@ import { streakInfo, STREAK_DEFAULT } from "../_shared/streak.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { PERSONAL_KV, kvKey, placesOf as placesOfFor, validTz } from "../_shared/people.ts";
 import { whoIs, AuthError, randomToken, sha256, type Who } from "../_shared/auth.ts";
+import { vapidPublic, pushTo } from "../_shared/push.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
@@ -879,6 +880,25 @@ async function apiTgLink() {
   return { url: `https://t.me/${bot}?start=login_${nonce}`, bot };
 }
 
+/** Сповіщення в додатку (16.11): ключ для підписки, підписати / відписати цей пристрій, тест, скільки пристроїв. */
+async function apiPush(p: Row) {
+  const act = s(p.act);
+  if (act === "key") return { key: await vapidPublic(raw), devices: ((await raw.from("push_subs").select("id").eq("owner_id", uid())).data || []).length };
+  if (act === "sub") {
+    const sub = p.sub || {}, endpoint = s(sub.endpoint), p256dh = s(sub.keys?.p256dh), auth = s(sub.keys?.auth);
+    if (!/^https:\/\//.test(endpoint) || !p256dh || !auth) fail("Пристрій не дав адресу для сповіщень.");
+    chk(await raw.from("push_subs").upsert({ endpoint, p256dh, auth, owner_id: uid(), agent: s(p.agent).slice(0, 160), fails: 0 }, { onConflict: "endpoint" }), "push_subs");
+    return { ok: true };
+  }
+  if (act === "unsub") { chk(await raw.from("push_subs").delete().eq("endpoint", s(p.endpoint)).eq("owner_id", uid()), "push_subs"); return { ok: true }; }
+  if (act === "test") {
+    const r = await pushTo(raw, uid(), { title: "📚 Сповіщення працюють", body: "Так виглядатимуть нагадування про релізи, посилки й серію читання.", tag: "test" });
+    if (!r.sent) fail(r.devices ? "Не вдалося надіслати. Спробуй вимкнути й знову увімкнути сповіщення." : "Сповіщення на цьому пристрої ще не увімкнені.");
+    return r;
+  }
+  fail("Невідома дія.");
+}
+
 /** Пошукові дії поки що виконує Apps Script (нічого не пише в базу, лише відповідає). */
 const PROXY = ["lbApiOcr", "lbApiAi", "lbApiGenre", "lbApiCoverUpload", "lbApiOfficial", "lbApiTropes", "lbApiSeriesCheck", "lbApiFromLink", "lbApiNews"];
 async function proxy(fn: string, args: unknown[]) {
@@ -962,6 +982,7 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiMe: async () => { const w = me(); const u = (await raw.from("app_users").select("id,name,role,tg_id").eq("id", w.uid).maybeSingle()).data; return { uid: w.uid, role: w.role, name: u?.name || "", via: w.via, tg: !!u?.tg_id || w.uid === 1 }; },
   lbApiImport: (p: Row) => apiImport(p || {}),
   lbApiTgLink: () => apiTgLink(),
+  lbApiPush: (p: Row) => apiPush(p || {}),
   lbApiInvites: (p: Row) => apiInvites(p || {}),
   lbApiSetPlaces: (p: Row) => apiSetPlaces(p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),

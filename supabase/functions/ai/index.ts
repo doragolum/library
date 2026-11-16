@@ -8,6 +8,7 @@ import { fromGoodreads } from "../_shared/goodreads.ts";
 import { pubCanon } from "../_shared/pub.ts";
 import { gemini, aiBooks, enrichItems, bookFromUrl, AiError, isbnKey, todayKyiv } from "../_shared/ai.ts";
 import { tgSend, esc } from "../_shared/tg.ts";
+import { pushHtml } from "../_shared/push.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { whoIs, AuthError, type Who } from "../_shared/auth.ts";
 
@@ -190,9 +191,13 @@ async function apiNews(req: Row) {
     // щотижня (понеділок): довший прохід і повідомлення в Телеграм
     const r = await seriesNews(110000);
     await log("📰 Новини серій", "", "", `Перевірено: ${r.checked}, нового: ${r.added.length}`);
-    if (r.added.length) await tgSend("📰 <b>Новини серій</b> (" + r.added.length + ")\n" + r.added.slice(0, 15).map((it) =>
-      "• " + esc(it.ch.title || it.t) + (it.s ? " <i>(" + esc(it.s) + (it.p ? " #" + esc(it.p) : "") + ")</i>" : "") + " — " + esc(newsText(it))).join("\n") +
-      "\n\nПідтвердити або сховати можна в додатку: Бажанки → «Новини серій».");
+    if (r.added.length) {
+      const msg = "📰 <b>Новини серій</b> (" + r.added.length + ")\n" + r.added.slice(0, 15).map((it) =>
+        "• " + esc(it.ch.title || it.t) + (it.s ? " <i>(" + esc(it.s) + (it.p ? " #" + esc(it.p) : "") + ")</i>" : "") + " — " + esc(newsText(it))).join("\n") +
+        "\n\nПідтвердити або сховати можна в додатку: Бажанки → «Новини серій».";
+      await tgSend(msg);
+      await pushHtml(db, uid(), msg, { tag: "news" }).catch((e) => console.error(e));
+    }
     return { checked: r.checked, added: r.added.length };
   }
   const items: Row[] = await kvGet("news", []);
