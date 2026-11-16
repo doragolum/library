@@ -253,16 +253,16 @@ async function loginConfirm(m: Row, nonce: string) {
   } else user = (await db.from("app_users").select("id,name").eq("tg_id", tgId).maybeSingle()).data;
   if (!user) {
     const inv = r.invite ? (await db.from("invites").select("*").eq("code", r.invite).maybeSingle()).data : null;
-    if (!inv || inv.revoked || inv.used_by) return say("Shelfie поки працює за запрошенням, а це запрошення вже використане або скасоване. Попроси нове посилання.");
+    if (!inv || inv.revoked || inv.used_by) return say("Nookly поки працює за запрошенням, а це запрошення вже використане або скасоване. Попроси нове посилання.");
     const made = await db.from("app_users").insert({ name, role: "user", tg_id: tgId, invited_by: inv.created_by }).select("id,name").single();
     if (made.error) return say("Не вийшло створити акаунт. Спробуй ще раз.");
     user = made.data; fresh = true;
     await db.from("invites").update({ used_by: user!.id, used_at: new Date().toISOString() }).eq("code", inv.code);
-    await db.from("log").insert({ action: "👥 Нова людина в Shelfie", title: name, details: "Увійшла через Телеграм за запрошенням" + (inv.note ? " (" + inv.note + ")" : ""), owner_id: 1 });
-    await tgSend("👥 У Shelfie нова людина: <b>" + esc(name) + "</b>" + (inv.note ? " (запрошення «" + esc(inv.note) + "»)" : "") + ".");
+    await db.from("log").insert({ action: "👥 Нова людина в Nookly", title: name, details: "Увійшла через Телеграм за запрошенням" + (inv.note ? " (" + inv.note + ")" : ""), owner_id: 1 });
+    await tgSend("👥 У Nookly нова людина: <b>" + esc(name) + "</b>" + (inv.note ? " (запрошення «" + esc(inv.note) + "»)" : "") + ".");
   }
   await db.from("login_requests").update({ confirmed_at: new Date().toISOString(), user_id: user!.id, tg_name: name }).eq("nonce", nonce);
-  return say((fresh ? "Вітаю в Shelfie, " + esc(name) + "! 📚\n" : "Готово, " + esc(user!.name || name) + "!\n") + "Вхід підтверджено. Повертайся на сайт, він відкриється сам.");
+  return say((fresh ? "Вітаю в Nookly, " + esc(name) + "! 📚\n" : "Готово, " + esc(user!.name || name) + "!\n") + "Вхід підтверджено. Повертайся на сайт, він відкриється сам.");
 }
 
 async function handle(u: Row) {
@@ -270,7 +270,7 @@ async function handle(u: Row) {
   const lm = u.message?.text && String(u.message.text).match(/^\/start\s+login_([A-Za-z0-9_-]{8,64})/);
   if (lm) { try { await loginConfirm(u.message, lm[1]); } catch (e) { console.error(e); } return; }
   if (u.message?.text === "/start" && String(u.message.chat?.id) !== chat) {
-    await tgApi("sendMessage", { chat_id: u.message.chat.id, text: "Привіт! Це бот Shelfie. Увійти можна на сайті кнопкою «Увійти через Телеграм» (поки за запрошенням)." });
+    await tgApi("sendMessage", { chat_id: u.message.chat.id, text: "Привіт! Це бот Nookly. Увійти можна на сайті кнопкою «Увійти через Телеграм» (поки за запрошенням)." });
     return;
   }
   const q = u.callback_query;
