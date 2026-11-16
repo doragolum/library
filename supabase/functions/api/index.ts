@@ -408,7 +408,7 @@ async function readAll() {
   for (const f of ["place", "isbn", "cover", "bought", "started", "readOn", "rating", "lentTo", "lentOn", "lentDue", "parcel", "plan", "page", "tropes", "moods", "orig", "src"]) cols[f] = true;
   Object.assign(cols, { wishCover: true, wishOrdered: true, wishIsbn: true, wishOrig: true, wishSrc: true });
   return {
-    me: { uid: uid(), role: me().role }, places: placesOf(kv.places), today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
+    me: { uid: uid(), role: me().role, tg: uid() === 1 || !!(await raw.from("app_users").select("tg_id").eq("id", uid()).maybeSingle()).data?.tg_id }, places: placesOf(kv.places), today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
     news: kv.news || [], pubCanon: PUBLISHERS, db: true,
     books, wish,
     series: series.map((x) => ({ author: x.author, name: x.name, total: x.total, finished: yesNo(x.finished), translated: yesNo(x.full_ua), pub: x.publisher || "" })),
@@ -671,6 +671,7 @@ async function apiSetProfile(p: Row) {
     else if (/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(ph) && ph.length < 200000) cur.photo = ph;
     else fail("Фото завелике або не JPEG.");
   }
+  if (p?.onboarded !== undefined) { if (p.onboarded) cur.onboarded = today(); else delete cur.onboarded; } // етап 7: знайомство пройдено
   await kvSet("profile", cur);
   return cur;
 }
@@ -810,6 +811,74 @@ async function apiSetGoals(g: Row) {
   return out;
 }
 
+/** Етап 7: імпорт з Goodreads. CSV розбирає сайт і шле рядки {title, author, isbn, shelf, rating, pages, pub, readOn}.
+ *  read / currently-reading → бібліотека (прочитано / читаю), to-read → бажанки «На майбутнє». dry — лише порахувати.
+ *  Дублі (та сама назва й автор або той самий ISBN у тебе) пропускаються; кожна додана книга — окремий рядок у журналі. */
+async function apiImport(p: Row) {
+  const want: Row = { read: p?.read !== false, "currently-reading": p?.reading !== false, "to-read": !!p?.toread };
+  const items: Row[] = (Array.isArray(p?.items) ? p.items : []).slice(0, 3000);
+  if (!items.length) fail("У файлі не знайшла книг. Потрібен експорт з Goodreads: My Books → Import and export → Export Library.");
+  const have = await allRows("books", "id,author,title,isbn,stage");
+  const key = (a: unknown, t: unknown) => norm(a) + "|" + norm(t);
+  const seen = new Set(have.map((b) => key(b.author, b.title)));
+  const isbns = new Set(have.filter((b) => b.isbn && !["sold", "gifted"].includes(b.stage)).map((b) => b.isbn));
+  const count: Row = { read: 0, "currently-reading": 0, "to-read": 0, dup: 0, other: 0 };
+  const todo: Row[] = [];
+  for (const x of items) {
+    const shelf = s(x.shelf) || "read";
+    let title = s(x.title).slice(0, 300), series = "", part: number | null = null;
+    const m = title.match(/^(.*?)\s*\(([^()]+?),?\s*#(\d+(?:\.\d+)?)\)\s*$/);
+    if (m) { title = m[1].trim(); series = m[2].trim(); part = Math.floor(Number(m[3])) || null; }
+    const author = s(x.author).slice(0, 200);
+    if (!title || !author) continue;
+    if (!(shelf in want)) { count.other++; continue; }
+    const ik = isbnKey(x.isbn13) || isbnKey(x.isbn);
+    if (seen.has(key(author, title)) || (ik && isbns.has(ik))) { count.dup++; continue; }
+    seen.add(key(author, title));
+    count[shelf]++;
+    if (!want[shelf]) continue;
+    if (ik) isbns.add(ik);
+    todo.push({ x, shelf, title, author, series, part, ik });
+  }
+  if (p?.dry) return { count, will: todo.length };
+  if (!todo.length) return { added: 0, count };
+  const home = placesOf(await kvGet("places", null)).home;
+  let seq = Number(await kvGet("id_seq", 0));
+  if (!seq) seq = (await allRows("books", "id,legacy")).reduce((mx, r) => Math.max(mx, Number(String(r.legacy?.id || "").replace(/\D/g, "")) || 0), 0);
+  const sids: Record<string, number | null> = {};
+  const rows: Row[] = [];
+  for (const t of todo) {
+    const sk = t.series ? key(t.author, t.series) : "";
+    if (sk && !(sk in sids)) sids[sk] = await seriesId(t.series, t.author);
+    const lib = t.shelf !== "to-read", r = Math.round(Number(t.x.rating) || 0), pages = Math.round(Number(t.x.pages) || 0);
+    rows.push({
+      stage: lib ? "library" : "wish", wish_kind: lib ? null : "На майбутнє", author: t.author, title: t.title,
+      series_id: sk ? sids[sk] : null, series_num: sk ? t.part : null, publisher: pubCanon(t.x.pub) || null, isbn: t.ik || null,
+      pages: pages > 0 && pages < 10000 ? pages : null, legacy: { id: "K" + String(++seq).padStart(5, "0") },
+      ...(lib ? { read_status: t.shelf === "read" ? "прочитано" : "читаю", avail: "у колекції", place: home, rating: r >= 1 && r <= 5 ? r : null, finished_on: t.shelf === "read" ? isoDate(t.x.readOn) : null } : {}),
+    });
+  }
+  await kvSet("id_seq", seq);
+  const cat = rows.filter((r) => r.isbn).map((r) => ({ isbn: r.isbn, title: r.title, author: r.author, publisher: r.publisher }));
+  for (let i = 0; i < cat.length; i += 500) await raw.from("catalog").upsert(cat.slice(i, i + 500), { onConflict: "isbn", ignoreDuplicates: true });
+  let added = 0;
+  for (let i = 0; i < rows.length; i += 200) {
+    const part = rows.slice(i, i + 200);
+    const made = chk(await db.from("books").insert(part).select("id,title,author,stage"), "books") as Row[];
+    added += made.length;
+    await db.from("log").insert(made.map((b) => ({ action: "📥 Імпорт з Goodreads", title: b.title, author: b.author, details: b.stage === "wish" ? "у бажанки «На майбутнє»" : "у бібліотеку", book_id: b.id })));
+  }
+  return { added, count };
+}
+/** Етап 7: підключити Телеграм до акаунта, з яким увійшли поштою. Бот за посиланням запише tg_id цій людині. */
+async function apiTgLink() {
+  const bot = await botName();
+  if (!bot) fail("Бот ще не підключено.");
+  const nonce = randomToken(18);
+  chk(await raw.from("login_requests").insert({ nonce, user_id: uid() }), "login_requests");
+  return { url: `https://t.me/${bot}?start=login_${nonce}`, bot };
+}
+
 /** Пошукові дії поки що виконує Apps Script (нічого не пише в базу, лише відповідає). */
 const PROXY = ["lbApiOcr", "lbApiAi", "lbApiGenre", "lbApiCoverUpload", "lbApiOfficial", "lbApiTropes", "lbApiSeriesCheck", "lbApiFromLink", "lbApiNews"];
 async function proxy(fn: string, args: unknown[]) {
@@ -890,7 +959,9 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiCatalogSearch: (q: Row) => apiCatalogSearch(q),
   lbApiStreak: (p: Row) => streakMark(String(p?.act || ""), p || {}),
   lbApiJournal: (p: Row) => apiJournal(p || {}),
-  lbApiMe: async () => { const w = me(); const u = (await raw.from("app_users").select("id,name,role").eq("id", w.uid).maybeSingle()).data; return { uid: w.uid, role: w.role, name: u?.name || "", via: w.via }; },
+  lbApiMe: async () => { const w = me(); const u = (await raw.from("app_users").select("id,name,role,tg_id").eq("id", w.uid).maybeSingle()).data; return { uid: w.uid, role: w.role, name: u?.name || "", via: w.via, tg: !!u?.tg_id || w.uid === 1 }; },
+  lbApiImport: (p: Row) => apiImport(p || {}),
+  lbApiTgLink: () => apiTgLink(),
   lbApiInvites: (p: Row) => apiInvites(p || {}),
   lbApiSetPlaces: (p: Row) => apiSetPlaces(p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),

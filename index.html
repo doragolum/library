@@ -496,6 +496,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .rl{display:flex;flex-direction:column;gap:6px;min-width:0}.rrow{display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0}.rrow .g{flex:1;min-width:0;display:flex;flex-direction:column}.rrow b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rrow small{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hcov{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px}.hc{border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:3px;color:var(--muted);font:inherit}
 .hc .thumb,.hc .ph{width:100%;height:auto;aspect-ratio:2/3}.hc small{font-size:12px;text-align:center}
+.grch{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}.grch input{margin-top:3px;accent-color:var(--accent)}.grch b{display:block;font-weight:600}.grch small{color:var(--muted);font-size:13px}
 .plusgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
 .plusgrid button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
 .plusgrid button svg{width:22px;height:22px;color:var(--accent)}.plusgrid small{font-weight:400;color:var(--muted);font-size:12px}
@@ -988,6 +989,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       document.getElementById('sync').textContent = '';
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) { try { localStorage.removeItem(CACHE_KEY); } catch (e2) {} }
       if (had && shown) refresh(); else render();
+      maybeOnboard();
     }).catch(function (err) {
       if (shown) { document.getElementById('sync').textContent = 'офлайн'; toast(err.message, true); }
       else fail(err.message);
@@ -1097,6 +1099,116 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (r.moved || []).forEach(function (m) { D.books.forEach(function (b) { if (b.place === m[0]) b.place = m[1]; }); });
       S = derive(D); closeModal(); toast('Місця збережено ✓'); render();
     }).catch(function (e) { placesDialog(e.message); });
+  }
+  /* ---------- етап 7: знайомство для нової людини, імпорт з Goodreads, бот для тих, хто увійшов поштою ---------- */
+  var ONB = null;
+  var SVG = function (p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+  function devTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } }
+  function maybeOnboard() {
+    if (!D || !D.me || D.me.uid === 1 || (D.profile && D.profile.onboarded) || ONB || document.getElementById('modal').innerHTML) return;
+    ONB = { goal: 3, away: false }; onbAbout();
+  }
+  function onbAbout(err) {
+    nav = []; modalStack = null;
+    var P = PL(), name = (D.profile && D.profile.name) || (D.me && D.me.name) || '';
+    openModal('<p class="muted small" style="margin:0 0 4px">Крок 2 з 3</p><h2>Трохи про тебе</h2>' +
+      '<div class="form"><label class="full"><span>Як тебе звати</span><input id="ob-name" maxlength="40" value="' + esc(name) + '" placeholder="Ім\'я"></label>' +
+      '<label class="full"><span>Де лежать твої книги?</span><input id="ob-home" maxlength="40" value="' + esc(P.home) + '" placeholder="Удома або місто"></label>' +
+      (ONB.away ? '<label class="full"><span>Друге місце (книги, що лежать деінде й приїжджають посилкою)</span><input id="ob-away" maxlength="40" value="' + esc(P.away) + '" placeholder="Наприклад, Київ"></label>' : '<button class="link" data-action="onb-away" style="justify-self:start">+ ще одне місце, наприклад у батьків</button>') +
+      '</div><p class="muted small" style="margin:14px 0 6px">Скільки книг на місяць хочеш читати?</p><div class="seg3" style="flex-wrap:wrap">' +
+      [[2, '2'], [3, '3'], [5, '5'], [0, 'без мети']].map(function (x) { return '<button data-action="onb-goal" data-v="' + x[0] + '" class="' + (ONB.goal === x[0] ? 'on' : '') + '" aria-pressed="' + (ONB.goal === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      (err ? '<div class="note">' + esc(err) + '</div>' : '') +
+      '<div class="row" style="margin-top:16px"><button class="btn p" data-action="onb-next">Далі</button></div>', false, 'mid');
+  }
+  function onbKeep() { if (!ONB) return; var n = document.getElementById('ob-name'), h = document.getElementById('ob-home'), w = document.getElementById('ob-away'); if (n) ONB.name = n.value; if (h) ONB.home = h.value; if (w) ONB.awayName = w.value; }
+  function onbRestore() { if (!ONB) return; [['ob-name', 'name'], ['ob-home', 'home'], ['ob-away', 'awayName']].forEach(function (x) { var e = document.getElementById(x[0]); if (e && ONB[x[1]] != null) e.value = ONB[x[1]]; }); }
+  function onbNext(btn) {
+    var home = fval('ob-home') || 'Удома', away = ONB.away ? fval('ob-away') : '', name = fval('ob-name');
+    btn.disabled = true;
+    api('lbApiSetPlaces', { home: home, away: away, tz: devTz() || undefined }).catch(function () { return api('lbApiSetPlaces', { home: home, away: away }); }).then(function (r) {
+      D.places = r.places;
+      return Promise.all([api('lbApiSetProfile', { name: name, onboarded: true }), ONB.goal ? api('lbApiSetGoals', { month: ONB.goal }) : Promise.resolve(D.goals || {})]);
+    }).then(function (x) { D.profile = x[0]; D.goals = x[1]; S = derive(D); render(); onbStart(); }).catch(function (e) { onbKeep(); onbAbout(e.message); onbRestore(); });
+  }
+  function onbStart() {
+    nav = []; modalStack = null;
+    openModal('<button class="close" data-action="close">×</button><p class="muted small" style="margin:0 0 4px">Крок 3 з 3</p><h2>Додай перші книги</h2><p class="muted small">Можна почати з кількох, решту додаси потроху. Усе це завжди є під кнопкою «+».</p><div class="plusgrid">' +
+      '<button data-action="plus-shot">' + SVG('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/>') + 'Скриншот<small>замовлення, анонсу чи полиці</small></button>' +
+      '<button data-action="add">' + SVG('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>') + 'Знайти книгу<small>за назвою чи ISBN</small></button>' +
+      '<button data-action="gr-import">' + SVG('<path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/>') + 'З Goodreads<small>завантаж свою таблицю</small></button>' +
+      (D.me && !D.me.tg ? '<button data-action="tg-link">' + SVG('<path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/>') + 'Телеграм-бот<small>скриншоти й нагадування в чаті</small></button>' : '') +
+      '</div><div class="row" style="margin-top:14px"><button class="btn" data-action="close">Почати з порожньої полиці</button></div>', false, 'mid');
+  }
+  // Goodreads: My Books → Import and export → Export Library (CSV)
+  function csvRows(text) {
+    var rows = [], row = [], f = '', q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; continue; }
+      if (c === '"') q = true; else if (c === ',') { row.push(f); f = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; } else f += c;
+    }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (x) { return x.trim(); }); });
+  }
+  function grParse(text) {
+    var rows = csvRows(String(text).replace(/^﻿/, '')), h = (rows.shift() || []).map(function (x) { return x.trim(); });
+    var ix = function (n) { return h.indexOf(n); }, need = ['Title', 'Author', 'Exclusive Shelf'];
+    if (need.some(function (n) { return ix(n) < 0; })) return null;
+    var g = function (r, n) { var i = ix(n); return i < 0 ? '' : String(r[i] || '').trim(); };
+    var num = function (v) { return v.replace(/[^0-9Xx]/g, ''); };
+    return rows.map(function (r) {
+      var d = g(r, 'Date Read').match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+      return { title: g(r, 'Title'), author: g(r, 'Author'), isbn: num(g(r, 'ISBN')), isbn13: num(g(r, 'ISBN13')), shelf: g(r, 'Exclusive Shelf'), rating: Number(g(r, 'My Rating')) || 0, pages: Number(g(r, 'Number of Pages')) || 0, pub: g(r, 'Publisher'), readOn: d ? d[1] + '-' + ('0' + d[2]).slice(-2) + '-' + ('0' + d[3]).slice(-2) : '' };
+    }).filter(function (x) { return x.title && x.author; });
+  }
+  var GR = null;
+  function grDialog(err) {
+    nav = []; modalStack = null;
+    var body;
+    if (!GR) body = '<p class="muted small">На сайті Goodreads відкрий <b>My Books → Import and export → Export Library</b> і завантаж файл .csv. Потім вибери його тут. Прочитані й «читаю зараз» стануть книгами в бібліотеці, «хочу прочитати» за бажанням стануть бажанками «На майбутнє». Книги, що вже є, я пропущу.</p>' +
+      '<label class="btn p" style="display:inline-flex;margin-top:6px">Вибрати файл .csv<input type="file" id="gr-file" accept=".csv,text/csv" hidden></label>';
+    else {
+      var c = GR.count || {}, ch = function (k, t, n, sub) { return '<label class="grch"><input type="checkbox" data-gr="' + k + '"' + (GR.pick[k] ? ' checked' : '') + (n ? '' : ' disabled') + '><span><b>' + t + ': ' + n + '</b><small>' + sub + '</small></span></label>'; };
+      var will = (GR.pick.read ? c.read || 0 : 0) + (GR.pick.reading ? c['currently-reading'] || 0 : 0) + (GR.pick.toread ? c['to-read'] || 0 : 0);
+      body = '<p class="muted small">У файлі ' + GR.items.length + ' ' + bookWord(GR.items.length) + '. Познач, що додати:</p>' +
+        ch('read', 'Прочитані', c.read || 0, 'у бібліотеку, з датою прочитання й оцінкою') + ch('reading', 'Читаю зараз', c['currently-reading'] || 0, 'у бібліотеку зі статусом «читаю»') + ch('toread', 'Хочу прочитати', c['to-read'] || 0, 'у бажанки «На майбутнє»') +
+        (c.dup ? '<p class="muted small">Ще ' + c.dup + ' ' + bookWord(c.dup) + ' вже є в тебе, їх пропущу.</p>' : '') +
+        '<div class="row" style="margin-top:12px"><button class="btn p" data-action="gr-go"' + (will ? '' : ' disabled') + '>Додати ' + will + ' ' + bookWord(will) + '</button><button class="btn" data-action="gr-reset">Інший файл</button></div>';
+    }
+    openModal('<button class="close" data-action="close">×</button><h2>Імпорт з Goodreads</h2>' + body + (err ? '<div class="note">' + esc(err) + '</div>' : ''), false, 'mid');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-gr]'), function (el) { el.onchange = function () { GR.pick[el.getAttribute('data-gr')] = el.checked; grDialog(); }; });
+    var inp = document.getElementById('gr-file');
+    if (inp) inp.onchange = function () {
+      var file = inp.files && inp.files[0]; if (!file) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        var items = grParse(rd.result);
+        if (!items) return grDialog('Це не схоже на файл з Goodreads: немає стовпців Title, Author і Exclusive Shelf.');
+        if (!items.length) return grDialog('У файлі не знайшла книг.');
+        document.getElementById('sync').textContent = 'рахую…';
+        api('lbApiImport', { items: items, dry: true, toread: true }).then(function (r) {
+          document.getElementById('sync').textContent = '';
+          GR = { items: items, count: r.count, pick: { read: true, reading: true, toread: false } }; grDialog();
+        }).catch(function (e) { document.getElementById('sync').textContent = ''; grDialog(e.message); });
+      };
+      rd.readAsText(file);
+    };
+  }
+  function grGo(btn) {
+    btn.disabled = true; btn.textContent = 'Додаю…';
+    api('lbApiImport', { items: GR.items, read: GR.pick.read, reading: GR.pick.reading, toread: GR.pick.toread }).then(function (r) {
+      GR = null; closeModal(); toast('Додано ' + r.added + ' ' + bookWord(r.added) + ' ✓'); load(true);
+    }).catch(function (e) { grDialog(e.message); });
+  }
+  function tgLink(btn) {
+    if (btn) btn.disabled = true;
+    var w = null; try { w = window.open('', '_blank'); } catch (e) {}
+    api('lbApiTgLink').then(function (r) {
+      if (w) w.location = r.url;
+      openModal('<button class="close" data-action="close">×</button><h2>Підключити бота</h2><p>У Телеграмі відкриється бот @' + esc(r.bot) + '. Натисни <b>Start</b>, і він одразу тебе впізнає.</p>' +
+        (w ? '' : '<p><a class="btn p" href="' + esc(r.url) + '" target="_blank" rel="noopener">Відкрити бота</a></p>') +
+        '<p class="muted small">Потім повернись сюди й натисни «Готово».</p><div class="row"><button class="btn p" data-action="tg-done">Готово</button></div>', false, 'mid');
+    }).catch(function (e) { if (w) w.close(); toast(e.message, true); if (btn) btn.disabled = false; });
   }
   function invitesApi(p) {
     return api('lbApiInvites', p).then(function (r) { invitesDialog(r); return r; }).catch(function (e) { toast(e.message, true); });
@@ -4569,10 +4681,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var gLook = grp('Вигляд', ['<div class="mrow mtheme">' + meIc('sun') + '<span class="g"><b>Світла чи темна</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="mrow mtheme mic">' + meIc('paint') + '<span class="g"><b>Колір</b></span><span class="pals">' + PALS.map(function (x) { return '<button data-action="pal" data-v="' + x[0] + '" class="' + (pal === x[0] ? 'on' : '') + '" aria-pressed="' + (pal === x[0]) + '" title="' + x[1] + '"><i style="background:linear-gradient(135deg,' + x[2] + ' 50%,' + x[3] + ' 50%)"></i>' + x[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="mrow mtheme mic">' + meIc('app') + '<span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div>']);
-    var gCon = grp('Підключено', [info('Телеграм-бот', '', 'tg', 'пошук, скриншоти, нагадування о 9:00' + (SI.on ? ' і про серію о ' + SI.hour + ':00' : '')), info('Нова пошта', 'щогодини', 'np', 'статуси ТТН'), info('Копія в Google-таблицю', 'щоночі', 'tbl')]);
     var ME = D.me || { uid: 1, role: 'owner' };
+    var tgRow = ME.uid !== 1 && !ME.tg ? row('data-action="tg-link"', 'Телеграм-бот', 'підключити', 'tg', 'пошук, скриншоти, нагадування в чаті') : info('Телеграм-бот', '', 'tg', 'пошук, скриншоти, нагадування о 9:00' + (SI.on ? ' і про серію о ' + SI.hour + ':00' : ''));
+    var gCon = grp('Підключено', [tgRow].concat(ME.role === 'owner' ? [info('Нова пошта', 'щогодини', 'np', 'статуси ТТН'), info('Копія в Google-таблицю', 'щоночі', 'tbl')] : []));
     var gPeople = ME.role === 'owner' ? grp('Друзі', [row('data-action="invites"', 'Запросити друзів', 'посилання', 'people', 'вхід через Телеграм або пошту, у кожного свої книги')]) : grp('Акаунт', [row('data-action="logout"', 'Вийти', '', 'out', 'на цьому пристрої')]);
-    var gData = grp('Дані', [row('data-action="me-log"', 'Журнал змін', 'останні ' + (D.log || []).length, 'log'), row('data-action="me-csv"', 'Завантажити копію', 'CSV', 'dl')]);
+    var gData = grp('Дані', [row('data-action="gr-import"', 'Імпорт з Goodreads', 'CSV', 'dl', 'прочитані, читаю, хочу прочитати'), row('data-action="me-log"', 'Журнал змін', 'останні ' + (D.log || []).length, 'log'), row('data-action="me-csv"', 'Завантажити копію', 'CSV', 'dl')]);
     return '<div class="mewrap">' + profileCard() + (SI.on ? '<div class="stcols">' + streakBlock() + streakBadges() + '</div>' : '') + '<div class="mecols"><div>' + gOff + gMore + gRead + gPlace + '</div><div>' + gLook + gCon + gPeople + gData + '</div></div></div>';
   };
   function meNameDialog() {
@@ -5339,6 +5452,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'logout') return logout();
     if (a === 'places') return placesDialog();
     if (a === 'places-save') return placesSave(act);
+    if (a === 'onb-goal') { onbKeep(); ONB.goal = Number(act.getAttribute('data-v')); onbAbout(); return onbRestore(); }
+    if (a === 'onb-away') { onbKeep(); ONB.away = true; onbAbout(); onbRestore(); var aw = document.getElementById('ob-away'); if (aw) aw.focus(); return; }
+    if (a === 'onb-next') return onbNext(act);
+    if (a === 'gr-import') { GR = null; return grDialog(); }
+    if (a === 'gr-reset') { GR = null; return grDialog(); }
+    if (a === 'gr-go') return grGo(act);
+    if (a === 'tg-link') return tgLink(act);
+    if (a === 'tg-done') { closeModal(); return api('lbApiMe').then(function (m) { D.me = Object.assign({}, D.me, m); toast(m.tg ? 'Бот підключено ✓' : 'Бот ще не бачить тебе. Натисни Start у Телеграмі.', !m.tg); render(); }); }
     if (a === 'login-mail') return loginMail();
     if (a === 'login-retry') return loginScreen();
     if (a === 'jr-more') { JR.n += 14; return journalDialog(); }
