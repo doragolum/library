@@ -8,8 +8,22 @@ import { fromGoodreads } from "../_shared/goodreads.ts";
 import { pubCanon } from "../_shared/pub.ts";
 import { gemini, aiBooks, enrichItems, bookFromUrl, AiError, isbnKey, todayKyiv } from "../_shared/ai.ts";
 import { tgSend, esc } from "../_shared/tg.ts";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { whoIs, AuthError, type Who } from "../_shared/auth.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+// хто питає (етап 4): друзі бачать лише свої книги й мають ліміт Gemini
+const ctx = new AsyncLocalStorage<Who>();
+const uid = () => ctx.getStore()?.uid || 1;
+const FRIEND_OK = ["lbApiAi", "lbApiAiParts", "lbApiGenre", "lbApiTropes", "lbApiFromLink", "lbApiOfficial", "lbApiCoverUpload"];
+const GEMINI_FNS = ["lbApiAi", "lbApiAiParts", "lbApiGenre", "lbApiTropes", "lbApiFromLink"];
+const FRIEND_DAY_LIMIT = 3; // скриншоти / голос / текст / посилання на день для друзів (безкоштовний тариф Gemini спільний)
+async function aiQuota() {
+  const d = todayKyiv(), u = uid();
+  const r = (await db.from("ai_usage").select("n").eq("user_id", u).eq("day", d).maybeSingle()).data;
+  if ((r?.n || 0) >= FRIEND_DAY_LIMIT) fail(`На сьогодні розпізнавання вичерпано (${FRIEND_DAY_LIMIT} на день). Завтра можна знову, а поки додай книгу вручну чи через пошук.`);
+  await db.from("ai_usage").upsert({ user_id: u, day: d, n: (r?.n || 0) + 1 });
+}
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 type Row = Record<string, any>;
 class UserError extends Error {}
@@ -23,36 +37,13 @@ async function kvSet(k: string, value: any) { const r = await db.from("kv").upse
 async function log(action: string, title: unknown, author: unknown, details: unknown) { await db.from("log").insert({ action, title: s(title) || null, author: s(author) || null, details: s(details) || null }); }
 /** Бібліотека й бажанки у форматі сайту — від api (службовий токен). */
 async function readAll(): Promise<Row> {
-  const r = await fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/api", { method: "POST", headers: { "Content-Type": "application/json", "x-import-token": String(await kvGet("import_token", "")) }, body: JSON.stringify({ fn: "lbApiData", args: [] }) });
+  const r = await fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/api", { method: "POST", headers: { "Content-Type": "application/json", "x-import-token": String(await kvGet("import_token", "")) }, body: JSON.stringify({ fn: "lbApiData", args: [], asUser: uid() }) });
   const j = await r.json().catch(() => null);
   if (!j?.ok) throw new Error(j?.error || "База не віддала дані");
   return j.data;
 }
 
-/* ---------- доступ (як в api) ---------- */
-function same(a: string, b: string) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
-async function hmac(keyBytes: Uint8Array, data: string) {
-  const k = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)));
-}
-async function auth(initData: string, k: string) {
-  const saved = Deno.env.get("LB_WEB_KEY") || "";
-  if (k && saved && same(k, saved)) return;
-  if (!initData) fail("Немає доступу. Відкрийте бібліотеку за своїм особистим посиланням або через кнопку в Телеграм-боті.");
-  const token = Deno.env.get("LB_TG_TOKEN"), allowed = Deno.env.get("LB_TG_USER_ID");
-  if (!token || !allowed) fail("Телеграм у новій базі ще не підключено. Відкрийте бібліотеку за особистим посиланням.");
-  const p = new URLSearchParams(initData);
-  const hash = (p.get("hash") || "").toLowerCase();
-  p.delete("hash");
-  const check = [...p.entries()].map(([a, b]) => `${a}=${b}`).sort().join("\n");
-  const secret = await hmac(new TextEncoder().encode("WebAppData"), token!);
-  const sig = [...(await hmac(secret, check))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  if (!hash || sig !== hash) fail("Телеграм не підтвердив, хто ви. Закрийте й відкрийте бібліотеку в боті заново.");
-  if (!(Math.floor(Date.now() / 1000) - Number(p.get("auth_date") || 0) < 24 * 3600)) fail("Сесія застаріла. Закрийте й відкрийте бібліотеку в боті заново.");
-  let u: Row = {};
-  try { u = JSON.parse(p.get("user") || "{}"); } catch { /* */ }
-  if (String(u.id) !== allowed) fail("Цей Телеграм не має доступу до бібліотеки.");
-}
+/* ---------- доступ: _shared/auth.ts ---------- */
 
 /* ---------- Gemini, посилання, новини серій, фото обкладинки (усе в базі, без Apps Script) ---------- */
 const aiCtx = async () => { const d: Row = await readAll(); return { books: d.books, wish: d.wish }; };
@@ -236,12 +227,14 @@ Deno.serve(async (req) => {
     const fn = s(body.fn);
     if (!API[fn]) fail("Невідома дія.");
     const svc = req.headers.get("x-import-token");
-    if (!(svc && svc === String(await kvGet("import_token", "")))) await auth(s(body.initData), s(body.key));
+    let who: Who = { uid: 1, role: "owner", name: "", via: "service" };
+    if (!(svc && svc === String(await kvGet("import_token", "")))) who = await whoIs(db, body);
+    if (who.role !== "owner" && !FRIEND_OK.includes(fn)) fail("Це поки доступно лише власниці.");
     const args = Array.isArray(body.args) ? body.args : [];
-    return reply({ ok: true, data: await API[fn](args[0] || {}) });
+    return reply({ ok: true, data: await ctx.run(who, async () => { if (who.role !== "owner" && GEMINI_FNS.includes(fn)) await aiQuota(); return API[fn](args[0] || {}); }) });
   } catch (e) {
-    const msg = e instanceof UserError ? e.message : "Помилка: " + String((e as Error)?.message ?? e);
-    if (!(e instanceof UserError)) console.error(e);
+    const msg = e instanceof UserError || e instanceof AuthError ? e.message : "Помилка: " + String((e as Error)?.message ?? e);
+    if (!(e instanceof UserError || e instanceof AuthError)) console.error(e);
     return reply({ ok: false, error: msg });
   }
 });

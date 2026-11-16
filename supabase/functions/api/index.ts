@@ -5,11 +5,38 @@ import { fromMegogo } from "../_shared/megogo.ts";
 import { fromYakaboo } from "../_shared/yakaboo.ts";
 import { PUBLISHERS, pubCanon, samePub } from "../_shared/pub.ts";
 import { streakInfo, STREAK_DEFAULT } from "../_shared/streak.ts";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { whoIs, AuthError, randomToken, sha256, type Who } from "../_shared/auth.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
 const TZ = "Europe/Kyiv";
-const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+const raw = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+/* ---------- чиї дані (етап 4, 16.11) ----------
+   Кожен запит виконується від імені однієї людини (ctx.uid). Особисті таблиці автоматично фільтруються за owner_id,
+   а нові записи отримують owner_id. Каталог спільний. Службові виклики (боти, крони) — від імені власниці (1). */
+const ctx = new AsyncLocalStorage<Who>();
+const me = (): Who => ctx.getStore() || { uid: 1, role: "owner", name: "", via: "service" };
+const uid = () => me().uid;
+const PERSONAL = new Set(["books", "series", "wish_found", "log", "reading_log"]);
+const withOwner = (v: any, u: number) => Array.isArray(v) ? v.map((x) => ({ ...x, owner_id: u })) : { ...v, owner_id: u };
+const db: any = {
+  from(table: string) {
+    const q: any = raw.from(table);
+    if (!PERSONAL.has(table)) return q;
+    const u = uid();
+    return {
+      select: (...a: any[]) => q.select(...a).eq("owner_id", u),
+      update: (v: any, o?: any) => q.update(v, o).eq("owner_id", u),
+      delete: (o?: any) => q.delete(o).eq("owner_id", u),
+      insert: (v: any, o?: any) => q.insert(withOwner(v, u), o),
+      upsert: (v: any, o?: any) => q.upsert(withOwner(v, u), o),
+    };
+  },
+};
+/** Особисті ключі kv: у власниці без суфікса (як було), у друзів — key@u<id>. */
+const PERSONAL_KV = new Set(["goals", "shelf_marks", "news", "news_state", "options", "profile", "streak", "series_catalog", "streak_sent", "streak_ask", "bot_pending", "onsale_today", "last_remind"]);
+const kk = (k: string) => (PERSONAL_KV.has(k) && uid() !== 1 ? `${k}@u${uid()}` : k);
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 class UserError extends Error {}
@@ -160,35 +187,63 @@ function clean(kind: string, f: string, fd: FD, value: unknown, options: Row) {
   }
 }
 
-/* ---------- доступ ---------- */
-function same(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let d = 0;
-  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return d === 0;
+/* ---------- доступ: див. _shared/auth.ts ---------- */
+const PAGE = "https://doragolum.github.io/library/";
+async function botName() {
+  const c = (await raw.from("kv").select("value").eq("key", "bot_username").maybeSingle()).data?.value;
+  if (c) return String(c);
+  const tok = Deno.env.get("LB_TG_TOKEN");
+  const r = tok ? await fetch(`https://api.telegram.org/bot${tok}/getMe`).then((x) => x.json()).catch(() => null) : null;
+  const n = r?.result?.username || "";
+  if (n) await raw.from("kv").upsert({ key: "bot_username", value: n, updated_at: new Date().toISOString() });
+  return n;
 }
-async function hmac(keyBytes: Uint8Array, data: string) {
-  const k = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)));
+/** Вхід через Телеграм, крок 1: сайт отримує одноразовий код і посилання на бота. Запрошення потрібне лише новим людям. */
+async function authStart(p: Row) {
+  const code = s(p?.invite);
+  if (code) {
+    const inv = (await raw.from("invites").select("code,used_by,revoked").eq("code", code).maybeSingle()).data;
+    if (!inv || inv.revoked) fail("Запрошення не знайдено або його скасували. Попроси нове посилання.");
+  }
+  const bot = await botName();
+  if (!bot) fail("Бот ще не підключено.");
+  const nonce = randomToken(18);
+  chk(await raw.from("login_requests").insert({ nonce, invite: code || null }), "login_requests");
+  return { nonce, url: `https://t.me/${bot}?start=login_${nonce}`, bot };
 }
-async function auth(initData: string, k: string) {
-  const saved = Deno.env.get("LB_WEB_KEY") || "";
-  if (k && saved && same(k, saved)) return "browser";
-  if (!initData) fail("Немає доступу. Відкрийте бібліотеку за своїм особистим посиланням або через кнопку в Телеграм-боті.");
-  const token = Deno.env.get("LB_TG_TOKEN"), allowed = Deno.env.get("LB_TG_USER_ID");
-  if (!token || !allowed) fail("Телеграм у новій базі ще не підключено. Відкрийте бібліотеку за особистим посиланням.");
-  const p = new URLSearchParams(initData);
-  const hash = (p.get("hash") || "").toLowerCase();
-  p.delete("hash");
-  const check = [...p.entries()].map(([a, b]) => `${a}=${b}`).sort().join("\n");
-  const secret = await hmac(new TextEncoder().encode("WebAppData"), token!);
-  const sig = [...(await hmac(secret, check))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  if (!hash || sig !== hash) fail("Телеграм не підтвердив, хто ви. Закрийте й відкрийте бібліотеку в боті заново.");
-  if (!(Math.floor(Date.now() / 1000) - Number(p.get("auth_date") || 0) < 24 * 3600)) fail("Сесія застаріла. Закрийте й відкрийте бібліотеку в боті заново.");
-  let u: Row = {};
-  try { u = JSON.parse(p.get("user") || "{}"); } catch { /* */ }
-  if (String(u.id) !== allowed) fail("Цей Телеграм не має доступу до бібліотеки.");
-  return "telegram";
+/** Крок 2: сайт питає, чи бот уже підтвердив вхід. Якщо так — видає сесію (один раз). */
+async function authPoll(p: Row) {
+  const nonce = s(p?.nonce);
+  const r = (await raw.from("login_requests").select("*").eq("nonce", nonce).maybeSingle()).data;
+  if (!r || Date.now() - new Date(r.created_at).getTime() > 15 * 60e3) fail("Код входу застарів. Спробуй ще раз.");
+  if (r.taken_at) fail("Цей вхід уже використано. Спробуй ще раз.");
+  if (!r.confirmed_at || !r.user_id) return { wait: true };
+  const token = randomToken(32);
+  chk(await raw.from("sessions").insert({ user_id: r.user_id, token_hash: await sha256(token), agent: s(p?.agent).slice(0, 200) || null }), "sessions");
+  await raw.from("login_requests").update({ taken_at: new Date().toISOString() }).eq("nonce", nonce);
+  const u = (await raw.from("app_users").select("id,name,role").eq("id", r.user_id).maybeSingle()).data;
+  return { session: token, user: u };
+}
+function ownerOnly() { if (me().role !== "owner") fail("Це може лише власниця Shelfie."); }
+/** Запрошення (лише власниця): list / create {note} / revoke {code}. */
+async function apiInvites(p: Row) {
+  ownerOnly();
+  const act = s(p?.act);
+  if (act === "create") {
+    const code = randomToken(9);
+    chk(await raw.from("invites").insert({ code, created_by: uid(), note: s(p?.note).slice(0, 80) || null }), "invites");
+    await log("👥 Запрошення створено", s(p?.note), "", "Посилання для нової людини", null);
+  } else if (act === "revoke") {
+    chk(await raw.from("invites").update({ revoked: true }).eq("code", s(p?.code)).is("used_by", null), "invites");
+    await log("👥 Запрошення скасовано", "", "", s(p?.code).slice(0, 4) + "…", null);
+  } else if (act !== "list") fail("Невідома дія.");
+  const rows = chk(await raw.from("invites").select("code,note,created_at,used_at,revoked,app_users!invites_used_by_fkey(name)").order("created_at", { ascending: false }).limit(50), "invites") as Row[];
+  const users = chk(await raw.from("app_users").select("id,name,role,created_at").order("id"), "app_users") as Row[];
+  return { page: PAGE, invites: rows.map((r) => ({ code: r.code, note: r.note || "", created: r.created_at, used: r.used_at, who: r.app_users?.name || "", revoked: r.revoked })), users };
+}
+async function apiLogout(body: Row) {
+  if (body.session) await raw.from("sessions").update({ revoked: true }).eq("token_hash", await sha256(String(body.session)));
+  return { ok: true };
 }
 
 /* ---------- база ---------- */
@@ -203,8 +258,8 @@ async function allRows(table: string, cols = "*", filter?: (q: any) => any): Pro
     if (part.length < 1000) return out;
   }
 }
-async function kvGet(k: string, def: any = null) { const r = await db.from("kv").select("value").eq("key", k).maybeSingle(); return r.data?.value ?? def; }
-async function kvSet(k: string, value: any) { chk(await db.from("kv").upsert({ key: k, value, updated_at: new Date().toISOString() }), "kv"); }
+async function kvGet(k: string, def: any = null) { const r = await db.from("kv").select("value").eq("key", kk(k)).maybeSingle(); return r.data?.value ?? def; }
+async function kvSet(k: string, value: any) { chk(await db.from("kv").upsert({ key: kk(k), value, updated_at: new Date().toISOString(), owner_id: PERSONAL_KV.has(k) ? uid() : null }), "kv"); }
 async function log(action: string, title: unknown, author: unknown, details: unknown, bookId?: number | null) {
   await db.from("log").insert({ action, title: s(title), author: s(author), details: s(details).slice(0, 1000), book_id: bookId ?? null });
 }
@@ -245,11 +300,13 @@ const tags = (a: unknown) => (Array.isArray(a) ? a.join(", ") : s(a));
 async function readAll() {
   const [rows, series, kvRows, logRows, journal] = await Promise.all([
     allRows("books"), allRows("series"),
-    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile", "streak"]),
+    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile", "streak"].map(kk)),
     db.from("log").select("at,action,title,author,details").order("id", { ascending: false }).limit(30),
     journalAll().catch(() => []),
   ]);
-  const kv: Row = Object.fromEntries(((kvRows.data ?? []) as Row[]).map((r) => [r.key, r.value]));
+  const kv: Row = Object.fromEntries(((kvRows.data ?? []) as Row[]).map((r) => [String(r.key).replace(/@u\d+$/, ""), r.value]));
+  // у нової людини ще немає своїх списків: беремо списки власниці без полиць (полиці в кожного свої)
+  if (!kv.options && uid() !== 1) { const o = (await raw.from("kv").select("value").eq("key", "options").maybeSingle()).data?.value || {}; kv.options = JSON.parse(JSON.stringify(o)); if (kv.options.library) kv.options.library.shelf = []; }
   const ser = new Map<number, Row>(series.map((x) => [x.id, x]));
   const books: Row[] = [], wish: Row[] = [], sold: Row[] = [];
   let n = 0;
@@ -288,7 +345,7 @@ async function readAll() {
   for (const f of ["place", "isbn", "cover", "bought", "started", "readOn", "rating", "lentTo", "lentOn", "lentDue", "parcel", "plan", "page", "tropes", "moods", "orig", "src"]) cols[f] = true;
   Object.assign(cols, { wishCover: true, wishOrdered: true, wishIsbn: true, wishOrig: true, wishSrc: true });
   return {
-    today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
+    me: { uid: uid(), role: me().role }, today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
     news: kv.news || [], pubCanon: PUBLISHERS, db: true,
     books, wish,
     series: series.map((x) => ({ author: x.author, name: x.name, total: x.total, finished: yesNo(x.finished), translated: yesNo(x.full_ua), pub: x.publisher || "" })),
@@ -768,6 +825,8 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiCatalogSearch: (q: Row) => apiCatalogSearch(q),
   lbApiStreak: (p: Row) => streakMark(String(p?.act || ""), p || {}),
   lbApiJournal: (p: Row) => apiJournal(p || {}),
+  lbApiMe: async () => { const w = me(); const u = (await raw.from("app_users").select("id,name,role").eq("id", w.uid).maybeSingle()).data; return { uid: w.uid, role: w.role, name: u?.name || "", via: w.via }; },
+  lbApiInvites: (p: Row) => apiInvites(p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),
 };
 
@@ -778,15 +837,20 @@ Deno.serve(async (req) => {
     const body = JSON.parse((await req.text()) || "{}");
     const fn = s(body.fn);
     const args = Array.isArray(body.args) ? body.args : [];
-    if (!API[fn] && !PROXY.includes(fn)) fail("Невідома дія.");
-    // службова перевірка (лише з самої бази через pg_net): заголовок x-import-token = kv.import_token
+    if (fn === "lbAuthStart") return reply({ ok: true, data: await authStart(args[0] || {}) });
+    if (fn === "lbAuthPoll") return reply({ ok: true, data: await authPoll(args[0] || {}) });
+    if (!API[fn] && !PROXY.includes(fn) && fn !== "lbApiLogout") fail("Невідома дія.");
+    // службова перевірка (лише з самої бази через pg_net): заголовок x-import-token = kv.import_token; тоді — від імені власниці
     const svc = req.headers.get("x-import-token");
-    if (!(svc && svc === (await kvGet("import_token", "")))) await auth(s(body.initData), s(body.key));
-    const data = API[fn] ? await API[fn](...args) : await proxy(fn, args);
+    let who: Who = { uid: 1, role: "owner", name: "", via: "service" };
+    if (!(svc && svc === (await kvGet("import_token", "")))) who = await whoIs(raw, body);
+    else if (Number(body.asUser) > 0) who = { uid: Number(body.asUser), role: Number(body.asUser) === 1 ? "owner" : "user", name: "", via: "service" };
+    if (fn === "lbApiLogout") return reply({ ok: true, data: await apiLogout(body) });
+    const data = await ctx.run(who, () => API[fn] ? API[fn](...args) : proxy(fn, args));
     return reply({ ok: true, data });
   } catch (e) {
-    const msg = e instanceof UserError ? e.message : "Помилка бази: " + String((e as Error)?.message ?? e);
-    if (!(e instanceof UserError)) console.error(e);
+    const msg = e instanceof UserError || e instanceof AuthError ? e.message : "Помилка бази: " + String((e as Error)?.message ?? e);
+    if (!(e instanceof UserError || e instanceof AuthError)) console.error(e);
     return reply({ ok: false, error: msg });
   }
 });

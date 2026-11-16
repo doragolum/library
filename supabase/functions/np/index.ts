@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     if (!key) return json({ ok: false, error: "Немає секрету NP_API_KEY у Supabase (Edge Functions → Secrets)." });
 
     // {ids:[…]} — перевірити лише ці книги (одразу після того, як ТТН вписали вручну)
-    let q = db.from("books").select("id,stage,author,title,ttn,np_status,np_error").in("stage", ACTIVE).not("ttn", "is", null);
+    let q = db.from("books").select("id,stage,author,title,ttn,np_status,np_error,owner_id").in("stage", ACTIVE).not("ttn", "is", null);
     if (Array.isArray(body.ids) && body.ids.length) q = q.in("id", body.ids.slice(0, 50));
     const books = chk(await q, "books") as Row[];
     const numbers = [...new Set(books.map((b) => norm(b.ttn)).filter((n) => /^\d{14}$/.test(n)))];
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       if (upd.stage || upd.np_status !== b.np_status) changes.push({ id: b.id, title: b.title, author: b.author, from: NAME[b.stage], to: upd.stage ? NAME[upd.stage] : null, np: upd.np_status ?? null, error: upd.np_error ?? null });
       if (dry) continue;
       chk(await db.from("books").update(upd).eq("id", b.id).eq("stage", b.stage), "books");
-      if (upd.stage) await db.from("log").insert({ action: "🚚 Нова пошта: " + NAME[upd.stage], book_id: b.id, title: b.title, author: b.author, details: `${NAME[b.stage]} → ${NAME[upd.stage]} (${r!.status})` });
+      if (upd.stage) await db.from("log").insert({ action: "🚚 Нова пошта: " + NAME[upd.stage], book_id: b.id, owner_id: b.owner_id ?? 1, title: b.title, author: b.author, details: `${NAME[b.stage]} → ${NAME[upd.stage]} (${r!.status})` });
     }
     return json({ ok: true, dry, books: books.length, ttn: numbers.length, errors, changes });
   } catch (e) {
