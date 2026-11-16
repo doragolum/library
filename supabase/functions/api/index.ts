@@ -6,6 +6,7 @@ import { fromYakaboo } from "../_shared/yakaboo.ts";
 import { PUBLISHERS, pubCanon, samePub } from "../_shared/pub.ts";
 import { streakInfo, STREAK_DEFAULT } from "../_shared/streak.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { PERSONAL_KV, kvKey, placesOf as placesOfFor, validTz } from "../_shared/people.ts";
 import { whoIs, AuthError, randomToken, sha256, type Who } from "../_shared/auth.ts";
 
 const APPS_SCRIPT_URL =
@@ -35,8 +36,8 @@ const db: any = {
   },
 };
 /** Особисті ключі kv: у власниці без суфікса (як було), у друзів — key@u<id>. */
-const PERSONAL_KV = new Set(["places", "goals", "shelf_marks", "news", "news_state", "options", "profile", "streak", "series_catalog", "streak_sent", "streak_ask", "bot_pending", "onsale_today", "last_remind"]);
-const kk = (k: string) => (PERSONAL_KV.has(k) && uid() !== 1 ? `${k}@u${uid()}` : k);
+const kk = (k: string) => kvKey(k, uid());
+const placesOf = (v: any) => placesOfFor(v, uid());
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 class UserError extends Error {}
@@ -263,14 +264,10 @@ async function authEmailFinish(p: Row) {
   }
   return newSession(user!.id, p?.agent);
 }
-/** Місця людини (етап 5): home — удома (полиці), away — друге місце з посилками або "". У власниці за замовчуванням Роттердам / Київ. */
-function placesOf(v: any) {
-  const def = uid() === 1 ? { home: "Роттердам", away: "Київ" } : { home: "Удома", away: "" };
-  return { home: s(v?.home) || def.home, away: v && "away" in v ? s(v.away) : def.away };
-}
 async function apiSetPlaces(p: Row) {
   const old = placesOf(await kvGet("places", null));
-  const home = s(p?.home).slice(0, 40), away = s(p?.away).slice(0, 40);
+  const home = s(p?.home).slice(0, 40), away = s(p?.away).slice(0, 40), tz = p?.tz === undefined ? old.tz : validTz(p.tz);
+  if (!tz) fail("Не знаю такого часового поясу.");
   if (!home) fail("Впиши, де ти вдома.");
   if (away && away.toLowerCase() === home.toLowerCase()) fail("Друге місце має називатися інакше, ніж дім.");
   const count = async (pl: string) => (chk(await db.from("books").select("id").eq("place", pl).in("stage", LIB_STAGES), "books") as Row[]).length;
@@ -284,9 +281,9 @@ async function apiSetPlaces(p: Row) {
       await log("📍 Місце перейменовано", "", "", `${a} → ${b}: ${n} кн.`, null);
     }
   }
-  const places = { home, away };
+  const places = { home, away, tz };
   await kvSet("places", places);
-  if (!moved.length) await log("📍 Мої місця", "", "", `Удома: ${home}; друге місце: ${away || "немає"}`, null);
+  if (!moved.length) await log("📍 Мої місця", "", "", `Удома: ${home}; друге місце: ${away || "немає"}; пояс: ${tz}`, null);
   return { places, moved };
 }
 function ownerOnly() { if (me().role !== "owner") fail("Це може лише власниця Nookly."); }

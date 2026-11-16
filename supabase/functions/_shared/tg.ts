@@ -1,7 +1,9 @@
 // Телеграм-бот: ключ — секрет LB_TG_TOKEN, ваш Телеграм — LB_TG_USER_ID (у приватному чаті це ж і номер чату).
+import { person } from "./people.ts";
 type Row = Record<string, any>;
 export const tgToken = () => (Deno.env.get("LB_TG_TOKEN") || "").trim();
-export const tgChat = () => (Deno.env.get("LB_TG_CHAT_ID") || Deno.env.get("LB_TG_USER_ID") || "").trim();
+/** Кому писати: у боті й кронах — людина, для якої зараз робота (етап 6), інакше власниця. */
+export const tgChat = () => person.getStore()?.chat || (Deno.env.get("LB_TG_CHAT_ID") || Deno.env.get("LB_TG_USER_ID") || "").trim();
 export const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export async function tgApi(method: string, payload: Row = {}): Promise<Row> {

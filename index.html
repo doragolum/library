@@ -1071,19 +1071,28 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     openModal(h, false, 'mid');
   }
   // етап 5: свої місця (удома — де полиці; друге місце — з посилками, необов'язкове)
+  // етап 6: часовий пояс для нагадувань бота (зберігається разом із місцями)
+  var TZS = [['Europe/Amsterdam', 'Нідерланди'], ['Europe/Kyiv', 'Україна'], ['Europe/Warsaw', 'Польща'], ['Europe/Berlin', 'Німеччина'], ['Europe/Prague', 'Чехія'], ['Europe/Vienna', 'Австрія'], ['Europe/Rome', 'Італія'], ['Europe/Madrid', 'Іспанія'], ['Europe/Paris', 'Франція'], ['Europe/London', 'Велика Британія'], ['Europe/Lisbon', 'Португалія'], ['America/New_York', 'США, Нью-Йорк'], ['America/Toronto', 'Канада, Торонто']];
+  function myTz() { return (D && D.places && D.places.tz) || (D && D.me && D.me.uid !== 1 ? 'Europe/Kyiv' : 'Europe/Amsterdam'); }
+  function tzLabel(z) { var f = TZS.filter(function (x) { return x[0] === z; })[0]; return f ? f[1] : z.replace(/^.*\//, '').replace(/_/g, ' '); }
   function placesDialog(err) {
     nav = []; modalStack = null;
     var P = PL(), nHome = S.inLib.filter(function (b) { return placeOf(b) === P.home; }).length, nAway = P.away ? S.inLib.filter(function (b) { return placeOf(b) === P.away; }).length : 0;
     openModal('<button class="close" data-action="close">×</button><h2>Мої місця</h2><p class="muted small">Удома — там, де твої полиці. Друге місце — якщо частина книг лежить деінде й приїжджає посилкою (у тебе це ' + esc(P.away || 'поки нічого') + '). Його можна не мати.</p>' +
       '<div class="form"><label class="full"><span>Удома (місто чи «Удома»)</span><input id="pl-home" maxlength="40" value="' + esc(P.home) + '"></label>' +
-      '<label class="full"><span>Друге місце</span><input id="pl-away" maxlength="40" placeholder="порожньо — немає" value="' + esc(P.away) + '"></label></div>' +
+      '<label class="full"><span>Друге місце</span><input id="pl-away" maxlength="40" placeholder="порожньо — немає" value="' + esc(P.away) + '"></label>' +
+      (function () {
+        var cur = myTz(), dev = ''; try { dev = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+        var list = TZS.slice(); [cur, dev].forEach(function (z) { if (z && !list.some(function (x) { return x[0] === z; })) list.push([z, tzLabel(z)]); });
+        return '<label class="full"><span>Часовий пояс (для нагадувань у боті)</span><select id="pl-tz">' + list.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (x[0] === cur ? ' selected' : '') + '>' + esc(x[1]) + (x[0] === dev && dev !== cur ? ' (як на цьому пристрої)' : '') + '</option>'; }).join('') + '</select></label>';
+      })() + '</div>' +
       '<p class="muted small">Якщо перейменуєш місце, ' + (nHome + nAway) + ' ' + bookWord(nHome + nAway) + ' переїдуть разом із назвою. Прибрати друге місце можна, лише коли там не лишилось книг (зараз ' + nAway + ').</p>' +
       (err ? '<div class="note">' + esc(err) + '</div>' : '') +
       '<div class="row" style="margin-top:12px"><button class="btn p" data-action="places-save">Зберегти</button><button class="btn" data-action="close">Скасувати</button></div>', false, 'mid');
   }
   function placesSave(btn) {
     btn.disabled = true;
-    api('lbApiSetPlaces', { home: fval('pl-home'), away: fval('pl-away') }).then(function (r) {
+    api('lbApiSetPlaces', { home: fval('pl-home'), away: fval('pl-away'), tz: fval('pl-tz') }).then(function (r) {
       D.places = r.places;
       (r.moved || []).forEach(function (m) { D.books.forEach(function (b) { if (b.place === m[0]) b.place = m[1]; }); });
       S = derive(D); closeModal(); toast('Місця збережено ✓'); render();
@@ -3961,7 +3970,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function streakSetDialog() {
     var I = streakInfo();
-    openModal('<button class="close" data-action="close">×</button><h2>Серія читання</h2><p class="muted small">Увечері бот нагадає, якщо ти сьогодні ще не читала. Час за Роттердамом.</p>' +
+    openModal('<button class="close" data-action="close">×</button><h2>Серія читання</h2><p class="muted small">Увечері бот нагадає, якщо ти сьогодні ще не читала. Час — за твоїм поясом (' + esc(tzLabel(myTz())) + '), змінити можна в «Я» → «Мої місця».</p>' +
       '<div class="seg3" style="flex-wrap:wrap">' + [['off', 'Вимкнено']].concat([19, 20, 21, 22].map(function (h) { return [String(h), h + ':00']; })).map(function (x) {
         var on = x[0] === 'off' ? !I.on : I.on && String(I.hour) === x[0];
         return '<button data-action="streak-hour" data-v="' + x[0] + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + x[1] + '</button>';
@@ -4556,7 +4565,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var gMore = WIDE ? '' : grp('Ще', [row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, 'money'), row('data-tab="stats"', 'Статистика', readY.length + ' ' + bookWord(readY.length) + ' за ' + y, 'stats')]);
     var SI = streakInfo();
     var gRead = grp('Читання', [row('data-action="goal"', 'Мета на місяць', goal ? goal + ' ' + bookWord(goal) : 'не задана', 'goal'), row('data-action="streak-set"', 'Серія читання', SI.on ? 'нагадаю о ' + SI.hour + ':00' : 'вимкнено', 'flame', 'вечірнє нагадування в боті'), info('Мій темп', '~' + Math.round(S.pace || 50) + ' стор. на день', 'pace', 'рахується сам з твоїх закладок')]);
-    var gPlace = grp('Мої місця', [row('data-list="where|' + esc(HOMEP()) + '"', esc(HOMEP()), inR + ' ' + bookWord(inR), 'pin', 'удома, тут полиці')].concat(AWAYP() ? [row('data-tab="kyiv"', esc(AWAYP()), inK + ' ' + bookWord(inK), 'pin', 'друге місце, книги приїжджають посилкою')] : [], [row('data-action="places"', 'Змінити місця', '', 'edit', 'назви, друге місце')]));
+    var gPlace = grp('Мої місця', [row('data-list="where|' + esc(HOMEP()) + '"', esc(HOMEP()), inR + ' ' + bookWord(inR), 'pin', 'удома, тут полиці')].concat(AWAYP() ? [row('data-tab="kyiv"', esc(AWAYP()), inK + ' ' + bookWord(inK), 'pin', 'друге місце, книги приїжджають посилкою')] : [], [row('data-action="places"', 'Змінити місця', '', 'edit', 'назви, друге місце, часовий пояс')]));
     var gLook = grp('Вигляд', ['<div class="mrow mtheme">' + meIc('sun') + '<span class="g"><b>Світла чи темна</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="mrow mtheme mic">' + meIc('paint') + '<span class="g"><b>Колір</b></span><span class="pals">' + PALS.map(function (x) { return '<button data-action="pal" data-v="' + x[0] + '" class="' + (pal === x[0] ? 'on' : '') + '" aria-pressed="' + (pal === x[0]) + '" title="' + x[1] + '"><i style="background:linear-gradient(135deg,' + x[2] + ' 50%,' + x[3] + ' 50%)"></i>' + x[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="mrow mtheme mic">' + meIc('app') + '<span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div>']);

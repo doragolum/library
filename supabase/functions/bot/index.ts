@@ -1,11 +1,12 @@
 // Телеграм-бот «Моєї бібліотеки» на вебхуку (замість опитування lbBotPoll в Apps Script).
 // Пошук «чи є в мене», /week /month /kyiv /rotterdam /help, скриншот / посилання / голосове → картка «У бажанки / Замовила / ✕» з уточненнями.
-// Відповідає лише вам (LB_TG_USER_ID). Телеграм підписує кожен запит секретом, виведеним з ключа бота.
+// Відповідає власниці (LB_TG_USER_ID) і друзям, які увійшли через Телеграм (app_users.tg_id; етап 6) — кожному з його даними. Телеграм підписує кожен запит секретом, виведеним з ключа бота.
 // Налаштування вебхука: POST {setup:true} із заголовком x-import-token (з самої бази) або функція lbSwitchToDb в Apps Script.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { tgApi, tgSend, tgChat, tgToken, esc, hookSecret } from "../_shared/tg.ts";
 import { looksPrivate, redact, parseRelease, todayKyiv } from "../_shared/ai.ts";
 import { findText, weekText, monthText, kyivText, rotterdamText, helpText, human } from "../_shared/texts.ts";
+import { person, personByTg, curUid, kvKey } from "../_shared/people.ts";
 import { streakMessage, streakInfo, currentBook, dayWord, STREAK_DEFAULT } from "../_shared/streak.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -13,13 +14,14 @@ const BASE = Deno.env.get("SUPABASE_URL")!;
 const PAGE = "https://doragolum.github.io/library/";
 type Row = Record<string, any>;
 
-async function kvGet(k: string, def: any = null) { const r = await db.from("kv").select("value").eq("key", k).maybeSingle(); return r.data?.value ?? def; }
-async function kvSet(k: string, value: any) { await db.from("kv").upsert({ key: k, value, updated_at: new Date().toISOString() }); }
+// особисті ключі (bot_pending, streak, streak_ask…) — свої в кожної людини
+async function kvGet(k: string, def: any = null) { const r = await db.from("kv").select("value").eq("key", kvKey(k, curUid())).maybeSingle(); return r.data?.value ?? def; }
+async function kvSet(k: string, value: any) { const key = kvKey(k, curUid()); await db.from("kv").upsert({ key, value, updated_at: new Date().toISOString(), ...(key !== k ? { owner_id: curUid() } : {}) }); }
 /** Виклик API бази від імені бота (службовий токен, як у кронів). Gemini й пошук в інтернеті — функція ai. */
 const AI_FNS = ["lbApiAi", "lbApiAiParts", "lbApiFromLink", "lbApiNews"];
 async function api(fn: string, arg: unknown) {
   const tok = await kvGet("import_token", "");
-  const r = await fetch(BASE + "/functions/v1/" + (AI_FNS.includes(fn) ? "ai" : "api"), { method: "POST", headers: { "Content-Type": "application/json", "x-import-token": String(tok) }, body: JSON.stringify({ fn, args: [arg] }) });
+  const r = await fetch(BASE + "/functions/v1/" + (AI_FNS.includes(fn) ? "ai" : "api"), { method: "POST", headers: { "Content-Type": "application/json", "x-import-token": String(tok) }, body: JSON.stringify({ fn, args: [arg], asUser: curUid() }) });
   const j = await r.json().catch(() => ({ ok: false, error: "База не відповіла" }));
   if (!j.ok) throw new Error(j.error || "Не вдалося");
   return j.data;
@@ -36,7 +38,7 @@ function b64(bytes: Uint8Array) { let s = ""; for (let i = 0; i < bytes.length; 
 const ASK: Record<string, (x: Row) => string> = {
   author: (x) => "✍️ Хто автор «" + esc(x.title) + "»?",
   part: (x) => "🔢 Який номер тому «" + esc(x.title) + "» у серії «" + esc(x.series) + "»?",
-  release: (x) => "📅 Коли виходить «" + esc(x.title) + "»? Напишіть, наприклад, <b>03.2027</b> або <b>березень</b>.",
+  release: (x) => "📅 Коли виходить «" + esc(x.title) + "»? Напиши, наприклад, <b>03.2027</b> або <b>березень</b>.",
 };
 async function pendGet(): Promise<Row> { return await kvGet("bot_pending", {}); }
 async function pendSave(p: Row) { const keys = Object.keys(p).sort(); while (keys.length > 10) delete p[keys.shift()!]; await kvSet("bot_pending", p); }
@@ -100,12 +102,12 @@ async function answerAsk(m: Row): Promise<boolean> {
     const ORD = ["перш", "друг", "трет", "четв", "пʼят", "шост", "сьом", "восьм", "девʼят", "десят"], tw = t.toLowerCase().replace(/['’]/g, "ʼ");
     ORD.forEach((w, i) => { if (!/\d/.test(t) && tw.includes(w)) t = String(i + 1); });
     const n = t.match(/\d+(?:[.,]\d+)?/);
-    if (!n) return retry("Напишіть номер тому цифрою, наприклад <b>2</b>.");
+    if (!n) return retry("Напиши номер тому цифрою, наприклад <b>2</b>.");
     x.part = n[0].replace(",", ".");
   }
   if (f === "release") {
     const r = parseRelease(t);
-    if (!r) return retry("Не зрозуміла дату. Напишіть, наприклад, <b>03.2027</b>.");
+    if (!r) return retry("Не зрозуміла дату. Напиши, наприклад, <b>03.2027</b>.");
     x.release = r; if (!x.avail || x.avail === "Анонс") x.avail = r > todayKyiv() ? (x.avail || "Анонс") : "Є у продажу";
   }
   pend[id] = p; await pendSave(pend);
@@ -180,7 +182,7 @@ async function button(q: Row) {
   delete pend[id]; await pendSave(pend);
   if (act === "x") return done("Добре, нічого не зберігаю.");
   const ok = p.items.filter((x: Row) => x.author);
-  if (!ok.length) return done("Немає автора — додайте книгу в додатку.");
+  if (!ok.length) return done("Немає автора — додай книгу в додатку.");
   const rel = (s: unknown) => { const t = String(s || ""); return /^\d{4}-\d{2}$/.test(t) ? t + "-01" : t; };
   const out = await api("lbApiOrder", { mode: act === "o" ? "order" : "wish", items: ok.map((x: Row) => ({
     title: x.title, author: x.author, series: x.series, part: x.part, total: x.total, pub: x.pub, price: x.price, release: rel(x.release), avail: x.avail,
@@ -201,7 +203,7 @@ async function photo(m: Row) {
   if (m.caption) req.text = (req.text ? req.text + "\n" : "") + "Підпис користувачки: " + m.caption;
   const r = await api("lbApiAi", req);
   if (r.nokey) return tgSend("Щоб я читала скриншоти, додайте секрет GEMINI_API_KEY у Supabase.");
-  if (!r.items?.length) return tgSend("На скриншоті не знайшла книг. Спробуйте інший або додайте через кнопку «Бібліотека».");
+  if (!r.items?.length) return tgSend("На скриншоті не знайшла книг. Спробуй інший або додай через кнопку «Nookly».");
   await card(m.chat.id, r.items, priv ? "🔒 Це схоже на замовлення: у Gemini пішов лише текст без адреси й телефону." : "");
 }
 async function voice(m: Row) {
@@ -212,22 +214,23 @@ async function voice(m: Row) {
   const r = await api("lbApiAiParts", { parts: [{ text: "Це голосове повідомлення користувачки українською: вона називає книгу(и), які хоче купити або вже замовила. Імена й назви пиши так, як вони звучать українською." },
     { inline_data: { mime_type: mime, data: b64(bytes) } }] });
   if (r.nokey) return tgSend("Щоб я розуміла голосові, додайте секрет GEMINI_API_KEY у Supabase.");
-  if (!r.items?.length) return tgSend("Не розчула назви книги. Спробуйте ще раз або напишіть текстом.");
+  if (!r.items?.length) return tgSend("Не розчула назви книги. Спробуй ще раз або напиши текстом.");
   await card(m.chat.id, r.items);
 }
 async function link(m: Row, url: string) {
   const r = await api("lbApiFromLink", { url });
-  if (!r.items?.length) return tgSend("На сторінці не знайшла книги. Надішліть скриншот або назву.");
+  if (!r.items?.length) return tgSend("На сторінці не знайшла книги. Надішли скриншот або назву.");
   await card(m.chat.id, r.items);
 }
 async function text(m: Row) {
   const t = String(m.text).trim(), cmd = t.toLowerCase();
-  if (/^\/(start|help|допомога)\b/.test(cmd)) return tgSend(helpText());
+  if (/^\/(start|help|допомога)\b/.test(cmd)) return tgSend(helpText(curUid() === 1));
   const data = await api("lbApiData", null);
   const td = todayKyiv();
   if (/^\/(week|тиждень)\b/.test(cmd)) return tgSend(weekText(data, td, true));
   if (/^\/(month|місяць)\b/.test(cmd)) return tgSend(monthText(data, td, true));
-  if (/^\/(kyiv|київ)\b/.test(cmd)) return tgSend(kyivText(data));
+  if (/^\/(kyiv|київ|away|друге)(?![\p{L}])/u.test(cmd)) return tgSend(kyivText(data));
+  if (/^\/(home|вдома|удома|дім)(?![\p{L}])/u.test(cmd)) return tgSend(rotterdamText(data));
   if (/^\/(rotterdam|роттердам)(?![\p{L}])/u.test(cmd)) return tgSend(rotterdamText(data));
   if (/^\/(streak|серія)(?![\p{L}])/u.test(cmd)) {
     const i = await streakNow(data);
@@ -236,7 +239,7 @@ async function text(m: Row) {
     return tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: sm.text, reply_markup: { inline_keyboard: sm.kb } });
   }
   const q = t.replace(/^\/(є|e|find|пошук)\s*/i, "").trim();
-  if (q.length < 2) return tgSend("Напишіть назву, автора або серію, наприклад: <b>Четверте крило</b>");
+  if (q.length < 2) return tgSend("Напиши назву, автора або серію, наприклад: <b>Четверте крило</b>");
   return tgSend(findText(q, data));
 }
 
@@ -266,13 +269,19 @@ async function loginConfirm(m: Row, nonce: string) {
 }
 
 async function handle(u: Row) {
-  const chat = tgChat();
   const lm = u.message?.text && String(u.message.text).match(/^\/start\s+login_([A-Za-z0-9_-]{8,64})/);
   if (lm) { try { await loginConfirm(u.message, lm[1]); } catch (e) { console.error(e); } return; }
-  if (u.message?.text === "/start" && String(u.message.chat?.id) !== chat) {
-    await tgApi("sendMessage", { chat_id: u.message.chat.id, text: "Привіт! Це бот Nookly. Увійти можна на сайті кнопкою «Увійти через Телеграм» (поки за запрошенням)." });
+  // хто пише (етап 6): власниця або друг із Телеграмом; решті — лише підказка на /start
+  const from = u.message?.from || u.callback_query?.from;
+  const who = await personByTg(db, Number(from?.id) || 0);
+  if (!who) {
+    if (u.message?.text === "/start") await tgApi("sendMessage", { chat_id: u.message.chat.id, text: "Привіт! Це бот Nookly. Увійти можна на сайті кнопкою «Увійти через Телеграм» (поки за запрошенням)." });
     return;
   }
+  await person.run(who, () => handleFor(u));
+}
+async function handleFor(u: Row) {
+  const chat = tgChat();
   const q = u.callback_query;
   if (q?.message && String(q.message.chat.id) === chat) {
     try { await button(q); } catch (e) { await tgApi("answerCallbackQuery", { callback_query_id: q.id, text: "Не вийшло: " + String((e as Error).message || e).slice(0, 150) }); }
@@ -299,7 +308,11 @@ async function setup() {
   const hook = await tgApi("setWebhook", { url: BASE + "/functions/v1/bot", secret_token: await hookSecret(), allowed_updates: ["message", "callback_query"], drop_pending_updates: false });
   const chat = tgChat();
   const menu = chat ? await tgApi("setChatMenuButton", { chat_id: Number(chat), menu_button: { type: "web_app", text: "Бібліотека", web_app: { url: PAGE + "?tg=1&db=1" } } }) : { ok: false };
-  await tgApi("setMyCommands", { commands: [{ command: "week", description: "Підсумок тижня" }, { command: "month", description: "Підсумок місяця" }, { command: "kyiv", description: "Що чекає в Києві" }, { command: "rotterdam", description: "Книги в Роттердамі" }, { command: "streak", description: "Серія читання" }, { command: "help", description: "Що я вмію" }] });
+  // меню для всіх (друзі) і окреме — у чаті власниці (Київ / Роттердам)
+  const cmd = (c: string, d: string) => ({ command: c, description: d });
+  await tgApi("setMyCommands", { commands: [cmd("week", "Підсумок тижня"), cmd("month", "Підсумок місяця"), cmd("home", "Книги вдома"), cmd("away", "Друге місце"), cmd("streak", "Серія читання"), cmd("help", "Що я вмію")] });
+  if (chat) await tgApi("setMyCommands", { scope: { type: "chat", chat_id: Number(chat) }, commands: [cmd("week", "Підсумок тижня"), cmd("month", "Підсумок місяця"), cmd("kyiv", "Що чекає в Києві"), cmd("rotterdam", "Книги в Роттердамі"), cmd("streak", "Серія читання"), cmd("help", "Що я вмію")] });
+  await tgApi("setChatMenuButton", { menu_button: { type: "web_app", text: "Nookly", web_app: { url: PAGE + "?tg=1&db=1" } } });
   return { ok: !!hook.ok, bot: "@" + me.result.username, webhook: hook.description || hook.ok, menu: menu.ok };
 }
 

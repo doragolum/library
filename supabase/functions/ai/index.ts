@@ -229,6 +229,7 @@ Deno.serve(async (req) => {
     const svc = req.headers.get("x-import-token");
     let who: Who = { uid: 1, role: "owner", name: "", via: "service" };
     if (!(svc && svc === String(await kvGet("import_token", "")))) who = await whoIs(db, body);
+    else if (Number(body.asUser) > 1) who = { uid: Number(body.asUser), role: "user", name: "", via: "service" }; // бот від імені друга (етап 6): ті самі межі й ліміт
     if (who.role !== "owner" && !FRIEND_OK.includes(fn)) fail("Це поки доступно лише власниці.");
     const args = Array.isArray(body.args) ? body.args : [];
     return reply({ ok: true, data: await ctx.run(who, async () => { if (who.role !== "owner" && GEMINI_FNS.includes(fn)) await aiQuota(); return API[fn](args[0] || {}); }) });
