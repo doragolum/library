@@ -2,6 +2,7 @@
 // data — у форматі readAll сайту (books, wish, sold).
 import { esc } from "./tg.ts";
 import { norm } from "./megogo.ts";
+import { pIn, pFrom } from "./people.ts";
 type Row = Record<string, any>;
 
 export const NOT_SENT_DAYS = 5;
@@ -11,9 +12,13 @@ export const weekday = (iso: string) => { const p = iso.split("-").map(Number); 
 const stars = (r: unknown) => "⭐".repeat(Math.round(Number(r) || 0));
 const money = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " грн";
 const site = (u: unknown) => String(u || "").replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*$/, "");
-const inKyiv = (b: Row) => b.place === "Київ" || b.avail === "Київ";
+// Місця людини (етап 6): data.places з api; без нього — як у власниці.
+const homeOf = (d: Row) => String(d.places?.home || "Роттердам");
+const awayOf = (d: Row) => (d.places ? String(d.places.away || "") : "Київ");
+const inAway = (d: Row) => { const a = awayOf(d); return (b: Row) => !!a && (b.place === a || b.avail === a); };
 const inRange = (iso: unknown, a: string, b: string) => !!iso && String(iso) >= a && String(iso) <= b;
 const k = (v: unknown) => String(v ?? "").trim().toLowerCase();
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function reminderLine(w: Row, withDate = false) {
   let s = "• " + (withDate && w.release ? human(w.release) + " · " : "") + esc(w.author) + " — <b>" + esc(w.title) + "</b>";
@@ -61,7 +66,7 @@ export function weekText(data: Row, today: string, now: boolean) {
   const ns = notSent(data, today);
   const lentLate = data.books.filter((b: Row) => b.avail === "позичена" && b.lentDue && b.lentDue < today);
   const onWay = data.wish.filter((w: Row) => w.ttn && ["Відправлено", "Створено ТТН", "В дорозі"].includes(w.status));
-  const kyivParcel = data.books.filter((b: Row) => inKyiv(b) && b.parcel);
+  const kyivParcel = data.books.filter((b: Row) => inAway(data)(b) && b.parcel);
   let s = "🗓 <b>Тиждень " + human(from).slice(0, 5) + "–" + human(to).slice(0, 5) + "</b>\n";
   s += "📖 Прочитано: <b>" + read.length + "</b>" + (read.length ? " (" + read.reduce((a: number, b: Row) => a + (b.pages || 0), 0) + " стор.)" : "") + "\n";
   for (const b of read) s += "   • " + esc(b.title) + (b.rating ? " " + stars(b.rating) : "") + "\n";
@@ -69,7 +74,7 @@ export function weekText(data: Row, today: string, now: boolean) {
   if (reading.length) s += "📚 Зараз читаю: " + reading.map((b: Row) => esc(b.title)).join(", ") + "\n";
   s += "🛍 Додано книг: <b>" + bought.length + "</b>" + (spent ? " на " + money(spent) : "") + "\n";
   if (onWay.length) s += "🚚 В дорозі: " + onWay.length + " кн.\n";
-  if (kyivParcel.length) s += "✈️ Посилка з Києва: " + kyivParcel.length + " кн.\n";
+  if (kyivParcel.length) s += "✈️ Посилка " + esc(pFrom(awayOf(data))) + ": " + kyivParcel.length + " кн.\n";
   if (soon.length) s += "\n⏰ <b>Релізи наступного тижня</b>\n" + soon.map((w: Row) => reminderLine(w, true)).join("\n") + "\n";
   if (ns.length) s += "\n📦 <b>Вийшли, але ще не відправлені</b>\n" + ns.map((w: Row) => reminderLine(w, true) + (w.where || w.site ? " · " + esc(w.where || site(w.site)) : "")).join("\n") + "\n";
   if (lentLate.length) s += "\n🤝 <b>Позичені, час повернути</b>\n" + lentLate.map((b: Row) => "• " + esc(b.title) + (b.lentTo ? " — " + esc(b.lentTo) : "") + " (до " + human(b.lentDue) + ")").join("\n") + "\n";
@@ -99,11 +104,13 @@ export function monthText(data: Row, today: string, now: boolean) {
   return s + "📚 Непрочитаних у бібліотеці: " + unread;
 }
 export function kyivText(data: Row) {
-  const kk = data.books.filter(inKyiv);
-  if (!kk.length) return "У Києві книг немає.";
+  const a = awayOf(data);
+  if (!a) return "У тебе немає другого місця. Додати можна в додатку: «Я» → «Мої місця».";
+  const kk = data.books.filter(inAway(data));
+  if (!kk.length) return cap(pIn(a)) + " книг немає.";
   const groups: Record<string, Row[]> = {};
   for (const b of kk) { const p = b.parcel ? "0" : (b.prio || "9"); (groups[p] = groups[p] || []).push(b); }
-  return "🏠 <b>Книги в Києві: " + kk.length + "</b>\n" + Object.keys(groups).sort().map((p) => {
+  return "🏠 <b>Книги " + esc(pIn(a)) + ": " + kk.length + "</b>\n" + Object.keys(groups).sort().map((p) => {
     const label = p === "0" ? "✈️ У посилці" : p === "9" ? "Без пріоритету" : "Пріоритет " + p;
     return "\n<b>" + label + "</b> (" + groups[p].length + ")\n" + groups[p].map((b) => "• " + esc(b.title) + " — " + esc(b.author) + (b.parcel ? " · " + esc(b.parcel) : "")).join("\n");
   }).join("\n");
@@ -111,8 +118,9 @@ export function kyivText(data: Row) {
 /** /rotterdam: коротке зведення книг у Роттердамі (повний список із кількох сотень книг задовгий). */
 export function rotterdamText(data: Row) {
   const gone = (b: Row) => ["продана", "подарована"].includes(k(b.avail));
-  const rr = data.books.filter((b: Row) => !inKyiv(b) && !gone(b));
-  if (!rr.length) return "У Роттердамі книг немає.";
+  const away = inAway(data), h = homeOf(data);
+  const rr = data.books.filter((b: Row) => !away(b) && !gone(b));
+  if (!rr.length) return cap(pIn(h)) + " книг немає.";
   const cnt = (f: (b: Row) => boolean) => rr.filter(f).length;
   const st = ["не читала", "читаю", "прочитано", "закинула"].map((s) => [s, cnt((b) => k(b.status) === s)] as [string, number]).filter((x) => x[1]);
   const list = (title: string, xs: Row[], line: (b: Row) => string) => xs.length ? "\n\n<b>" + title + " (" + xs.length + ")</b>\n" + xs.slice(0, 10).map(line).join("\n") + (xs.length > 10 ? "\n…і ще " + (xs.length - 10) : "") : "";
@@ -121,7 +129,7 @@ export function rotterdamText(data: Row) {
   const shelves: Record<string, number> = {};
   for (const b of rr) { const s = String(b.shelf || "").trim() || "без полиці"; shelves[s] = (shelves[s] || 0) + 1; }
   const sh = Object.keys(shelves).sort((a, b) => a.localeCompare(b, "uk", { numeric: true })).map((s) => esc(s) + " — " + shelves[s]).join(" · ");
-  return "📍 <b>Книги в Роттердамі: " + rr.length + "</b>\n" + st.map((x) => x[0] + " " + x[1]).join(" · ") +
+  return "📍 <b>Книги " + esc(pIn(h)) + ": " + rr.length + "</b>\n" + st.map((x) => x[0] + " " + x[1]).join(" · ") +
     list("Позичені", lent, (b) => "• " + esc(b.title) + " — " + esc(b.lentTo || "кому, не вказано") + (b.lentDue ? ", повернути до " + human(String(b.lentDue)).slice(0, 5) : "")) +
     list("На продаж", sale, (b) => "• " + esc(b.title) + " — " + esc(b.author)) +
     "\n\n<b>По полицях</b>\n" + sh;
@@ -137,7 +145,7 @@ export function findText(q: string, data: Row) {
   if (b.length) out.push("✅ <b>У бібліотеці (" + b.length + ")</b>\n" + b.slice(0, 10).map((x: Row) => {
     const st = x.avail;
     const where = st === "позичена" ? "позичена" + (x.lentTo ? " (" + esc(x.lentTo) + ")" : "")
-      : inKyiv(x) ? "Київ" + (st !== "у колекції" ? ", " + esc(st) : "") + (x.prio ? ", пріоритет " + esc(x.prio) : "")
+      : inAway(data)(x) ? esc(awayOf(data)) + (st !== "у колекції" ? ", " + esc(st) : "") + (x.prio ? ", пріоритет " + esc(x.prio) : "")
       : st !== "у колекції" ? esc(st) + (x.shelf ? ", " + esc(x.shelf) : "")
       : esc(x.shelf || "полицю не вказано");
     return "• <b>" + esc(x.title) + "</b> — " + esc(x.author) + (x.series && x.series !== "-" && x.type === "Серія" ? " (" + esc(x.series) + (x.num ? " #" + esc(x.num) : "") + ")" : "") +
@@ -147,10 +155,11 @@ export function findText(q: string, data: Row) {
   if (s.length) out.push("💰 <b>Продано (" + s.length + ")</b>\n" + s.slice(0, 5).map((x: Row) => "• " + esc(x.title) + " — " + esc(x.author)).join("\n"));
   return out.join("\n\n");
 }
-export const helpText = () => "📚 <b>Що я вмію</b>\n" +
-  "• Напишіть назву, автора або серію, і я скажу, чи є книга в бібліотеці, де вона стоїть, чи є в бажанках або серед проданих.\n" +
-  "• Надішліть скриншот анонсу чи замовлення, посилання на сторінку книги або голосове («хочу нову книгу Маас, вийде в березні») — я складу картку і запропоную додати в бажанки або як замовлену. Чого бракує — перепитаю.\n" +
-  "• /week — підсумок тижня, /month — підсумок місяця, /kyiv — книги в Києві за пріоритетом, /rotterdam — зведення книг у Роттердамі, /streak — серія читання.\n" +
+export const helpText = (owner = true) => "📚 <b>Що я вмію</b>\n" +
+  "• Напиши назву, автора або серію, і я скажу, чи є книга в бібліотеці, де вона стоїть, чи є в бажанках або серед проданих.\n" +
+  "• Надішли скриншот анонсу чи замовлення, посилання на сторінку книги або голосове («хочу нову книгу Маас, вийде в березні») — я складу картку і запропоную додати в бажанки або як замовлену. Чого бракує — перепитаю.\n" +
+  (owner ? "• /week — підсумок тижня, /month — підсумок місяця, /kyiv — книги в Києві за пріоритетом, /rotterdam — зведення книг у Роттердамі, /streak — серія читання.\n"
+    : "• /week — підсумок тижня, /month — підсумок місяця, /home — книги вдома, /away — друге місце (якщо є), /streak — серія читання.\n") +
   "• Увечері нагадую про серію читання, якщо ти сьогодні ще не читала (час і вимкнення — у «Я» в додатку).\n" +
   "• Сама нагадую про релізи, позичені книги і замовлення, які вийшли, але ще не відправлені.\n" +
   "Кнопка <b>Бібліотека</b> внизу відкриває весь додаток.";
