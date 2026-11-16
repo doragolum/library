@@ -249,6 +249,15 @@ async function loginConfirm(m: Row, nonce: string) {
   const r = (await db.from("login_requests").select("*").eq("nonce", nonce).maybeSingle()).data;
   if (!r || r.confirmed_at || Date.now() - new Date(r.created_at).getTime() > 15 * 60e3) return say("Це посилання для входу вже не діє. Натисни «Увійти через Телеграм» на сайті ще раз.");
   const tgId = Number(m.from?.id) || 0, name = [m.from?.first_name, m.from?.last_name].filter(Boolean).join(" ").slice(0, 60) || "Читачка";
+  // етап 7: підключення Телеграму до акаунта, з яким увійшли поштою (код створено вже для цієї людини)
+  if (r.user_id) {
+    const other = (await db.from("app_users").select("id").eq("tg_id", tgId).maybeSingle()).data;
+    if (other && other.id !== r.user_id) return say("Цей Телеграм уже підключено до іншого акаунта Nookly.");
+    if (String(tgId) === String(Deno.env.get("LB_TG_USER_ID") || "") && r.user_id !== 1) return say("Цей Телеграм належить власниці Nookly.");
+    await db.from("app_users").update({ tg_id: tgId }).eq("id", r.user_id);
+    await db.from("login_requests").update({ confirmed_at: new Date().toISOString(), taken_at: new Date().toISOString(), tg_name: name }).eq("nonce", nonce);
+    return say("Готово! Телеграм підключено 📚\nТепер можна писати мені назви книг, кидати скриншоти й отримувати нагадування. /help — що я вмію.");
+  }
   let user: Row | null = null, fresh = false;
   if (String(tgId) === String(Deno.env.get("LB_TG_USER_ID") || "")) {
     user = (await db.from("app_users").select("id,name").eq("id", 1).maybeSingle()).data;
