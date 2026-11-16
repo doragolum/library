@@ -482,6 +482,15 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .ly{height:30px;border:0;border-radius:4px;color:#2a2622;font:inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);cursor:pointer;min-width:0}
 .ly span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ly small{opacity:.9;flex:none;white-space:nowrap}
 .ly em{font-style:normal;background:var(--card);color:var(--bad);border-radius:6px;font-size:12px;padding:0 5px;margin-left:6px}
+.mpbar{position:relative;display:flex;height:22px;border-radius:6px;background:var(--line);margin:30px 0 6px}
+.mpbar i{display:block;height:100%;border-right:2px solid var(--card);cursor:pointer;min-width:3px}.mpbar i:first-child{border-radius:6px 0 0 6px}.mpbar i:last-of-type{border-right:0;border-radius:0 6px 6px 0}
+.mpln{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink,currentColor);pointer-events:none}
+.mplt{position:absolute;top:-24px;font-size:12px;color:var(--muted);transform:translateX(-50%);white-space:nowrap;pointer-events:none}
+.mpr .el{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpl{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.mpr{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;background:var(--bg)}
+.mpr [data-book]{cursor:pointer}.mpsw{width:6px;align-self:stretch;border-radius:3px;flex:none}
+.mptag{font-size:12px;font-weight:500;border-radius:999px;padding:0 7px;margin-left:6px;background:var(--gold-soft);color:var(--gold)}
 .tip{background:var(--line);border-radius:12px;padding:9px 11px;font-size:13px;margin-top:10px}.tip.ok{background:var(--ok-soft)}
 .tl{position:relative;margin-top:10px}.tl .days{display:grid;font-size:12px;color:var(--muted);text-align:center;margin-bottom:4px}
 .tl .grid{position:absolute;top:16px;bottom:0;left:0;right:0;display:grid;pointer-events:none}.tl .grid div{border-left:1px dashed var(--line)}
@@ -3698,22 +3707,35 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     })]);
     return rows.map(function (r) { return '<div class="trow"><div class="tlab">' + r[0] + '</div><div class="pills">' + r[1].join('') + '</div></div>'; }).join('');
   }
+  // «У плані» (16.11, варіант B + D): шкала місяця (книга = шматок завширшки зі сторінки, риска — докуди встигаєш у своєму темпі) + список запланованих із «Почати»
   function pileHtml(ym) {
-    var f = planForecast(ym), pile = f.pile;
-    var done = D.books.filter(function (b) { return b.plan === ym && isRead(b); });
-    var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Стос на ' + MONTHS_ON[mIdx(ym)] + (pile.length + done.length ? ' <span class="muted">· ' + done.length + ' з ' + (pile.length + done.length) + '</span>' : '') + '</h3><a class="link small" data-action="plan-open">Увесь план ›</a></div>';
-    if (!pile.length) return h + '<p class="muted small">Стос порожній. Додай книги, які хочеш прочитати цього місяця.</p><button class="btn p" data-action="plan-pick" data-to="' + ym + '">＋ Спланувати ' + MONTHS_ON[mIdx(ym)] + '</button></div>';
-    var maxP = Math.max.apply(null, pile.map(function (b) { return b.pages || 350; }).concat([400]));
-    var shown = pile.slice(0, 7);
-    h += '<div class="pile">' + shown.map(function (b) {
-      var w = 58 + Math.round((b.pages || 350) / maxP * 40);
-      return '<button class="ly" data-book="' + b.row + '" style="width:' + w + '%;background:' + genreColor(b.genre) + '"><span>' + esc(b.title) + '</span><small>' + (b.pages ? b.pages + ' с.' : '') + (b.plan < ym ? '<em>з ' + MONTHS_FROM[mIdx(b.plan)] + '</em>' : '') + '</small></button>';
-    }).join('') + '</div><div class="muted small" style="text-align:center;margin-top:4px">' + (pile.length > shown.length ? '+ ще ' + (pile.length - shown.length) + ' · ' : '') + 'разом ' + f.left.toLocaleString('uk-UA') + ' стор.</div>';
-    if (view.tipHide !== ym) {
-      if (f.fits) h += '<div class="tip ok">✅ Встигаєш: у твоєму темпі це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.</div>';
-      else h += '<div class="tip">💡 Стос важкий: у твоєму темпі це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.' +
+    var f = planForecast(ym), pile = f.pile, pace = S.pace || 50;
+    var read = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === ym; });
+    var now = ym === curYm() ? readingNow() : [];
+    var pg = function (b) { return b.pages || 350; };
+    var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">У плані на ' + MONTHS_ON[mIdx(ym)] + '</h3><a class="link small" data-action="plan-open">Увесь план ›</a></div>';
+    var parts = read.map(function (b) { return [b, 'r']; }).concat(now.map(function (b) { return [b, 'n']; }), pile.map(function (b) { return [b, 'p']; }));
+    if (parts.length) {
+      var total = parts.reduce(function (a, x) { return a + pg(x[0]); }, 0);
+      var done = read.reduce(function (a, b) { return a + pg(b); }, 0) + now.reduce(function (a, b) { return a + Math.min(b.page || 0, pg(b)); }, 0);
+      var reach = done + f.daysLeft * pace, line = Math.round(reach / total * 1000) / 10;
+      h += '<div class="mpbar">' + parts.map(function (x) {
+        var b = x[0], c = genreColor(b.genre), w = (pg(b) / total * 100).toFixed(2);
+        var bg = x[1] === 'n' && b.page ? 'linear-gradient(90deg,' + c + ' ' + Math.round(Math.min(b.page, pg(b)) / pg(b) * 100) + '%,color-mix(in srgb,' + c + ' 40%,transparent) 0)' : x[1] === 'p' ? 'color-mix(in srgb,' + c + ' 40%,transparent)' : c;
+        return '<i data-book="' + b.row + '" title="' + esc(b.title + ' · ' + (x[1] === 'r' ? 'прочитано' : x[1] === 'n' ? 'читаю' : 'у плані') + ' · ' + pg(b) + ' стор.') + '" style="width:' + w + '%;background:' + bg + '"></i>';
+      }).join('') + (line < 100 ? '<span class="mpln" style="left:' + line + '%"></span><span class="mplt" style="left:' + Math.max(12, Math.min(88, line)) + '%">до кінця місяця</span>' : '') + '</div>' +
+        '<div class="muted small">' + (line < 100 ? 'Кожна частина — книга, ширина — сторінки. Усе, що правіше риски, у твоєму темпі (~' + Math.round(pace) + ' стор. на день) не встигаєш.' : 'Кожна частина — книга, ширина — сторінки. У твоєму темпі встигаєш усе.') + '</div>';
+    }
+    if (view.tipHide !== ym && pile.length) {
+      if (f.fits) h += '<div class="tip ok">Встигаєш: ще ~' + f.left.toLocaleString('uk-UA') + ' стор., це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.</div>';
+      else h += '<div class="tip">Стос важкий: ще ~' + f.left.toLocaleString('uk-UA') + ' стор., це ~' + f.need + ' ' + dayWord(f.need) + ', а до кінця місяця ' + f.daysLeft + '.' +
         (f.move ? ' Перенести «' + esc(f.move.title) + '» на ' + MONTHS_ON[mIdx(addMonths(ym, 1))] + '?<div style="margin-top:6px"><button class="lnk" data-action="plan-set" data-row="' + f.move.row + '" data-to="' + addMonths(ym, 1) + '">Перенести</button> <button class="lnk mu" data-action="tip-hide" data-ym="' + ym + '">Залишити</button></div>' : '') + '</div>';
     }
+    if (!pile.length) return h + '<p class="muted small">У плані поки нічого. Додай книги, які хочеш прочитати цього місяця.</p><button class="btn p" data-action="plan-pick" data-to="' + ym + '">＋ Спланувати ' + MONTHS_ON[mIdx(ym)] + '</button></div>';
+    h += '<div class="mpl">' + pile.map(function (b) {
+      var d = Math.max(1, Math.ceil(pg(b) / pace));
+      return '<div class="mpr"><span class="mpsw" style="background:' + genreColor(b.genre) + '"></span><div class="grow" style="min-width:0" data-book="' + b.row + '"><b class="el">' + esc(b.title) + (b.plan < ym ? '<span class="mptag">з ' + MONTHS_FROM[mIdx(b.plan)] + '</span>' : '') + '</b><div class="muted small">' + (b.pages ? b.pages + ' стор. · ' : '') + '~' + d + ' ' + dayWord(d) + '</div></div><button class="btn sm" data-action="qm-start" data-row="' + b.row + '">Почати</button></div>';
+    }).join('') + '</div><button class="lnk" style="margin-top:8px" data-action="plan-pick" data-to="' + ym + '">＋ Додати книгу</button>';
     return h + '</div>';
   }
   function threadHtml(ym) {
