@@ -235,7 +235,7 @@ async function authEmailStart(p: Row) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail("Перевір адресу пошти.");
   const known = (await raw.from("app_users").select("id").ilike("email", email).maybeSingle()).data;
   if (!known) {
-    if (!code) fail("Shelfie поки працює за запрошенням. Відкрий посилання-запрошення й увійди звідти.");
+    if (!code) fail("Nookly поки працює за запрошенням. Відкрий посилання-запрошення й увійди звідти.");
     const inv = (await raw.from("invites").select("code,used_by,revoked").eq("code", code).maybeSingle()).data;
     if (!inv || inv.revoked || inv.used_by) fail("Запрошення вже використане або скасоване. Попроси нове посилання.");
   }
@@ -253,17 +253,17 @@ async function authEmailFinish(p: Row) {
   if (!user) {
     const reqs = (await raw.from("login_requests").select("invite,created_at").ilike("email", email).not("invite", "is", null).order("created_at", { ascending: false }).limit(1)).data || [];
     const inv = reqs[0] ? (await raw.from("invites").select("*").eq("code", reqs[0].invite).maybeSingle()).data : null;
-    if (!inv || inv.revoked || inv.used_by) fail("Shelfie поки працює за запрошенням, а це запрошення вже використане або скасоване.");
+    if (!inv || inv.revoked || inv.used_by) fail("Nookly поки працює за запрошенням, а це запрошення вже використане або скасоване.");
     const name = email.split("@")[0].slice(0, 40);
     user = chk(await raw.from("app_users").insert({ name, role: "user", email, invited_by: inv.created_by }).select("id,name").single(), "app_users") as Row;
     await raw.from("invites").update({ used_by: user.id, used_at: new Date().toISOString() }).eq("code", inv.code);
-    await raw.from("log").insert({ action: "👥 Нова людина в Shelfie", title: name, details: "Увійшла поштою за запрошенням" + (inv.note ? " (" + inv.note + ")" : ""), owner_id: 1 });
+    await raw.from("log").insert({ action: "👥 Нова людина в Nookly", title: name, details: "Увійшла поштою за запрошенням" + (inv.note ? " (" + inv.note + ")" : ""), owner_id: 1 });
     const tok = Deno.env.get("LB_TG_TOKEN"), chat = Deno.env.get("LB_TG_CHAT_ID") || Deno.env.get("LB_TG_USER_ID");
-    if (tok && chat) await fetch(`https://api.telegram.org/bot${tok}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: Number(chat), text: "👥 У Shelfie нова людина (пошта): " + name + (inv.note ? " (запрошення «" + inv.note + "»)" : "") }) }).catch(() => {});
+    if (tok && chat) await fetch(`https://api.telegram.org/bot${tok}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: Number(chat), text: "👥 У Nookly нова людина (пошта): " + name + (inv.note ? " (запрошення «" + inv.note + "»)" : "") }) }).catch(() => {});
   }
   return newSession(user!.id, p?.agent);
 }
-function ownerOnly() { if (me().role !== "owner") fail("Це може лише власниця Shelfie."); }
+function ownerOnly() { if (me().role !== "owner") fail("Це може лише власниця Nookly."); }
 /** Запрошення (лише власниця): list / create {note} / revoke {code}. */
 async function apiInvites(p: Row) {
   ownerOnly();
@@ -666,7 +666,7 @@ async function apiCatalogSearch(req: Row) {
   const mine = isbns.length ? ((chk(await db.from("books").select("isbn,stage").in("isbn", isbns), "books") || []) as Row[]) : [];
   const own = new Map(mine.map((m) => [m.isbn, m.stage]));
   return { items: rows.map((r) => ({ isbn: r.isbn, title: r.title, author: r.author, pub: r.publisher, pages: r.pages, cover: r.cover, seriesName: r.series, seriesNum: r.series_num,
-    total: r.series_total, genresRaw: r.genres || [], language: r.lang, year: r.year, orig: r.orig_title, description: r.description, sources: ["Каталог Shelfie"],
+    total: r.series_total, genresRaw: r.genres || [], language: r.lang, year: r.year, orig: r.orig_title, description: r.description, sources: ["Каталог Nookly"],
     mine: own.has(r.isbn) ? (LIB_STAGES.includes(own.get(r.isbn)) ? "library" : "wish") : "" })) };
 }
 /** Серія читання (16.11): read — сьогодні читала; skip — використати пропуск на сьогодні; set — увімкнути/вимкнути, година нагадування. */

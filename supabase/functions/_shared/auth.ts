@@ -18,15 +18,15 @@ export function randomToken(bytes = 32) { const a = crypto.getRandomValues(new U
 /** Перевіряє підпис Телеграму; повертає користувача Телеграму. */
 export async function tgUser(initData: string): Promise<Row> {
   const token = Deno.env.get("LB_TG_TOKEN");
-  if (!token) no("Телеграм ще не підключено. Відкрий Shelfie за особистим посиланням.");
+  if (!token) no("Телеграм ще не підключено. Відкрий Nookly за особистим посиланням.");
   const p = new URLSearchParams(initData);
   const hash = (p.get("hash") || "").toLowerCase();
   p.delete("hash");
   const check = [...p.entries()].map(([a, b]) => `${a}=${b}`).sort().join("\n");
   const secret = await hmac(new TextEncoder().encode("WebAppData"), token!);
   const sig = [...(await hmac(secret, check))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  if (!hash || sig !== hash) no("Телеграм не підтвердив, хто ти. Закрий і відкрий Shelfie в боті заново.");
-  if (!(Math.floor(Date.now() / 1000) - Number(p.get("auth_date") || 0) < 24 * 3600)) no("Сесія застаріла. Закрий і відкрий Shelfie в боті заново.");
+  if (!hash || sig !== hash) no("Телеграм не підтвердив, хто ти. Закрий і відкрий Nookly в боті заново.");
+  if (!(Math.floor(Date.now() / 1000) - Number(p.get("auth_date") || 0) < 24 * 3600)) no("Сесія застаріла. Закрий і відкрий Nookly в боті заново.");
   try { return JSON.parse(p.get("user") || "{}"); } catch { return {}; }
 }
 
@@ -43,10 +43,10 @@ export async function whoIs(db: any, body: Row): Promise<Who> {
     return { uid: s.user_id, role: s.app_users.role, name: s.app_users.name || "", via: "session" };
   }
   const initData = String(body.initData || "");
-  if (!initData) no("Немає доступу. Увійди через Телеграм або відкрий Shelfie за особистим посиланням.");
+  if (!initData) no("Немає доступу. Увійди через Телеграм або відкрий Nookly за особистим посиланням.");
   const u = await tgUser(initData);
   if (String(u.id) === String(Deno.env.get("LB_TG_USER_ID") || "")) return { uid: 1, role: "owner", name: "", via: "telegram" };
   const r = await db.from("app_users").select("id,name,role").eq("tg_id", Number(u.id) || 0).maybeSingle();
-  if (!r.data) no("Shelfie поки працює за запрошенням. Попроси посилання в того, хто тебе запросив.");
+  if (!r.data) no("Nookly поки працює за запрошенням. Попроси посилання в того, хто тебе запросив.");
   return { uid: r.data.id, role: r.data.role, name: r.data.name || "", via: "telegram" };
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Shelfie</title>
+<title>Nookly</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" id="lbFav" href="icons/icon-192.png?v=3">
 <script src="config.js"></script>
@@ -16,7 +16,7 @@
 <script>/* значок додатку: «Пастель» (звичайний) або «Класика», вибирається в «Я» */try{if(localStorage.getItem('lb.icon')==='classic'){document.getElementById('lbFav').href='icons/classic/icon-192.png?v=3';document.getElementById('lbTouch').href='icons/classic/apple-touch-icon.png?v=3';document.getElementById('lbMan').href='manifest-classic.webmanifest';}}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Shelfie">
+<meta name="apple-mobile-web-app-title" content="Nookly">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>if ('serviceWorker' in navigator && location.protocol === 'https:' && !/script\.google/.test(location.host)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });</script>
 <style>
@@ -675,7 +675,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 </head>
 <body>
 <header>
-  <div class="top"><h1><svg class="logo" viewBox="19 19 64 65" aria-hidden="true"><rect x="27" y="27" width="10" height="38" rx="2" fill="var(--logo-a)"/><rect x="39.5" y="21" width="10" height="44" rx="2" fill="var(--accent)"/><rect x="52" y="30" width="9" height="35" rx="2" fill="var(--logo-b)"/><rect x="63" y="29" width="9.5" height="37" rx="2" fill="var(--logo-c)" transform="rotate(14 72.5 66)"/><path d="M23 72.5Q50 87 77 72.5" fill="none" stroke="var(--accent)" stroke-width="5.5" stroke-linecap="round"/></svg>Shelfie</h1><span id="sync" class="muted small"></span><button class="iconbtn srch" data-action="search" title="Пошук" aria-label="Пошук"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="sl">Знайти книгу</span><kbd class="sk">⌘K</kbd></button><button class="addbtn" data-action="plus" aria-label="Додати">＋<span class="lbl"> Додати</span></button></div>
+  <div class="top"><h1><svg class="logo" viewBox="19 19 64 65" aria-hidden="true"><rect x="27" y="27" width="10" height="38" rx="2" fill="var(--logo-a)"/><rect x="39.5" y="21" width="10" height="44" rx="2" fill="var(--accent)"/><rect x="52" y="30" width="9" height="35" rx="2" fill="var(--logo-b)"/><rect x="63" y="29" width="9.5" height="37" rx="2" fill="var(--logo-c)" transform="rotate(14 72.5 66)"/><path d="M23 72.5Q50 87 77 72.5" fill="none" stroke="var(--accent)" stroke-width="5.5" stroke-linecap="round"/></svg>Nookly</h1><span id="sync" class="muted small"></span><button class="iconbtn srch" data-action="search" title="Пошук" aria-label="Пошук"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="sl">Знайти книгу</span><kbd class="sk">⌘K</kbd></button><button class="addbtn" data-action="plus" aria-label="Додати">＋<span class="lbl"> Додати</span></button></div>
   <nav class="tabs" id="tabs"></nav>
 </header>
 <main id="app"><div class="loading">Завантажую бібліотеку…</div></main>
@@ -990,12 +990,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     document.getElementById('sync').textContent = '';
     var app = document.getElementById('app');
     app.innerHTML = '<div class="login"><div class="lgc"><svg class="lglogo" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="14" width="8" height="28" rx="2" fill="var(--accent-fill)"/><rect x="22" y="10" width="8" height="32" rx="2" fill="var(--ok)"/><rect x="32" y="16" width="8" height="26" rx="2" fill="var(--gold)"/><rect x="42" y="12" width="8" height="30" rx="2" fill="var(--plum)"/><path d="M8 46q24 12 48 0" fill="none" stroke="var(--shelf-ink)" stroke-width="4" stroke-linecap="round"/></svg>' +
-      '<h2>Shelfie</h2><p>' + (INVITE ? 'Тебе запросили в Shelfie: книги, бажанки, замовлення й читання в одному місці.' : 'Твої книги, бажанки, замовлення й читання в одному місці.') + '</p>' +
+      '<h2>Nookly</h2><p>' + (INVITE ? 'Тебе запросили в Nookly: книги, бажанки, замовлення й читання в одному місці.' : 'Твої книги, бажанки, замовлення й читання в одному місці.') + '</p>' +
       (msg && !/Немає доступу/.test(msg) ? '<div class="note">' + esc(msg) + '</div>' : '') +
       '<div id="lgbtn"><button class="btn p lgb" disabled>Готую вхід…</button></div>' +
       '<p class="muted small">Відкриється Телеграм, натисни там «Start» (або «Почати»). Потім повертайся сюди, сторінка відкриється сама.</p>' +
       '<div class="lgor"><span>або поштою</span></div><div id="lgmail"><input type="email" id="lg-email" inputmode="email" autocomplete="email" placeholder="твоя@пошта" enterkeyhint="send"><button class="btn lgb" data-action="login-mail">Надіслати посилання на пошту</button></div>' +
-      (INVITE ? '' : '<p class="muted small">Поки Shelfie працює за запрошенням. Якщо ти тут уперше, попроси посилання.</p>') + '</div></div>';
+      (INVITE ? '' : '<p class="muted small">Поки Nookly працює за запрошенням. Якщо ти тут уперше, попроси посилання.</p>') + '</div></div>';
     api('lbAuthStart', { invite: INVITE }).then(function (r) {
       LOGIN = { nonce: r.nonce, t0: Date.now() };
       var b = document.getElementById('lgbtn');
@@ -1021,7 +1021,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) return toast('Перевір адресу пошти', true);
     if (box) box.innerHTML = '<p class="muted small">Надсилаю…</p>';
     api('lbAuthEmailStart', { email: em, invite: INVITE }).then(function () {
-      if (box) box.innerHTML = '<div class="note">Лист надіслано на <b>' + esc(em) + '</b>. Відкрий його й натисни посилання, Shelfie відкриється вже з входом. Якщо листа немає кілька хвилин, глянь у «Спам».</div>';
+      if (box) box.innerHTML = '<div class="note">Лист надіслано на <b>' + esc(em) + '</b>. Відкрий його й натисни посилання, Nookly відкриється вже з входом. Якщо листа немає кілька хвилин, глянь у «Спам».</div>';
     }).catch(function (e) { if (box) box.innerHTML = '<div class="note">' + esc(e.message) + '</div><button class="btn lgb" data-action="login-retry">Спробувати ще раз</button>'; });
   }
   // повернулась із листа: у адресі #access_token=… від Supabase
@@ -1044,7 +1044,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function invitesDialog(r) {
     if (r) INV = r;
     nav = []; modalStack = null;
-    var h = '<button class="close" data-action="close">×</button><h2>Друзі в Shelfie</h2><p class="muted small">Надішли людині посилання. Вона відкриє його й увійде через Телеграм або поштою. Кожне посилання — для однієї людини. У кожного свої книги, спільний лише каталог видань.</p>' +
+    var h = '<button class="close" data-action="close">×</button><h2>Друзі в Nookly</h2><p class="muted small">Надішли людині посилання. Вона відкриє його й увійде через Телеграм або поштою. Кожне посилання — для однієї людини. У кожного свої книги, спільний лише каталог видань.</p>' +
       '<div class="row" style="gap:8px;flex-wrap:wrap"><input id="inv-note" placeholder="Кому (для себе), напр. Оля" style="flex:1 1 180px"><button class="btn p" data-action="inv-new">＋ Нове запрошення</button></div>';
     if (!INV) h += '<p class="muted small">Завантажую…</p>';
     else {
@@ -1054,7 +1054,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         return '<div class="jen"><div class="grow" style="min-width:0"><b class="el">' + esc(i.note || 'Без підпису') + '</b><span class="muted small">' + dmy(String(i.created).slice(0, 10)) + '</span></div><button class="btn sm" data-action="inv-copy" data-url="' + esc(url) + '">Копіювати</button><button class="jed" data-action="inv-revoke" data-code="' + esc(i.code) + '" aria-label="Скасувати">×</button></div>';
       }).join('');
       var people = INV.users.filter(function (u) { return u.role !== 'owner'; });
-      h += '<div class="jdh"><span>Уже в Shelfie</span><span>' + people.length + '</span></div>' + (people.length ? people.map(function (u) {
+      h += '<div class="jdh"><span>Уже в Nookly</span><span>' + people.length + '</span></div>' + (people.length ? people.map(function (u) {
         var inv = used.filter(function (i) { return i.who === u.name; })[0];
         return '<div class="jen"><div class="grow"><b>' + esc(u.name || 'Без імені') + '</b><span class="muted small">з ' + dmy(String(u.created_at).slice(0, 10)) + (inv && inv.note ? ' · ' + esc(inv.note) : '') + '</span></div></div>';
       }).join('') : '<p class="muted small" style="margin:4px 0">Поки нікого. Розпізнавання скриншотів у друзів — до 3 на день.</p>');
@@ -2818,9 +2818,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var inp = function (id, label, val, extra, cls) { return '<label class="' + (cls || '') + '"><span>' + label + '</span><input id="' + id + '" value="' + esc(val == null ? '' : val) + '" ' + (extra || '') + '></label>'; };
     var h = '<button class="close" data-action="close" aria-label="Закрити">×</button><h2>📚 ' + (addState.wish ? 'Отримала → у бібліотеку' : 'Додати книгу') + '</h2>';
     if (addState.wish) h += '<p class="muted small">З бажанок: ' + esc(addState.wish.author) + ' — ' + esc(addState.wish.title) + '. Заповни, чого бракує, і вибери, де книга.</p>';
-    else h += '<p class="muted small">Знайди книгу в каталозі Shelfie або почни з ISBN: решту підтягну сама. Обов\'язкові лише автор і назва.</p>';
+    else h += '<p class="muted small">Знайди книгу в каталозі Nookly або почни з ISBN: решту підтягну сама. Обов\'язкові лише автор і назва.</p>';
     h += '<div class="form addf">';
-    if (!addState.wish) h += '<div class="full"><span class="flab">Каталог Shelfie</span><input id="f-cat" placeholder="Назва, автор, серія чи ISBN" autocomplete="off" aria-label="Пошук у каталозі" style="width:100%"><div id="f-catres" class="catres"></div></div>';
+    if (!addState.wish) h += '<div class="full"><span class="flab">Каталог Nookly</span><input id="f-cat" placeholder="Назва, автор, серія чи ISBN" autocomplete="off" aria-label="Пошук у каталозі" style="width:100%"><div id="f-catres" class="catres"></div></div>';
     h += '<div class="full"><span class="flab">ISBN</span><div class="row isbnrow"><input id="f-isbn" class="grow" inputmode="numeric" placeholder="978…" aria-label="ISBN" value="' + esc(b.isbn || '') + '"><button class="btn ib" data-action="paste" data-for="f-isbn" title="Вставити скопійований ISBN" aria-label="Вставити скопійований ISBN">📋</button><button class="btn ib" data-action="scan-add" title="Сфотографувати штрихкод" aria-label="Сфотографувати штрихкод">📷</button><button class="btn" data-action="lookup">🔍 Підтягнути</button></div><div class="muted small" style="margin-top:3px">Штрихкод на звороті книги: 📷 сфотографуй його або впиши цифри.</div><div id="f-look" class="small muted" style="margin-top:6px"></div></div>';
     h += '<div id="f-dupe" class="full" hidden></div>';
     h += inp('f-author', 'Автор *', b.author, 'list="dl-authors" autocomplete="off"', 'wide') + inp('f-title', 'Назва *', b.title, '', 'wide');
@@ -2907,7 +2907,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         var sub = [x.author, x.seriesName ? x.seriesName + (x.seriesNum ? ' #' + numTxt(x.seriesNum) : '') : '', x.pub].filter(Boolean).map(esc).join(' · ');
         return '<button class="catr" data-action="cat-pick" data-i="' + i + '">' + (x.cover ? '<img class="thumb" referrerpolicy="no-referrer" src="' + esc(x.cover) + '" alt="">' : '<span class="thumb"></span>') +
           '<span class="g"><b>' + esc(x.title) + '</b><small>' + sub + '</small></span>' + (x.mine ? '<span class="pill2 ok">' + (x.mine === 'library' ? 'уже є' : 'у бажанках') + '</span>' : '') + '</button>';
-      }).join('') : '<p class="muted small">У каталозі Shelfie такої книги ще немає.</p>';
+      }).join('') : '<p class="muted small">У каталозі Nookly такої книги ще немає.</p>';
       box.innerHTML += '<button class="btn sm" data-action="cat-web" style="align-self:flex-start">Шукати в інтернеті</button><p class="muted small" style="margin:0">MEGOGO, Goodreads та інші. Що знайду, заповню сама, а після збереження книга з\'явиться в каталозі для всіх.</p>';
     }).catch(function (e) { if (my === catSeq) box.innerHTML = '<p class="msg small">' + esc(e.message) + '</p>'; });
   }
@@ -2928,7 +2928,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function catPick(i) {
     var x = (addState.cat || [])[i]; if (!x) return;
     applyLookup(x);
-    if (x.seriesName && !fval('f-series')) { setAuto('f-series', x.seriesName, 'Каталог Shelfie'); if (x.seriesNum) setAuto('f-num', numTxt(x.seriesNum), 'Каталог Shelfie'); if (x.total) setAuto('f-total', x.total, 'Каталог Shelfie'); applySeriesDefaults(); }
+    if (x.seriesName && !fval('f-series')) { setAuto('f-series', x.seriesName, 'Каталог Nookly'); if (x.seriesNum) setAuto('f-num', numTxt(x.seriesNum), 'Каталог Nookly'); if (x.total) setAuto('f-total', x.total, 'Каталог Nookly'); applySeriesDefaults(); }
     addState.cover = x.cover || addState.cover;
     showLookPreview(x);
     var box = document.getElementById('f-catres'); if (box) box.innerHTML = '';
@@ -5296,7 +5296,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'jr-open') { JR.n = 14; return journalDialog(); }
     if (a === 'invites') { invitesDialog(); return invitesApi({ act: 'list' }); }
     if (a === 'inv-new') { act.disabled = true; return invitesApi({ act: 'create', note: fval('inv-note') }).then(function (r) { var i = r && r.invites[0]; if (i && navigator.clipboard) navigator.clipboard.writeText(r.page + '?invite=' + i.code).then(function () { toast('Посилання скопійовано ✓'); }).catch(function () {}); }); }
-    if (a === 'inv-copy') { var iu = act.getAttribute('data-url'); if (navigator.share && !WIDE) { navigator.share({ title: 'Shelfie', text: 'Запрошую тебе в Shelfie 📚', url: iu }).catch(function () {}); } else if (navigator.clipboard) navigator.clipboard.writeText(iu).then(function () { toast('Посилання скопійовано ✓'); }, function () { toast(iu); }); else toast(iu); return; }
+    if (a === 'inv-copy') { var iu = act.getAttribute('data-url'); if (navigator.share && !WIDE) { navigator.share({ title: 'Nookly', text: 'Запрошую тебе в Nookly 📚', url: iu }).catch(function () {}); } else if (navigator.clipboard) navigator.clipboard.writeText(iu).then(function () { toast('Посилання скопійовано ✓'); }, function () { toast(iu); }); else toast(iu); return; }
     if (a === 'inv-revoke') { if (act.getAttribute('data-sure') !== '1') { act.setAttribute('data-sure', '1'); act.textContent = '?'; act.setAttribute('aria-label', 'Точно скасувати?'); return toast('Натисни ще раз, щоб скасувати запрошення'); } return invitesApi({ act: 'revoke', code: act.getAttribute('data-code') }); }
     if (a === 'logout') return logout();
     if (a === 'login-mail') return loginMail();
