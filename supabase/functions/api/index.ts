@@ -4,6 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { fromMegogo } from "../_shared/megogo.ts";
 import { fromYakaboo } from "../_shared/yakaboo.ts";
 import { PUBLISHERS, pubCanon, samePub } from "../_shared/pub.ts";
+import { streakInfo, STREAK_DEFAULT } from "../_shared/streak.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
@@ -244,7 +245,7 @@ const tags = (a: unknown) => (Array.isArray(a) ? a.join(", ") : s(a));
 async function readAll() {
   const [rows, series, kvRows, logRows] = await Promise.all([
     allRows("books"), allRows("series"),
-    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile"]),
+    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile", "streak"]),
     db.from("log").select("at,action,title,author,details").order("id", { ascending: false }).limit(30),
   ]);
   const kv: Row = Object.fromEntries(((kvRows.data ?? []) as Row[]).map((r) => [r.key, r.value]));
@@ -286,7 +287,7 @@ async function readAll() {
   for (const f of ["place", "isbn", "cover", "bought", "started", "readOn", "rating", "lentTo", "lentOn", "lentDue", "parcel", "plan", "page", "tropes", "moods", "orig", "src"]) cols[f] = true;
   Object.assign(cols, { wishCover: true, wishOrdered: true, wishIsbn: true, wishOrig: true, wishSrc: true });
   return {
-    today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, shelfMarks: kv.shelf_marks || {},
+    today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
     news: kv.news || [], pubCanon: PUBLISHERS, db: true,
     books, wish,
     series: series.map((x) => ({ author: x.author, name: x.name, total: x.total, finished: yesNo(x.finished), translated: yesNo(x.full_ua), pub: x.publisher || "" })),
@@ -359,6 +360,8 @@ async function saveOne(options: Row, ch: Row) {
     } catch { /* статус підтягнеться щогодини */ }
   }
   if (notes.length) await log("✏️ Змінено в додатку", upd.title ?? b.title, upd.author ?? b.author, notes.join("; "), b.id);
+  // закладка = день читання для серії
+  if (kind === "library" && upd.cur_page != null && upd.cur_page !== b.cur_page) await streakMark("read").catch(() => {});
   return { row: b.id, values };
 }
 
@@ -542,6 +545,27 @@ async function apiSetProfile(p: Row) {
   await kvSet("profile", cur);
   return cur;
 }
+/** Серія читання (16.11): read — сьогодні читала; skip — використати пропуск на сьогодні; set — увімкнути/вимкнути, година нагадування. */
+async function streakMark(act: string, p: Row = {}) {
+  const st: Row = { ...STREAK_DEFAULT, ...((await kvGet("streak", {})) || {}) }, td = today();
+  if (!st.since) st.since = td;
+  st.days = Array.isArray(st.days) ? st.days : []; st.skips = Array.isArray(st.skips) ? st.skips : [];
+  if (act === "read") { if (!st.days.includes(td)) st.days.push(td); st.skips = st.skips.filter((d: string) => d !== td); }
+  else if (act === "skip") {
+    const rows = await allRows("books");
+    const books = rows.filter((b) => LIB_STAGES.includes(b.stage)).map((b) => ({ started: b.started_on, readOn: b.finished_on, status: b.read_status }));
+    const info = streakInfo(books, st, td);
+    if (info.readToday) fail("Сьогодні ти вже читала, пропуск не потрібен.");
+    if (!info.skipToday) { if (info.left < 1) fail("Пропусків цього місяця вже немає."); st.skips.push(td); }
+  } else if (act === "set") {
+    if (p.on !== undefined) st.on = !!p.on;
+    if (p.hour !== undefined) { const h = Number(p.hour); if (!(h >= 6 && h <= 23)) fail("Час від 6 до 23."); st.hour = Math.round(h); }
+  } else fail("Невідома дія серії.");
+  const cut = (a: string[]) => a.filter((d) => /^\d{4}-\d\d-\d\d$/.test(d)).sort().slice(-500);
+  st.days = cut(st.days); st.skips = cut(st.skips);
+  await kvSet("streak", st);
+  return st;
+}
 async function apiSetGoals(g: Row) {
   const out: Row = {};
   for (const k of ["month", "year"]) { const n = Math.round(Number(g?.[k])); if (n > 0 && n < 1000) out[k] = n; }
@@ -626,6 +650,7 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiShelfMark: (req: Row) => apiShelfMark(req),
   lbApiSetGoals: (g: Row) => apiSetGoals(g),
   lbApiSetProfile: (p: Row) => apiSetProfile(p),
+  lbApiStreak: (p: Row) => streakMark(String(p?.act || ""), p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),
 };
 
