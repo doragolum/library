@@ -37,6 +37,8 @@ async function remind(test: boolean) {
   } else {
     const d = dailyText(data, today);
     if (d) msgs.push(d);
+    const os: Row = (await kvGet("onsale_today", {})) || {};
+    if (os.date === today && os.items?.length) msgs.push("📗 <b>Вийшли й уже є у продажу</b>:\n" + os.items.map((x: Row) => "• " + esc(x.a) + " — <b>" + esc(x.t) + "</b>").join("\n"));
     if (weekday(today) === 1) msgs.push(weekText(data, today, false));
     if (today.slice(8) === "01") msgs.push(monthText(data, today, false));
   }
@@ -73,6 +75,8 @@ async function night() {
   const rows = (r.data || []) as Row[];
   for (const b of rows) await db.from("books").update({ sale_status: "Є у продажу" }).eq("id", b.id).eq("sale_status", b.sale_status);
   if (rows.length) await db.from("log").insert({ action: "📗 Вийшли з друку", details: "Наявність → «Є у продажу»: " + rows.map((b) => b.author + " — " + b.title).join("; ") });
+  // ранкове повідомлення (remind) скаже про них у боті
+  await kvSet("onsale_today", { date: today, items: rows.map((b) => ({ a: b.author, t: b.title })) });
   return { onSale: rows.length };
 }
 
