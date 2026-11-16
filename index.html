@@ -442,6 +442,26 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .plusgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
 .plusgrid button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
 .plusgrid button svg{width:22px;height:22px;color:var(--accent)}.plusgrid small{font-weight:400;color:var(--muted);font-size:12px}
+.mewrap{max-width:1100px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:6px}
+.pfh{display:flex;gap:14px;align-items:center}
+.pav{position:relative;width:64px;height:64px;border-radius:50%;border:0;padding:0;background:var(--accent-soft);color:var(--accent);flex:none;cursor:pointer;overflow:visible}
+.pav img{width:64px;height:64px;border-radius:50%;object-fit:cover;display:block}.pav span{font:600 26px/64px var(--head)}
+.pav i{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--accent-fill);color:#fff;font-style:normal;font-size:13px;line-height:22px;border:2px solid var(--card)}
+.pnm{font:600 20px/1.2 var(--head)}
+.pchs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pchs span{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--bg);border:1px solid var(--line)}
+.pyr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.pyr div{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0}.pyr b{display:block;font-size:20px}.pyr small{color:var(--muted);font-size:12px}
+.prow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;margin-top:14px;align-items:start}
+.phm{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:3px}
+.phm i{border-radius:2px;background:var(--line)}.phm i.a{background:color-mix(in srgb,var(--accent-fill) 45%,transparent)}.phm i.b{background:var(--accent-fill)}.phm i.f{background:transparent}
+.pfacts div{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:6px 0;border-top:1px solid var(--line)}.pfacts div:first-child{border-top:0}.pfacts b{text-align:right}
+.mgl{font-size:12px;font-weight:600;color:var(--muted);margin:16px 4px 6px}
+.mrow .mv{color:var(--muted);font-size:13px;white-space:nowrap}.mrow .g small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.mrow .mi svg{display:block}.mi.g5{color:var(--accent)}
+.mlog div{display:flex;flex-direction:column;gap:1px;padding:8px 0;border-top:1px solid var(--line)}.mlog div:first-child{border-top:0}
+@media (min-width:900px){.mecols{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;align-items:start}}
+@media (max-width:899px){.pyr{grid-template-columns:repeat(2,minmax(0,1fr))}.prow{grid-template-columns:1fr;gap:12px}.phm{grid-template-rows:repeat(7,1fr);grid-auto-columns:1fr;gap:2px}.phm i{aspect-ratio:1}}
 .mlist{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:12px}
 .mrow{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:13px 14px;cursor:pointer}.mrow:last-child{border-bottom:0}
 .mrow .g{flex:1;min-width:0;display:flex;flex-direction:column}.mrow small{color:var(--muted);font-size:13px}.mrow .chev{color:var(--muted);font-size:16px}
@@ -585,6 +605,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 <div id="toast" class="toast"></div>
 <input type="file" id="scanfile" accept="image/*" capture="environment" hidden>
 <input type="file" id="orderfile" accept="image/*" multiple hidden>
+<input type="file" id="mephoto" accept="image/*" hidden>
 <input type="file" id="coverfile" accept="image/*" capture="environment" hidden>
 
 <script>
@@ -1047,6 +1068,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       trope: ['Троп: ' + arg, lib.filter(function (b) { return (b._t || []).indexOf(arg) !== -1; })],
       mood: ['Враження: ' + arg, lib.filter(function (b) { return (b._m || []).indexOf(arg) !== -1; })],
       sold: ['Продані', null, D.sold],
+      gifted: ['Подаровані', D.books.filter(function (b) { return low(b.avail) === 'подарована'; })],
       ordered: ['Замовлено, ще не в бібліотеці', null, D.wish.filter(function (w) { return ORDERED.indexOf(w.status) !== -1; })],
       want: ['«Хочу купити»', null, D.wish.filter(function (w) { return w.status === 'Хочу купити'; })],
       soon: ['Релізи за 14 днів', null, D.wish.filter(function (w) { return w.release && w.release >= D.today && w.release <= soonEnd && w.status !== 'В бібліотеці'; }).sort(function (a, b) { return a.release < b.release ? -1 : 1; })],
@@ -1405,6 +1427,19 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     shrinkImage(f, 900).then(function (b64) { return api('lbApiCoverUpload', { data: b64, title: b.author + ' — ' + b.title }); })
       .then(function (r) { return saveSet('library', b, { cover: r.url }); })
       .catch(function (e) { toast(e.message, true); });
+  });
+  document.getElementById('mephoto').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0]; ev.target.value = ''; if (!f) return;
+    toast('Зберігаю фото…');
+    /* квадрат 320×320 з центру картинки */
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onload = function () {
+      var sz = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = 320;
+      c.getContext('2d').drawImage(img, (img.width - sz) / 2, (img.height - sz) / 2, sz, sz, 0, 0, 320, 320); URL.revokeObjectURL(url);
+      meSave({ photo: c.toDataURL('image/jpeg', 0.85) }, 'Фото збережено ✓');
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); toast('Не вдалося відкрити картинку', true); };
+    img.src = url;
   });
   function coverQueue() {
     var list = S.inLib.filter(function (x) { return !x.cover; }).sort(function (a, b) { return String(a.shelf).localeCompare(String(b.shelf), 'uk', { numeric: true }) || a.author.localeCompare(b.author, 'uk'); });
@@ -3978,26 +4013,99 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
 
   /* ---------- «Я» як акаунт ---------- */
+  // «Я» (16.11, варіант A + B): картка профілю (фото, ім'я, рік коротко, дні читання за пів року, факти) + групи налаштувань; на комп'ютері у два стовпці
+  var MEI = {
+    lent: '<path d="M7 17L17 7M9 7h8v8"/>', tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+    gift: '<rect x="3" y="9" width="18" height="12" rx="1"/><path d="M12 9v12M3 13h18M12 9c-1.5-3.5-5.5-3.5-5.5-1s5.5 1 5.5 1 5.5 1.5 5.5-1-4-2.5-5.5 1"/>',
+    money: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>', stats: '<path d="M5 20V12M12 20V5M19 20v-9"/>',
+    goal: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>', pace: '<circle cx="12" cy="13" r="8"/><path d="M12 13l3-3M10 2h4"/>',
+    pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
+    app: '<rect x="4" y="4" width="16" height="16" rx="4"/>', tg: '<path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/>',
+    np: '<path d="M2 6h12v10H2zM14 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
+    tbl: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>', log: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+    dl: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'
+  };
+  function meIc(k) { return '<span class="mi g5" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + MEI[k] + '</svg></span>'; }
+  function meAgo(from) {
+    var m = (Number(D.today.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(D.today.slice(5, 7)) - Number(from.slice(5, 7)), y = Math.floor(m / 12); m = m % 12;
+    var yw = function (n) { var a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'рік' : a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'роки' : 'років'; };
+    return (y ? y + ' ' + yw(y) : '') + (y && m ? ' ' : '') + (m ? m + ' міс.' : '') || 'цього місяця';
+  }
+  function profileCard() {
+    var P = D.profile || {}, y = D.today.slice(0, 4), ym = curYm();
+    var readY = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === y; });
+    var readM = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === ym; });
+    var boughtY = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 4) === y; });
+    var goal = (D.goals && D.goals.month) || 0, streak = streakNow();
+    var first = ''; D.books.forEach(function (b) { [b.bought, b.started, b.readOn].forEach(function (d) { if (d && /^\d{4}-\d\d/.test(d) && (!first || d < first)) first = d; }); });
+    var name = P.name || 'Я';
+    var av = '<button class="pav" data-action="me-photo" aria-label="' + (P.photo ? 'Змінити фото' : 'Додати фото') + '">' + (P.photo ? '<img src="' + esc(P.photo) + '" alt="">' : '<span>' + esc(name.slice(0, 1).toUpperCase()) + '</span>') + '<i aria-hidden="true">＋</i></button>';
+    var place = {}; S.inLib.forEach(function (b) { place[placeOf(b)] = 1; });
+    var h = '<div class="pcard"><div class="pfh">' + av + '<div class="grow" style="min-width:0"><div class="pnm">' + esc(name) + '</div>' +
+      (first ? '<div class="muted small">книги в обліку з ' + MONTHS_FROM[mIdx(first.slice(0, 7))] + ' ' + first.slice(0, 4) + ' · ' + meAgo(first) + '</div>' : '') +
+      '<div class="pchs"><span>' + S.inLib.length + ' у бібліотеці</span><span>' + D.wish.filter(function (w) { return w.status !== 'В бібліотеці'; }).length + ' бажанок</span>' + (WIDE ? '<span>' + ['Роттердам', 'Київ'].filter(function (k) { return place[k]; }).join(' · ') + '</span>' : '') + '</div></div><button class="lnk" data-action="me-name">Змінити</button></div>';
+    h += '<div class="pyr"><div><b>' + readY.length + '</b><small>прочитано за ' + y + '</small></div><div><b>' + readM.length + (goal ? ' / ' + goal : '') + '</b><small>у ' + MONTHS_IN[mIdx(ym)] + '</small></div><div><b>' + boughtY.length + '</b><small>куплено за рік</small></div><div><b>' + streak + ' ' + dayWord(streak) + '</b><small>читаєш поспіль</small></div></div>';
+    // дні читання за 26 тижнів: стовпчик = тиждень (пн–нд), темніше — день, коли дочитала книгу
+    var set = readingDays(), fin = {}; D.books.forEach(function (b) { if (b.readOn) fin[b.readOn] = 1; });
+    var dow = (new Date(D.today + 'T12:00:00Z').getUTCDay() + 6) % 7, start = addDays(D.today, -(25 * 7 + dow)), cells = '', n = 0, tot = 0;
+    for (var i = 0; i < 26 * 7; i++) {
+      var d = addDays(start, i), fut = d > D.today;
+      if (!fut) { tot++; if (set[d]) n++; }
+      cells += '<i class="' + (fut ? 'f' : fin[d] ? 'b' : set[d] ? 'a' : '') + '" title="' + dmy(d) + '"></i>';
+    }
+    var fg = mostCommon(readY.length >= 5 ? readY : D.books.filter(function (b) { return b.readOn; }), function (b) { return b.genre; }) || '—';
+    var fa = mostCommon(S.inLib, function (b) { return b.author; }) || '—';
+    h += '<div class="prow"><div><div class="phm">' + cells + '</div><div class="muted small" style="margin-top:6px">дні читання за пів року · ' + n + ' з ' + tot + '</div></div>' +
+      '<div class="pfacts"><div><span class="muted">Улюблений жанр</span><b>' + esc(fg) + '</b></div><div><span class="muted">Найчастіший автор</span><b>' + esc(fa) + '</b></div><div><span class="muted">Найдовша серія днів</span><b>' + bestStreak() + '</b></div></div></div></div>';
+    return h;
+  }
   VIEWS.me = function () {
-    // одне спокійне меню: цифри року стоять у рядках, без окремих плиток і дублів вкладок
     var y = D.today.slice(0, 4);
     var boughtY = D.books.filter(function (b) { return b.bought && b.bought.slice(0, 4) === y; });
     var readY = D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === y; });
     var lent = S.inLib.filter(function (b) { return low(b.avail) === 'позичена'; });
+    var gifted = D.books.filter(function (b) { return low(b.avail) === 'подарована'; });
     var cur = (function () { try { return localStorage.getItem('lb.theme') || ''; } catch (e) { return ''; } })();
-    var row = function (attr, t, s, ic) { return '<button class="mrow" ' + attr + '>' + (ic ? '<span class="mi ' + ic[1] + '" aria-hidden="true">' + ic[0] + '</span>' : '') + '<span class="g"><b>' + t + '</b><small>' + s + '</small></span><span class="chev">›</span></button>'; };
-    var h = '<div class="mlist">' +
-      (WIDE ? '' : row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, ['💸', 'g1']) +
-      row('data-tab="stats"', 'Статистика', 'прочитано ' + readY.length + ' ' + bookWord(readY.length) + ' за ' + y, ['📊', 'g2'])) +
-      row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' ' + bookWord(lent.length) + ' у людей' : 'нікому не позичено', ['🤝', 'g4']) +
-      row('data-list="sold"', 'Продані', D.sold.length + ' ' + bookWord(D.sold.length), ['🏷', 'g6']) +
-      '</div>';
-    h += '<div class="mlist"><div class="mrow mtheme"><span class="g"><b>Тема</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>';
     var ic = (function () { try { return localStorage.getItem('lb.icon') || ''; } catch (e) { return ''; } })();
-    h += '<div class="mrow mtheme mic"><span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div></div>';
-    return h;
+    var goal = (D.goals && D.goals.month) || 0;
+    var row = function (attr, t, v, k, sub) { return '<button class="mrow" ' + attr + '>' + meIc(k) + '<span class="g"><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="mv">' + v + '</span><span class="chev">›</span></button>'; };
+    var info = function (t, v, k, sub) { return '<div class="mrow mtheme">' + meIc(k) + '<span class="g"><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="mv">' + v + '</span></div>'; };
+    var grp = function (t, rows) { return '<div class="mgl">' + t + '</div><div class="mlist">' + rows.join('') + '</div>'; };
+    var inK = S.inLib.filter(inKyiv).length, inR = S.inLib.filter(function (b) { return placeOf(b) === 'Роттердам'; }).length;
+    var gOff = grp('Книги поза полицями', [row('data-list="lent"', 'Позичені', lent.length ? lent.length + ' у людей' : 'нікому', 'lent'), row('data-list="sold"', 'Продані', D.sold.length, 'tag'), row('data-list="gifted"', 'Подаровані', gifted.length, 'gift')]);
+    var gMore = WIDE ? '' : grp('Ще', [row('data-tab="money"', 'Фінанси', money(sumPrice(boughtY)) + ' за ' + y, 'money'), row('data-tab="stats"', 'Статистика', readY.length + ' ' + bookWord(readY.length) + ' за ' + y, 'stats')]);
+    var gRead = grp('Читання', [row('data-action="goal"', 'Мета на місяць', goal ? goal + ' ' + bookWord(goal) : 'не задана', 'goal'), info('Мій темп', '~' + Math.round(S.pace || 50) + ' стор. на день', 'pace', 'рахується сам з твоїх закладок')]);
+    var gPlace = grp('Мої місця', [row('data-list="where|Роттердам"', 'Роттердам', inR + ' ' + bookWord(inR), 'pin'), row('data-tab="kyiv"', 'Київ', inK + ' ' + bookWord(inK), 'pin')]);
+    var gLook = grp('Вигляд', ['<div class="mrow mtheme">' + meIc('sun') + '<span class="g"><b>Тема</b></span><span class="seg3 mini">' + [['', 'Авто'], ['light', 'Світла'], ['dark', 'Темна']].map(function (x) { return '<button data-action="theme" data-v="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>' +
+      '<div class="mrow mtheme mic">' + meIc('app') + '<span class="g"><b>Значок</b></span><span class="seg3 mini">' + [['', 'Пастель', 'icons/icon.svg'], ['classic', 'Класика', 'icons/classic/icon.svg']].map(function (x) { return '<button data-action="appicon" data-v="' + x[0] + '" class="' + (ic === x[0] ? 'on' : '') + '" aria-pressed="' + (ic === x[0]) + '"><img src="' + x[2] + '" alt="" width="20" height="20" class="aic"> ' + x[1] + '</button>'; }).join('') + '</span><small class="mhint">На екрані «Додому» зміниться, коли знову додаси туди сайт.</small></div>']);
+    var gCon = grp('Підключено', [info('Телеграм-бот', '', 'tg', 'пошук, скриншоти, нагадування о 9:00'), info('Нова пошта', 'щогодини', 'np', 'статуси ТТН'), info('Копія в Google-таблицю', 'щоночі', 'tbl')]);
+    var gData = grp('Дані', [row('data-action="me-log"', 'Журнал змін', 'останні ' + (D.log || []).length, 'log'), row('data-action="me-csv"', 'Завантажити копію', 'CSV', 'dl')]);
+    return '<div class="mewrap">' + profileCard() + '<div class="mecols"><div>' + gOff + gMore + gRead + gPlace + '</div><div>' + gLook + gCon + gData + '</div></div></div>';
   };
-
+  function meNameDialog() {
+    var P = D.profile || {};
+    openModal('<button class="close" data-action="close">×</button><h2>Профіль</h2><label class="muted small" for="me-n">Ім\'я</label><input id="me-n" maxlength="40" value="' + esc(P.name || '') + '" placeholder="Як тебе звати" style="width:100%;margin:6px 0 14px">' +
+      '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn p" data-action="me-name-save">Зберегти</button><button class="btn" data-action="me-photo">' + (P.photo ? 'Змінити фото' : 'Додати фото') + '</button>' + (P.photo ? '<button class="btn" data-action="me-photo-del">Прибрати фото</button>' : '') + '</div>', false, 'mid');
+  }
+  function meSave(p, msg) {
+    return api('lbApiSetProfile', p).then(function (r) { D.profile = r; closeModal(); toast(msg); render(); }).catch(function (e) { toast(e.message, true); });
+  }
+  function meLog() {
+    var L = D.log || [];
+    openModal('<button class="close" data-action="close">×</button><h2>Журнал змін</h2><p class="muted small">Останні ' + L.length + ' змін у базі.</p>' + (L.length ? '<div class="mlog">' + L.map(function (r) { return '<div><small class="muted">' + esc(r[0]) + '</small><b>' + esc(r[1]) + '</b>' + (r[2] ? '<span>' + esc(r[2]) + (r[3] ? ' · ' + esc(r[3]) : '') + '</span>' : '') + (r[4] ? '<small class="muted">' + esc(r[4]) + '</small>' : '') + '</div>'; }).join('') + '</div>' : '<p>Поки порожньо.</p>'), true);
+  }
+  function meCsv() {
+    var cols = [['title', 'Назва'], ['author', 'Автор'], ['series', 'Серія'], ['num', '№'], ['genre', 'Жанр'], ['status', 'Статус читання'], ['avail', 'Наявність'], ['place', 'Де фізично'], ['shelf', 'Полиця'], ['pages', 'Сторінок'], ['price', 'Ціна'], ['isbn', 'ISBN'], ['bought', 'Дата покупки'], ['readOn', 'Дата прочитання'], ['rating', 'Оцінка']];
+    var q = function (v) { v = v == null ? '' : String(v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var lines = [cols.map(function (c) { return c[1]; }).join(',')].concat(D.books.map(function (b) { return cols.map(function (c) { return q(b[c[0]]); }).join(','); }));
+    var wcols = [['title', 'Назва'], ['author', 'Автор'], ['status', 'Статус'], ['price', 'Ціна'], ['release', 'Дата виходу'], ['site', 'Магазин']];
+    var wl = [wcols.map(function (c) { return c[1]; }).join(',')].concat(D.wish.map(function (w) { return wcols.map(function (c) { return q(w[c[0]]); }).join(','); }));
+    var save = function (name, text) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+    save('shelfie-книги-' + D.today + '.csv', lines.join('\n'));
+    setTimeout(function () { save('shelfie-бажанки-' + D.today + '.csv', wl.join('\n')); }, 400);
+    toast('Завантажую дві таблиці: книги й бажанки');
+  }
   function shelfMark(sh) { var m = (D.shelfMarks || {})[sh]; return m ? m.k : ''; }
   var MARKS = { open: ['є місце', 'var(--ok-soft)', 'var(--ok)'], full: ['повна', 'var(--bad-soft)', 'var(--bad)'], only: ['лише ', 'var(--accent-soft)', 'var(--accent)'] };
   function markChip(sh) {
@@ -4724,6 +4832,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'close-stay') { var ca = document.querySelector('#modal .closeask'); if (ca) ca.remove(); return; }
     if (a === 'plus-shot') { closeModal(); openOrder('wish'); document.getElementById('orderfile').click(); return; }
     if (a === 'hseg') { view.hseg = act.getAttribute('data-v'); try { localStorage.setItem('lb.hseg', view.hseg); } catch (e) {} return render(); }
+    if (a === 'me-name') return meNameDialog();
+    if (a === 'me-name-save') return meSave({ name: fval('me-n') }, 'Збережено ✓');
+    if (a === 'me-photo') return document.getElementById('mephoto').click();
+    if (a === 'me-photo-del') return meSave({ photo: '' }, 'Фото прибрано');
+    if (a === 'me-log') return meLog();
+    if (a === 'me-csv') return meCsv();
     if (a === 'theme') { setTheme(act.getAttribute('data-v')); return render(); }
     if (a === 'appicon') { setAppIcon(act.getAttribute('data-v')); return render(); }
     if (a === 'order-open') openOrder();

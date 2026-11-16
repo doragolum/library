@@ -244,7 +244,7 @@ const tags = (a: unknown) => (Array.isArray(a) ? a.join(", ") : s(a));
 async function readAll() {
   const [rows, series, kvRows, logRows] = await Promise.all([
     allRows("books"), allRows("series"),
-    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog"]),
+    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile"]),
     db.from("log").select("at,action,title,author,details").order("id", { ascending: false }).limit(30),
   ]);
   const kv: Row = Object.fromEntries(((kvRows.data ?? []) as Row[]).map((r) => [r.key, r.value]));
@@ -286,7 +286,7 @@ async function readAll() {
   for (const f of ["place", "isbn", "cover", "bought", "started", "readOn", "rating", "lentTo", "lentOn", "lentDue", "parcel", "plan", "page", "tropes", "moods", "orig", "src"]) cols[f] = true;
   Object.assign(cols, { wishCover: true, wishOrdered: true, wishIsbn: true, wishOrig: true, wishSrc: true });
   return {
-    today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, shelfMarks: kv.shelf_marks || {},
+    today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, shelfMarks: kv.shelf_marks || {},
     news: kv.news || [], pubCanon: PUBLISHERS, db: true,
     books, wish,
     series: series.map((x) => ({ author: x.author, name: x.name, total: x.total, finished: yesNo(x.finished), translated: yesNo(x.full_ua), pub: x.publisher || "" })),
@@ -529,6 +529,19 @@ async function apiShelfMark(req: Row) {
   await kvSet("shelf_marks", m);
   return m;
 }
+/** Профіль «Я» (16.11): ім'я і фото (маленький JPEG у data:-адресі, до ~150 КБ). photo:"" прибирає фото. */
+async function apiSetProfile(p: Row) {
+  const cur: Row = await kvGet("profile", {}) || {};
+  if (p?.name !== undefined) { const n = String(p.name ?? "").trim().slice(0, 40); if (n) cur.name = n; else delete cur.name; }
+  if (p?.photo !== undefined) {
+    const ph = String(p.photo ?? "");
+    if (!ph) delete cur.photo;
+    else if (/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(ph) && ph.length < 200000) cur.photo = ph;
+    else fail("Фото завелике або не JPEG.");
+  }
+  await kvSet("profile", cur);
+  return cur;
+}
 async function apiSetGoals(g: Row) {
   const out: Row = {};
   for (const k of ["month", "year"]) { const n = Math.round(Number(g?.[k])); if (n > 0 && n < 1000) out[k] = n; }
@@ -612,6 +625,7 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiDeleteBook: (req: Row) => apiDelete(req, LIB_STAGES, "🗑 Видалено з бібліотеки"),
   lbApiShelfMark: (req: Row) => apiShelfMark(req),
   lbApiSetGoals: (g: Row) => apiSetGoals(g),
+  lbApiSetProfile: (p: Row) => apiSetProfile(p),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),
 };
 
