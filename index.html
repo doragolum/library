@@ -615,7 +615,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
   var SAVED_KEY = 'lb.view.v3';
   try { var sv = JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); if (sv.f) view.f = sv.f; if (sv.sort) view.sort = sv.sort; if (sv.bookMode) view.bookMode = sv.bookMode; } catch (e) {}
-  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; view.shTitles = !!localStorage.getItem('lb.shtitles'); } catch (e) {}
+  try { view.shelfMode = localStorage.getItem('lb.shm') || 'tiles'; view.shTitles = false; /* перемикач «Назви» прибрано 16.11 */ } catch (e) {}
   // після оновлення сторінки відкривається та сама вкладка
   try { view.hseg = localStorage.getItem('lb.hseg') || 'today'; } catch (e) { view.hseg = 'today'; }
   try { var lt = localStorage.getItem('lb.tab'); if (lt && TABS.some(function (t) { return t[0] === lt; })) view.tab = lt; } catch (e) {}
@@ -1568,7 +1568,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var mode = view.shelfMode === 'covers' || view.shelfMode === 'spines' ? view.shelfMode : 'tiles', fm = mode === 'covers';
     var h = '<div class="row" style="align-items:center;margin-bottom:10px"><div class="wseg" role="group" aria-label="Вигляд">' +
       [['tiles', 'Плитки'], ['spines', 'Корінці'], ['covers', 'Обкладинки']].map(function (m) { return '<button data-shm="' + m[0] + '" class="' + (mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') + '</div>' +
-      (mode === 'spines' ? '<button class="shsw' + (view.shTitles ? ' on' : '') + '" data-action="sh-titles" role="switch" aria-checked="' + (view.shTitles ? 'true' : 'false') + '"><i></i>Назви</button>' : '') + '<span class="grow"></span>' +
+      '<span class="grow"></span>' +
       '<button class="tbtn" data-action="shmore-toggle" aria-label="Ще" aria-expanded="' + (view.shelfMoreOpen ? 'true' : 'false') + '">⋯</button></div>';
     var mv = movePlan().length;
     // підказка про перестановку видна, лише коли є що переставити; решта службового — у «⋯»
