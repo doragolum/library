@@ -159,3 +159,53 @@ export const helpText = (_owner = true) => "📚 <b>Що я вмію</b>\n" +
   "• Надішли скриншот анонсу чи замовлення, посилання на сторінку книги або голосове («хочу нову книгу Маас, вийде в березні») — я складу картку і запропоную додати в бажанки або як замовлену. Чого бракує — перепитаю.\n" +
   "• Пошук, підсумки й серія читання — у додатку, нагадування приходять сповіщеннями з додатку («Я» → «Сповіщення»).\n" +
   "Кнопка <b>Nookly</b> внизу відкриває весь додаток.";
+
+/* ---------- короткі сповіщення з додатку (16.11, погоджено): одна подія — одне сповіщення, без емодзі ----------
+   Кожне: {kind, title, body, tag, id?, actions?}. kind — для перемикачів і панелі з кнопками на сайті. */
+export type PushItem = { kind: string; title: string; body: string; tag: string; id?: number; actions?: { action: string; title: string }[] };
+const q = (s: unknown) => "«" + String(s ?? "").trim() + "»";
+const books = (n: number) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "книга" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "книги" : "книг"; };
+const booksAcc = (n: number) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "книгу" : books(n); };
+const releasesW = (n: number) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "реліз" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "релізи" : "релізів"; };
+const pagesW = (n: number) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "сторінка" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "сторінки" : "сторінок"; };
+const listT = (xs: Row[], max = 3) => xs.slice(0, max).map((x) => q(x.title)).join(", ") + (xs.length > max ? " і ще " + (xs.length - max) : "");
+const LATER = { action: "later", title: "Завтра" };
+
+export function pushMorning(data: Row, today: string, mute: number[] = [], onsale: Row[] = []): PushItem[] {
+  const out: PushItem[] = [], tomorrow = addDays(today, 1), m = new Set(mute.map(Number));
+  const active = data.wish.filter((w: Row) => w.release && w.status !== "В бібліотеці" && !m.has(Number(w.row)));
+  const t = active.filter((w: Row) => w.release === today), n = active.filter((w: Row) => w.release === tomorrow);
+  const tail = n.length ? (n.length === 1 ? "Завтра ще " + q(n[0].title) + "." : "Завтра ще " + n.length + " " + releasesW(n.length) + ".") : "";
+  if (t.length === 1) out.push({ kind: "release", id: t[0].row, title: "Сьогодні виходить " + q(t[0].title), body: [t[0].author + ".", tail].filter(Boolean).join(" "), tag: "rel-" + t[0].row, actions: [{ action: "ordered", title: "Замовила" }, LATER] });
+  else if (t.length > 1) out.push({ kind: "release", title: "Сьогодні " + t.length + " " + releasesW(t.length), body: listT(t) + "." + (tail ? " " + tail : ""), tag: "rel-" + today });
+  else if (n.length === 1) out.push({ kind: "release", id: n[0].row, title: "Завтра виходить " + q(n[0].title), body: n[0].author + ".", tag: "rel-" + n[0].row, actions: [{ action: "ordered", title: "Замовила" }, LATER] });
+  else if (n.length > 1) out.push({ kind: "release", title: "Завтра " + n.length + " " + releasesW(n.length), body: listT(n) + ".", tag: "rel-" + tomorrow });
+  for (const w of notSent(data, today).filter((x: Row) => x.release === addDays(today, -NOT_SENT_DAYS))) {
+    const shop = w.where || site(w.site);
+    out.push({ kind: "ttn", id: w.row, title: "Немає ТТН уже " + NOT_SENT_DAYS + " днів", body: q(w.title) + (shop ? ", " + shop : "") + (w.order ? " № " + w.order : "") + ". Може, написати магазину?", tag: "ttn-" + w.row, actions: [LATER] });
+  }
+  for (const b of data.books.filter((x: Row) => x.avail === "позичена" && x.lentDue === today))
+    out.push({ kind: "lent", id: b.row, title: (b.lentTo ? b.lentTo + " має повернути " : "Час повернути ") + q(b.title), body: "Сьогодні останній день.", tag: "lent-" + b.row, actions: [{ action: "returned", title: "Повернула" }, LATER] });
+  const os = onsale.filter((x) => !m.has(Number(x.id)));
+  if (os.length === 1) out.push({ kind: "onsale", id: os[0].id, title: q(os[0].t) + " уже в продажу", body: (os[0].a ? os[0].a + ". " : "") + "Чекала в бажанках як анонс. Можна замовляти.", tag: "sale-" + (os[0].id || today), actions: os[0].id ? [{ action: "ordered", title: "Замовила" }, LATER] : undefined });
+  else if (os.length > 1) out.push({ kind: "onsale", title: os.length + " " + books(os.length) + " уже в продажу", body: listT(os.map((x) => ({ title: x.t }))) + ".", tag: "sale-" + today });
+  return out;
+}
+export function pushWeek(data: Row, today: string): PushItem {
+  const from = addDays(today, -7), to = addDays(today, -1);
+  const read = data.books.filter((b: Row) => inRange(b.readOn, from, to)), pages = read.reduce((a: number, b: Row) => a + (b.pages || 0), 0);
+  const bought = data.books.filter((b: Row) => inRange(b.bought, from, to)), spent = bought.reduce((a: number, b: Row) => a + (b.price || 0), 0);
+  const soon = data.wish.filter((w: Row) => w.release && w.release >= today && w.release <= addDays(today, 7) && w.status !== "В бібліотеці").length;
+  const title = read.length ? "Тиждень: " + read.length + " " + books(read.length) + (pages ? ", " + pages + " " + pagesW(pages) : "") : "Тиждень без дочитаних книг";
+  const body = [bought.length ? "Додала " + bought.length + " " + booksAcc(bought.length) + (spent ? " на " + money(spent) : "") + "." : "", soon ? "Наступного тижня " + soon + " " + releasesW(soon) + "." : ""].filter(Boolean).join(" ") || "Нових книг не додавала.";
+  return { kind: "week", title, body, tag: "week-" + today };
+}
+export function pushMonth(data: Row, today: string): PushItem {
+  const p = today.split("-").map(Number); let y = p[0], mo = p[1] - 1; if (mo === 0) { mo = 12; y -= 1; }
+  const ym = y + "-" + String(mo).padStart(2, "0");
+  const names = ["", "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
+  const read = data.books.filter((b: Row) => b.readOn && String(b.readOn).slice(0, 7) === ym);
+  const best = read.filter((b: Row) => b.rating).sort((a: Row, b: Row) => b.rating - a.rating)[0];
+  const spent = data.books.filter((b: Row) => b.bought && String(b.bought).slice(0, 7) === ym).reduce((a: number, b: Row) => a + (b.price || 0), 0);
+  return { kind: "month", title: names[mo] + ": прочитала " + read.length + " " + booksAcc(read.length), body: [best ? "Найкраща — " + q(best.title) + "." : "", spent ? "Витрачено " + money(spent) + "." : ""].filter(Boolean).join(" ") || "Подивись підсумок у додатку.", tag: "month-" + ym };
+}

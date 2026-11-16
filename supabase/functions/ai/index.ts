@@ -8,7 +8,7 @@ import { fromGoodreads } from "../_shared/goodreads.ts";
 import { pubCanon } from "../_shared/pub.ts";
 import { gemini, aiBooks, enrichItems, bookFromUrl, AiError, isbnKey, todayKyiv } from "../_shared/ai.ts";
 import { tgSend, esc } from "../_shared/tg.ts";
-import { pushHtml } from "../_shared/push.ts";
+import { pushTo } from "../_shared/push.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { whoIs, AuthError, type Who } from "../_shared/auth.ts";
 
@@ -196,7 +196,9 @@ async function apiNews(req: Row) {
         "• " + esc(it.ch.title || it.t) + (it.s ? " <i>(" + esc(it.s) + (it.p ? " #" + esc(it.p) : "") + ")</i>" : "") + " — " + esc(newsText(it))).join("\n") +
         "\n\nПідтвердити або сховати можна в додатку: Бажанки → «Новини серій».";
       // 16.11: лише сповіщенням; у Телеграм — тільки поки сповіщення не ввімкнені
-      const r2 = await pushHtml(db, uid(), msg, { tag: "news" }).catch((e) => { console.error(e); return { devices: 0 }; });
+      const f = r.added[0];
+      const r2 = await pushTo(db, uid(), { kind: "news", title: "Новини серій: " + r.added.length, body: "«" + (f.ch.title || f.t) + "»" + (f.s ? " (" + f.s + (f.p ? " #" + f.p : "") + ")" : "") + " — " + newsText(f) + (r.added.length > 1 ? ". І ще " + (r.added.length - 1) + "." : "."), tag: "news-" + todayKyiv() })
+        .catch((e) => { console.error(e); return { devices: 0 }; });
       if (!(r2 as any).devices) await tgSend(msg);
     }
     return { checked: r.checked, added: r.added.length };

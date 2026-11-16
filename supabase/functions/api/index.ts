@@ -8,7 +8,7 @@ import { streakInfo, STREAK_DEFAULT } from "../_shared/streak.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { PERSONAL_KV, kvKey, placesOf as placesOfFor, validTz } from "../_shared/people.ts";
 import { whoIs, AuthError, randomToken, sha256, type Who } from "../_shared/auth.ts";
-import { vapidPublic, pushTo } from "../_shared/push.ts";
+import { vapidPublic, pushTo, pushPrefs, snoozeAt } from "../_shared/push.ts";
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzMBurJfPgrKJY2H99pHG7BN7axnxWIFC3p1cHjno3Q0bKywZP71_KDC2vBd9qfUi1/exec";
@@ -883,7 +883,31 @@ async function apiTgLink() {
 /** Сповіщення в додатку (16.11): ключ для підписки, підписати / відписати цей пристрій, тест, скільки пристроїв. */
 async function apiPush(p: Row) {
   const act = s(p.act);
-  if (act === "key") return { key: await vapidPublic(raw), devices: ((await raw.from("push_subs").select("id").eq("owner_id", uid())).data || []).length };
+  if (act === "key") return { key: await vapidPublic(raw), devices: ((await raw.from("push_subs").select("id").eq("owner_id", uid())).data || []).length, prefs: await pushPrefs(raw, uid()) };
+  if (act === "prefs") {
+    const cur = await pushPrefs(raw, uid());
+    for (const k of Object.keys(cur)) if (p.prefs && k in p.prefs) cur[k] = !!p.prefs[k];
+    await kvSet("push_prefs", cur);
+    return { prefs: cur };
+  }
+  if (act === "snooze") {
+    // «Нагадати пізніше»: те саме сповіщення прийде ще раз (крон lb-snooze кожні 5 хвилин)
+    const m = p.msg || {}, when = s(p.when);
+    if (!["1h", "22", "tomorrow", "week"].includes(when)) fail("Невідомий час.");
+    const msg = { kind: s(m.kind).slice(0, 20), id: Number(m.id) || undefined, title: s(m.title).slice(0, 160), body: s(m.body).slice(0, 600), tag: s(m.tag).slice(0, 60) || "later", actions: Array.isArray(m.actions) ? m.actions.slice(0, 2) : undefined };
+    if (!msg.title) fail("Немає тексту сповіщення.");
+    const at = snoozeAt(when, placesOf(await kvGet("places", null)).tz);
+    chk(await raw.from("push_snooze").insert({ owner_id: uid(), due_at: at.toISOString(), msg }), "push_snooze");
+    return { at: at.toISOString() };
+  }
+  if (act === "mute") {
+    // «Більше не нагадувати» про цю бажанку (релізи й «уже в продажу»)
+    const id = Number(p.id); if (!id) fail("Немає книги.");
+    const list: number[] = (await kvGet("push_mute", [])) || [];
+    if (!list.includes(id)) list.push(id);
+    await kvSet("push_mute", list.slice(-500));
+    return { ok: true };
+  }
   if (act === "sub") {
     const sub = p.sub || {}, endpoint = s(sub.endpoint), p256dh = s(sub.keys?.p256dh), auth = s(sub.keys?.auth);
     if (!/^https:\/\//.test(endpoint) || !p256dh || !auth) fail("Пристрій не дав адресу для сповіщень.");

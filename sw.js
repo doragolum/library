@@ -22,18 +22,22 @@ self.addEventListener('fetch', function (e) {
 self.addEventListener('push', function (e) {
   var m = {};
   try { m = e.data ? e.data.json() : {}; } catch (err) { m = { title: 'Nookly', body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(m.title || 'Nookly', {
-    body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { open: m.open || '' }
-  }));
+  // дані для панелі з кнопками на сайті (16.11): вид, книга, текст — натиск відкриває Nookly з цією панеллю
+  var data = { k: m.kind || '', id: m.id || 0, t: m.title || '', b: m.body || '', tag: m.tag || '', open: m.open || '', acts: m.actions || [] };
+  var opt = { body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: data };
+  // кнопки прямо в сповіщенні (Chrome на комп'ютері; айфон їх не показує)
+  if (m.actions && m.actions.length) opt.actions = m.actions.slice(0, 2);
+  e.waitUntil(self.registration.showNotification(m.title || 'Nookly', opt));
 });
 self.addEventListener('notificationclick', function (e) {
   e.notification.close();
-  var open = (e.notification.data && e.notification.data.open) || '';
-  var url = self.registration.scope + (open ? '#open=' + open : '');
+  var d = e.notification.data || {};
+  var o = d.k ? { k: d.k, id: d.id, t: d.t, b: d.b, tag: d.tag, acts: d.acts, do: e.action || '' } : (d.open || '');
+  var hash = o ? '#open=' + encodeURIComponent(typeof o === 'string' ? o : JSON.stringify(o)) : '';
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (cs) {
     for (var i = 0; i < cs.length; i++) {
-      if (cs[i].url.indexOf(self.registration.scope) === 0 && 'focus' in cs[i]) { cs[i].postMessage({ open: open }); return cs[i].focus(); }
+      if (cs[i].url.indexOf(self.registration.scope) === 0 && 'focus' in cs[i]) { cs[i].postMessage({ open: o }); return cs[i].focus(); }
     }
-    return self.clients.openWindow(url);
+    return self.clients.openWindow(self.registration.scope + hash);
   }));
 });
