@@ -260,6 +260,35 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .col .item .t{font-size:13px}
 /* календар */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+/* журнал читання (16.11) */
+.jline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.jdh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px}
+.jen{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:6px;width:100%;text-align:left;font:inherit;color:var(--ink)}
+.jen.jadd{border-style:dashed;justify-content:center;color:var(--muted);cursor:pointer}
+.jen .el{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.jen .muted.small{display:block}
+.jtm{font-size:13px;color:var(--muted);width:42px;flex:none;font-variant-numeric:tabular-nums}
+.jcv{width:28px;flex:none;cursor:pointer}.jcv img,.jcv .ph{width:28px;height:42px;border-radius:3px;object-fit:cover;font-size:5px;padding:1px;overflow:hidden;display:block}
+.jtag{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.jtag.w{border-radius:999px;padding:1px 8px;background:var(--ok-soft);color:var(--ok);font-weight:600}
+.jed{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--muted);display:grid;place-items:center;font:inherit;font-size:14px;cursor:pointer;flex:none}
+.cal.jcal .d{cursor:pointer;align-items:center;justify-content:center;min-height:54px;border:1px solid var(--line);background:var(--card)}
+.jcal .d .n{color:var(--ink);font-weight:600;font-size:13px}
+.jcal .d small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:16px}
+.jcal .d.r{background:var(--ok-soft);border-color:transparent}.jcal .d.r small,.jcal .d.r .n{color:var(--ok)}
+.jcal .d.fr small{color:var(--blue)}
+.jcal .d.fu{opacity:.4;cursor:default}
+.jcal .d.out{border:0;background:transparent}
+.jcal .d.sel{outline:2px solid var(--accent-fill);outline-offset:-2px}
+.jcal .d.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.cal.jcal.cvm .d{min-height:78px;justify-content:flex-start;align-items:stretch}
+.jcal .d .fin{top:1px;right:4px}
+.jbars{display:flex;align-items:flex-end;gap:3px;height:60px;margin:10px 0 2px}.jbars i{flex:1;max-width:24px;background:var(--accent-fill);border-radius:3px 3px 0 0;opacity:.85}
+.jtl{position:relative;padding-left:18px;margin-top:10px}.jtl:before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.jtl .p{position:relative;display:flex;align-items:center;gap:8px;margin-bottom:8px}.jtl .p:before{content:"";position:absolute;left:-17px;top:10px;width:10px;height:10px;border-radius:50%;background:var(--accent-fill)}
+.jtl .p.s:before{background:var(--ok)}
+.jtl .p b{font-size:15px;font-variant-numeric:tabular-nums}
+.jmore summary{cursor:pointer;list-style:none;margin-top:2px}.jmore summary::-webkit-details-marker{display:none}
 .cal .dh{font-size:12px;color:var(--muted);text-align:center}
 .cal .d{min-height:74px;border-radius:8px;background:var(--bg);padding:3px;font-size:12px;position:relative;display:flex;flex-direction:column;gap:2px;overflow:hidden}
 .cal .d .n{color:var(--muted)}
@@ -688,7 +717,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (m) m.href = v === 'classic' ? 'manifest-classic.webmanifest' : 'manifest.webmanifest';
   }
   try { var th0 = localStorage.getItem('lb.theme'); if (th0) document.documentElement.setAttribute('data-theme', th0); } catch (e) {}
-  var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? (function () { try { return localStorage.getItem('lb.wmode') || 'board'; } catch (e) { return 'board'; } })() : 'list', seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '' };
+  var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? (function () { try { return localStorage.getItem('lb.wmode') || 'board'; } catch (e) { return 'board'; } })() : 'list', seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '', calCv: (function () { try { return localStorage.getItem('lb.calcv') || 'pages'; } catch (e) { return 'pages'; } })() };
   var modalStack = null; // що зараз відкрито у вікні, щоб перемалювати після збереження
   var nav = [];           // історія карток у вікні: книга → серія → автор …, для кнопки «‹ Назад»
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
@@ -932,6 +961,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       res.forEach(function (r, i) {
         var it = list[i].item;
         it.row = r.row;
+        if (r.journal) { D.journal = [r.journal].concat(D.journal || []); }
+        if (r.streak) { D.streak = r.streak; DAYS_CACHE = null; MARK_CACHE = null; }
         Object.keys(r.values).forEach(function (f) {
           var v = r.values[f];
           if (f === 'rating' || f === 'pages' || f === 'price') v = v === '' ? null : Number(v);
@@ -1349,6 +1380,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         (c.started ? '<label class="edit"><span>Почала</span><input type="date" data-date="started|' + b.row + '" value="' + esc(b.started || '') + '"></label>' : '') +
         (c.readOn ? '<label class="edit"><span>Дочитала</span><input type="date" data-date="readOn|' + b.row + '" value="' + esc(b.readOn || '') + '"></label>' : '') +
         '</div>' + (c.rating ? '<div style="margin-top:8px"><span class="muted small">Оцінка </span>' + starPicker('rate|' + b.row, b.rating) + (b.rating ? ' <button class="chip" data-action="unrate" data-row="' + b.row + '">прибрати</button>' : '') + '</div>' : '') + '</div>';
+      pd += jBookHtml(b);
       if (c.moods) pd += '<div class="card"><h3>Мої враження</h3>' + moodChips(b._m, 'mood-t', b.row) + '<p class="muted small" style="margin:8px 0 0">Можна кілька. За ними «Що почитати?» підбирає схоже.</p></div>';
       h += pane('diary', pd);
     }
@@ -3710,6 +3742,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (b.started && b.readOn && b.readOn >= b.started) range(b.started, b.readOn);
     });
     st.days.forEach(function (d) { set[d] = 1; });
+    (D.journal || []).forEach(function (e) { set[e.day] = 1; });
     Object.keys(set).forEach(function (d) { if (d > D.today) delete set[d]; });
     DAYS_CACHE = { d: D, v: S, st: D.streak, set: set };
     return set;
@@ -3719,6 +3752,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var set = {};
     D.books.forEach(function (b) { if (b.started) set[b.started] = 1; if (b.readOn) set[b.readOn] = 1; });
     stCfg().days.forEach(function (d) { set[d] = 1; });
+    (D.journal || []).forEach(function (e) { set[e.day] = 1; });
     Object.keys(set).forEach(function (d) { if (d > D.today) delete set[d]; });
     MARK_CACHE = { d: D, st: D.streak, set: set };
     return set;
@@ -3784,7 +3818,168 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       }).join('') + '</div><p class="muted small" style="margin:10px 0 0">Коли вимкнено, серії немає ні в боті, ні в додатку.</p>', false, 'mid');
   }
   function streakApi(p, msg) {
-    return api('lbApiStreak', p).then(function (r) { D.streak = r; DAYS_CACHE = null; MARK_CACHE = null; if (msg) toast(msg); render(); return r; }).catch(function (e) { toast(e.message, true); });
+    return api('lbApiStreak', p).then(function (r) { if (r && r.journal) { D.journal = r.journal; delete r.journal; } D.streak = r; DAYS_CACHE = null; MARK_CACHE = null; if (msg) toast(msg); render(); return r; }).catch(function (e) { toast(e.message, true); });
+  }
+
+  /* ---------- журнал читання (16.11, варіанти A + B + C разом) ----------
+     Кожна закладка й «Читала» (тут чи в боті) — запис у базі (reading_log): дата, час, зі сторінки → до сторінки.
+     Записи можна виправити й видалити; поточна сторінка й серія перераховуються на сервері (lbApiJournal).
+     Початок і кінець книги показуються в журналі з дат книги (міняються в картці, «Щоденник»). */
+  var DOW_SH = ['нд', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  function jAll() { return D.journal || []; }
+  function jPages(e) { return e.from != null && e.to != null ? Math.max(0, e.to - e.from) : 0; }
+  function jTime(e) { if (!e.at) return ''; var d = new Date(e.at); return isNaN(d) ? '' : ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function jDayName(d) { var w = DOW_SH[new Date(d + 'T12:00:00Z').getUTCDay()]; return (d === D.today ? 'Сьогодні, ' : d === addDays(D.today, -1) ? 'Вчора, ' : '') + w + ' ' + dmy(d).slice(0, 5); }
+  // записи дня разом із початком / кінцем книги
+  function jDay(day) {
+    var list = jAll().filter(function (e) { return e.day === day; });
+    D.books.forEach(function (b) {
+      if (b.readOn === day) list.push({ syn: 'finish', row: b.row, day: day });
+      if (b.started === day) list.push({ syn: 'start', row: b.row, day: day });
+    });
+    return list.sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')) || (b.id || 0) - (a.id || 0); });
+  }
+  function jDayPages(day) { return jAll().reduce(function (s, e) { return s + (e.day === day ? jPages(e) : 0); }, 0); }
+  function jBookDays(row) {
+    var m = {};
+    jAll().forEach(function (e) { if (e.row === row) m[e.day] = (m[e.day] || 0) + jPages(e); });
+    return m;
+  }
+  function jEntryHtml(e) {
+    var b = e.row ? bookByRow(e.row) : null, t = jTime(e), what, tag = '';
+    if (e.syn) { what = ''; tag = '<span class="jtag w">' + (e.syn === 'start' ? 'почала' : 'дочитала ✓') + '</span>'; }
+    else if (e.to != null) { what = 'стор. ' + (e.from != null ? e.from + ' → ' : 'до ') + e.to; if (jPages(e)) tag = '<span class="jtag">+' + jPages(e) + '</span>'; }
+    else what = 'позначка «Читала»';
+    return '<div class="jen"><span class="jtm">' + (t || '—') + '</span>' + (b ? '<span class="jcv" data-book="' + b.row + '">' + cover(b) + '</span>' : '<span class="jcv"></span>') +
+      '<div class="grow" style="min-width:0"><b class="el"' + (b ? ' data-book="' + b.row + '"' : '') + '>' + esc(b ? b.title : 'Без книги') + '</b>' + (what ? '<span class="muted small">' + what + '</span>' : '') + '</div>' + tag +
+      (e.syn ? '' : '<button class="jed" data-action="jr-edit" data-id="' + e.id + '" aria-label="Виправити запис">✎</button>') + '</div>';
+  }
+  // A: рядок під «Зараз читаю»
+  function jLine(b) {
+    var es = jAll().filter(function (e) { return e.row === b.row && e.to != null; }), td = es.filter(function (e) { return e.day === D.today; });
+    var txt = '';
+    if (td.length) { var lo = Math.min.apply(null, td.map(function (e) { return e.from != null ? e.from : e.to; })), hi = Math.max.apply(null, td.map(function (e) { return e.to; })); txt = 'Сьогодні: стор. ' + (lo !== hi ? lo + ' → ' : '') + hi; }
+    else if (es.length) txt = 'Остання закладка ' + dmy(es[0].day).slice(0, 5) + ', стор. ' + es[0].to;
+    return '<div class="jline"><span class="muted small">' + txt + '</span><button class="lnk" data-action="jr-open">Журнал читання ›</button></div>';
+  }
+  var JR = { n: 14, back: null };
+  function journalDialog() {
+    nav = []; modalStack = null; JR.back = journalDialog;
+    var I = streakInfo(), days = {}, h = '';
+    jAll().forEach(function (e) { days[e.day] = 1; });
+    D.books.forEach(function (b) { if (b.started && b.started <= D.today) days[b.started] = 1; if (b.readOn && b.readOn <= D.today) days[b.readOn] = 1; });
+    for (var i = 0; i < 7; i++) days[addDays(D.today, -i)] = 1; // останній тиждень цілком, щоб дописати забутий день
+    var list = Object.keys(days).sort().reverse(), shown = list.slice(0, JR.n);
+    h += '<button class="close" data-action="close">×</button><div class="row" style="justify-content:space-between;margin-right:40px"><h2 style="margin:0">Журнал читання</h2><button class="btn sm" data-action="jr-add" data-d="' + D.today + '">＋ Додати запис</button></div>' +
+      '<p class="muted small" style="margin:6px 0 4px">Кожна закладка й «Читала» — тут. ✎ — виправити або видалити. Поточна сторінка й серія перерахуються самі.</p>';
+    h += shown.map(function (d) {
+      var es = jDay(d), pg = jDayPages(d);
+      var right = es.length ? (pg ? '+' + pg + ' стор.' : '') : I.skipped[d] || (stCfg().skips.indexOf(d) !== -1) ? 'пропуск ❄' : 'не читала';
+      return '<div class="jdh"><span>' + jDayName(d) + '</span><span>' + right + '</span></div>' + (es.length ? es.map(jEntryHtml).join('') : '<button class="jen jadd" data-action="jr-add" data-d="' + d + '">＋ Дописати цей день</button>');
+    }).join('');
+    if (list.length > shown.length) h += '<button class="btn" style="margin-top:8px;width:100%" data-action="jr-more">Показати ще</button>';
+    openModal(h, false, 'mid');
+  }
+  // редагування запису (і додавання)
+  function jEditDialog(e, day, row) {
+    var isNew = !e, b0 = e ? (e.row ? bookByRow(e.row) : null) : row ? bookByRow(row) : readingNow()[0];
+    var t = e ? jTime(e) : day === D.today ? ('0' + new Date().getHours()).slice(-2) + ':' + ('0' + new Date().getMinutes()).slice(-2) : '';
+    // книги на вибір: зараз читаю, ті, що є в журналі за 2 місяці, і прочитані за 2 місяці
+    var since = addDays(D.today, -62), pick = {}, opt = [];
+    var add = function (b) { if (b && !pick[b.row]) { pick[b.row] = 1; opt.push(b); } };
+    add(b0); readingNow().forEach(add);
+    jAll().forEach(function (x) { if (x.day >= since && x.row) add(bookByRow(x.row)); });
+    D.books.forEach(function (b) { if ((b.readOn && b.readOn >= since) || (b.started && b.started >= since)) add(b); });
+    var from = e ? e.from : b0 && b0.page != null && !e ? b0.page : '';
+    var h = '<button class="close" data-action="jr-back">×</button><h2>' + (isNew ? 'Новий запис' : 'Запис') + '</h2><div class="form">' +
+      '<label class="full"><span>Книга</span><select id="j-book"><option value="">— без книги («Читала») —</option>' + opt.map(function (b) { return '<option value="' + b.row + '"' + (b0 && b.row === b0.row ? ' selected' : '') + '>' + esc(b.title) + (b.author ? ' · ' + esc(b.author) : '') + '</option>'; }).join('') + '</select></label>' +
+      '<label><span>Дата</span><input type="date" id="j-day" max="' + D.today + '" value="' + esc(e ? e.day : day || D.today) + '"></label>' +
+      '<label><span>Час</span><input type="time" id="j-time" value="' + esc(t) + '"></label>' +
+      '<label><span>Зі сторінки</span><input type="number" inputmode="numeric" min="0" id="j-from" value="' + esc(from == null ? '' : from) + '"></label>' +
+      '<label><span>До сторінки</span><input type="number" inputmode="numeric" min="0" id="j-to" value="' + esc(e && e.to != null ? e.to : '') + '"></label></div>' +
+      '<div class="row" style="margin-top:14px"><button class="btn p" data-action="jr-save" data-id="' + (e ? e.id : '') + '">Зберегти</button>' + (e ? '<button class="btn" style="color:var(--bad)" data-action="jr-del" data-id="' + e.id + '">Видалити</button>' : '') + '<button class="btn" data-action="jr-back">Скасувати</button></div>' +
+      '<p class="muted small" style="margin:10px 0 0">Без сторінок запис означає просто «Читала». Після зміни поточна сторінка й серія перерахуються самі.</p>';
+    nav = []; modalStack = null;
+    openModal(h, false, 'mid');
+  }
+  function jBack() { var f = JR.back; if (f) f(); else { closeModal(); refresh(); } }
+  function jApply(r) {
+    D.journal = r.journal; if (r.streak) D.streak = r.streak;
+    (r.pages || []).forEach(function (p) { var b = bookByRow(p.row); if (b) b.page = p.page; });
+    DAYS_CACHE = null; MARK_CACHE = null; S = derive(D);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(D)); } catch (e) {}
+  }
+  function jSave(id, del) {
+    var p = del ? { act: 'del', id: id } : (function () {
+      var day = fval('j-day'), tm = fval('j-time'), at = '';
+      if (day && tm) { var d = new Date(day + 'T' + tm); if (!isNaN(d)) at = d.toISOString(); }
+      return { act: id ? 'edit' : 'add', id: id || '', row: fval('j-book'), day: day, at: at, from: fval('j-from'), to: fval('j-to') };
+    })();
+    toast('Зберігаю…');
+    return api('lbApiJournal', p).then(function (r) { jApply(r); toast(del ? 'Запис видалено' : 'Збережено ✓'); refresh(); jBack(); }).catch(function (e) { toast(e.message, true); });
+  }
+  // B: календар місяця замість старого «Календаря читання»; перемикач «Сторінки / Обкладинки»
+  function calendarCard() {
+    var m = view.calM || D.today.slice(0, 7), p = m.split('-').map(Number), lib = D.books;
+    var dim = new Date(Date.UTC(p[0], p[1], 0)).getUTCDate(), startDow = (new Date(Date.UTC(p[0], p[1] - 1, 1)).getUTCDay() + 6) % 7;
+    var cv = view.calCv === 'covers', I = streakInfo(), set = markedDays();
+    var names = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+    var sel = view.calSel && view.calSel.slice(0, 7) === m ? view.calSel : m === D.today.slice(0, 7) ? D.today : '';
+    var h = '<div class="card" id="calcard"><div class="row" style="flex-wrap:wrap;gap:8px"><div class="row" style="gap:6px;flex:1 0 auto;flex-wrap:nowrap"><button class="btn sm" data-cal="-1" aria-label="Попередній місяць">‹</button><h3 style="margin:0;min-width:120px;text-align:center">' + names[p[1] - 1] + ' ' + p[0] + '</h3><button class="btn sm" data-cal="1" aria-label="Наступний місяць">›</button></div>' +
+      '<div class="wseg" role="group" aria-label="Вигляд календаря"><button data-action="cal-cv" data-v="pages" class="' + (cv ? '' : 'on') + '">Сторінки</button><button data-action="cal-cv" data-v="covers" class="' + (cv ? 'on' : '') + '">Обкладинки</button></div></div>';
+    h += '<div class="cal jcal' + (cv ? ' cvm' : '') + '" style="margin-top:10px">' + ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(function (d) { return '<div class="dh">' + d + '</div>'; }).join('');
+    for (var i = 0; i < startDow; i++) h += '<div class="d out"></div>';
+    var monthPages = 0, readDays = 0;
+    for (var d = 1; d <= dim; d++) {
+      var day = m + '-' + ('0' + d).slice(-2), fut = day > D.today, pg = jDayPages(day), on = !!set[day] || jAll().some(function (e) { return e.day === day; });
+      var fr = !on && (I.skipped[day] || stCfg().skips.indexOf(day) !== -1);
+      monthPages += pg; if (on) readDays++;
+      var fin = lib.some(function (b) { return b.readOn === day; });
+      var cls = 'd' + (on ? ' r' : '') + (fr ? ' fr' : '') + (fut ? ' fu' : '') + (day === D.today ? ' today' : '') + (day === sel ? ' sel' : '');
+      var inner = '<span class="n">' + d + '</span>' + (fin && cv ? '<span class="fin">✓</span>' : '');
+      if (cv) {
+        var act = lib.filter(function (b) { return activeOn(b, day); }), rows = {};
+        act.forEach(function (b) { rows[b.row] = 1; });
+        jAll().forEach(function (e) { if (e.day === day && e.row && !rows[e.row]) { var bb = bookByRow(e.row); if (bb) { act.push(bb); rows[e.row] = 1; } } });
+        inner += '<div class="cv">' + act.slice(0, 3).map(function (b) { return '<span data-book="' + b.row + '">' + cover(b) + '</span>'; }).join('') + (act.length > 3 ? '<span class="muted">+' + (act.length - 3) + '</span>' : '') + '</div>';
+      } else inner += '<small>' + (pg ? pg : on ? '✓' : fr ? '❄' : '') + '</small>';
+      h += fut ? '<div class="' + cls + '">' + inner + '</div>' : '<div class="' + cls + '" role="button" tabindex="0" data-action="cal-day" data-d="' + day + '" aria-label="' + dmy(day) + '">' + inner + '</div>';
+    }
+    h += '</div><p class="muted small" style="margin:8px 0 0">' + (cv ? 'Обкладинки — книги, які ти читала цього дня, ✓ — дочитала. ' : 'Число — сторінки за день із закладок, ✓ — читала без сторінок, ❄ — пропуск. ') + 'Натисни день, щоб побачити й виправити записи.</p>';
+    if (sel) {
+      var es = jDay(sel), pgs = jDayPages(sel);
+      h += '<div class="jdh" style="margin-top:12px"><span>' + jDayName(sel) + (pgs ? ' · ' + pgs + ' стор.' : '') + '</span><button class="lnk" data-action="jr-add" data-d="' + sel + '">＋ Додати</button></div>' +
+        (es.length ? es.map(jEntryHtml).join('') : '<p class="muted small" style="margin:4px 0">Цього дня записів немає.</p>');
+    }
+    var finished = lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === m; });
+    var withR = finished.filter(function (b) { return b.rating; });
+    h += '<div class="row" style="justify-content:space-between;flex-wrap:wrap;margin-top:10px;gap:6px"><span class="muted small">' + readDays + ' ' + dayWord(readDays) + ' читання' + (monthPages ? ' · ' + monthPages.toLocaleString('uk-UA') + ' стор. за закладками' : '') + ' · дочитано ' + finished.length + (withR.length ? ', середня оцінка ' + (withR.reduce(function (a, b) { return a + b.rating; }, 0) / withR.length).toFixed(1) + '★' : '') + '</span><button class="lnk" data-action="jr-open">Журнал читання ›</button></div></div>';
+    return h;
+  }
+  // C: історія читання в картці книги (вкладка «Щоденник»)
+  function jBookHtml(b) {
+    var es = jAll().filter(function (e) { return e.row === b.row; }).slice();
+    if (b.readOn) es.push({ syn: 'finish', row: b.row, day: b.readOn });
+    if (b.started) es.push({ syn: 'start', row: b.row, day: b.started });
+    es.sort(function (x, y) { return x.day < y.day ? 1 : x.day > y.day ? -1 : (x.syn === 'start' ? 1 : 0) - (y.syn === 'start' ? 1 : 0) || String(y.at || '').localeCompare(String(x.at || '')); });
+    var h = '<div class="card"><div class="row"><h3 class="grow" style="margin:0">Історія читання</h3><button class="lnk" data-action="jr-add" data-d="' + D.today + '" data-row="' + b.row + '">＋ Запис</button></div>';
+    if (!es.length) return h + '<p class="muted small" style="margin:6px 0 0">Записи з\'являться, коли ставитимеш закладки або натиснеш «Читала».</p></div>';
+    var bd = jBookDays(b.row), ds = Object.keys(bd).sort(), tot = ds.reduce(function (s, d) { return s + bd[d]; }, 0), withP = ds.filter(function (d) { return bd[d]; }).length;
+    var span = b.started ? daysBetween(b.started, b.readOn || D.today) + 1 : ds.length;
+    h += '<div class="muted small" style="margin-top:4px">' + [span ? span + ' ' + dayWord(span) + (b.readOn ? ' від початку до кінця' : ' від початку') : '', ds.length ? ds.length + ' ' + dayWord(ds.length) + ' із записами' : '', withP ? '~' + Math.round(tot / withP) + ' стор. на день' : ''].filter(Boolean).join(' · ') + '</div>';
+    if (withP > 1) {
+      var last = [], d0 = ds[ds.length - 1];
+      for (var k = 0; k < 30 && d0 >= ds[0]; k++, d0 = addDays(d0, -1)) last.unshift(d0);
+      var mx = Math.max.apply(null, last.map(function (d) { return bd[d] || 0; })) || 1;
+      h += '<div class="jbars">' + last.map(function (d) { return '<i title="' + dmy(d) + ': ' + (bd[d] || 0) + ' стор." style="height:' + (bd[d] ? Math.max(4, Math.round(bd[d] / mx * 100)) : 0) + '%"></i>'; }).join('') + '</div><div class="row muted" style="justify-content:space-between;font-size:12px"><span>' + dmy(last[0]).slice(0, 5) + '</span><span>' + dmy(last[last.length - 1]).slice(0, 5) + '</span></div>';
+    }
+    var row = function (e) {
+      var what = e.syn ? (e.syn === 'start' ? 'почала' : 'дочитала ✓') : e.to != null ? (e.from != null ? e.from + ' → ' : 'до стор. ') + e.to + (jPages(e) ? ' · +' + jPages(e) : '') : '«Читала»';
+      return '<div class="p' + (e.syn ? ' s' : '') + '"><div class="grow"><b>' + what + '</b><div class="muted small">' + dmy(e.day).slice(0, 5) + (jTime(e) ? ' · ' + jTime(e) : '') + '</div></div>' + (e.syn ? '' : '<button class="jed" data-action="jr-edit" data-id="' + e.id + '" aria-label="Виправити запис">✎</button>') + '</div>';
+    };
+    h += '<div class="jtl">' + es.slice(0, 5).map(row).join('') + '</div>';
+    if (es.length > 5) h += '<details class="jmore"><summary class="lnk">ще ' + (es.length - 5) + ' ' + (es.length - 5 === 1 ? 'запис' : es.length - 5 < 5 ? 'записи' : 'записів') + '</summary><div class="jtl">' + es.slice(5).map(row).join('') + '</div></details>';
+    return h + '</div>';
   }
 
   /* ---------- корінці з обкладинок ---------- */
@@ -3864,7 +4059,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
         '<div class="grow" style="min-width:0"><h3 data-book="' + b.row + '">' + esc(b.title) + '</h3><div class="a">' + esc(b.author) + (b.type === 'Серія' && b.num ? ' · #' + esc(numTxt(b.num)) : '') + '</div>' +
         (b.page ? '<div class="pg">' + b.page + (b.pages ? ' <small>/ ' + b.pages + ' стор.</small>' : '') + '</div>' + (b.pages && b.page >= b.pages ? '<div class="info">Закладка на останній сторінці. <button class="lnk w" style="margin:0" data-action="finish" data-row="' + b.row + '">Дочитала?</button> Або <button class="lnk w" style="margin:0" data-action="page-dlg" data-row="' + b.row + '">виправ сторінку</button>.</div>' : '') : '<div class="pg" style="font-size:16px;margin-top:10px">' + (b.pages ? b.pages + ' стор.' : '') + '<br><small>познач сторінку закладкою</small></div>') +
         '<div class="info">' + esc(info.join(' · ')) + '</div>' + (b.started ? (b.pages && b.page >= b.pages ? '' : '<div class="info">дочитаєш ~' + dmy(addDays(D.today, ndays - 1)).slice(0, 5) + '</div>') : '<button class="lnk w" data-action="start-date" data-row="' + b.row + '">Коли почала? ›</button>') + '</div></div>' +
-        '<div class="btns"><button class="b1" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка</button><button class="b2" data-action="finish" data-row="' + b.row + '">✅ Дочитала</button></div></div>';
+        '<div class="btns"><button class="b1" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка</button><button class="b2" data-action="finish" data-row="' + b.row + '">✅ Дочитала</button></div>' + jLine(b) + '</div>';
     }).join('') + '</div>';
   }
   function todayRowsHtml() {
@@ -3941,35 +4136,6 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     for (var k = 1; k <= upto; k++) if (set[ym + '-' + ('0' + k).slice(-2)]) cnt++;
     var st = streakNow();
     return h + '<div class="row" style="justify-content:space-between;margin-top:8px"><span class="muted small">Читала ' + cnt + ' ' + dayWord(cnt) + ' із ' + upto + '</span>' + (st > 1 ? '<span class="muted small">🔥 ' + st + ' ' + dayWord(st) + ' поспіль</span>' : '') + '</div></div>';
-  }
-  function calendarCard() {
-    var c = D.cols, lib = D.books, h = '';
-    if (!c.readOn && !c.started) {
-      h += '<div class="card"><h3>Календар читання</h3><div class="note">Щоб вести щоденник і календар, потрібні колонки «Дата початку», «Дата прочитання» і «Оцінка». Коли вони з\'являться, дати ставитимуться самі: статус «читаю» → дата початку, «прочитано» → дата кінця й оцінка.</div></div>';
-    } else {
-      var m = view.calM || D.today.slice(0, 7);
-      var p = m.split('-').map(Number);
-      var first = m + '-01', dim = new Date(Date.UTC(p[0], p[1], 0)).getUTCDate();
-      var startDow = (new Date(Date.UTC(p[0], p[1] - 1, 1)).getUTCDay() + 6) % 7;
-      var names = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
-      var finished = lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === m; });
-      var pages = finished.reduce(function (a, b) { return a + (b.pages || 0); }, 0);
-      var withR = finished.filter(function (b) { return b.rating; });
-      h += '<div class="card" id="calcard"><div class="row"><button class="btn" data-cal="-1">‹</button><h3 class="grow" style="margin:0;text-align:center">' + names[p[1] - 1] + ' ' + p[0] + ' · ' + finished.length + ' кн.</h3><button class="btn" data-cal="1">›</button></div>';
-      h += '<div class="cal" style="margin-top:10px">' + ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(function (d) { return '<div class="dh">' + d + '</div>'; }).join('');
-      for (var i = 0; i < startDow; i++) h += '<div class="d out"></div>';
-      for (var d = 1; d <= dim; d++) {
-        var day = m + '-' + ('0' + d).slice(-2);
-        var act = lib.filter(function (b) { return activeOn(b, day); });
-        var fin = act.some(function (b) { return b.readOn === day; });
-        h += '<div class="d' + (day === D.today ? ' today' : '') + '"><span class="n">' + d + '</span>' + (fin ? '<span class="fin">✓</span>' : '') + '<div class="cv">' + act.slice(0, 3).map(function (b) {
-          return '<span data-book="' + b.row + '">' + cover(b) + '</span>';
-        }).join('') + (act.length > 3 ? '<span class="muted">+' + (act.length - 3) + '</span>' : '') + '</div></div>';
-      }
-      h += '</div><p class="muted small" style="margin-top:8px">Прочитано за місяць: <b>' + finished.length + '</b>, ' + pages.toLocaleString('uk-UA') + ' стор.' + (withR.length ? ', середня оцінка ' + (withR.reduce(function (a, b) { return a + b.rating; }, 0) / withR.length).toFixed(1) + '★' : '') + '</p>' +
-        (finished.length ? '<div class="list">' + finished.sort(function (a, b) { return a.readOn < b.readOn ? -1 : 1; }).map(bookItem).join('') + '</div>' : '') + '</div>';
-    }
-    return h;
   }
   VIEWS.plan = function () {
     var ym = curYm();
@@ -4988,6 +5154,24 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'me-photo-del') return meSave({ photo: '' }, 'Фото прибрано');
     if (a === 'me-log') return meLog();
     if (a === 'streak-open') return streakDialog();
+    if (a === 'jr-open') { JR.n = 14; return journalDialog(); }
+    if (a === 'jr-more') { JR.n += 14; return journalDialog(); }
+    if (a === 'jr-add' || a === 'jr-edit') {
+      var inBook = t.closest('#modal') && document.querySelector('#modal .bhero'), jid = Number(act.getAttribute('data-id'));
+      var je = a === 'jr-edit' ? jAll().filter(function (x) { return x.id === jid; })[0] : null;
+      if (a === 'jr-edit' && !je) return toast('Запис не знайдено. Онови сторінку.', true);
+      var brow = je ? je.row : row;
+      JR.back = inBook && brow ? function () { showBook(brow); } : t.closest('#modal') ? journalDialog : null;
+      return jEditDialog(je, act.getAttribute('data-d'), je ? null : row);
+    }
+    if (a === 'jr-back') return jBack();
+    if (a === 'jr-save') { act.disabled = true; return jSave(Number(act.getAttribute('data-id')) || 0).then(function () { act.disabled = false; }); }
+    if (a === 'jr-del') {
+      if (act.getAttribute('data-sure') !== '1') { act.setAttribute('data-sure', '1'); act.textContent = 'Точно видалити?'; return; }
+      act.disabled = true; return jSave(Number(act.getAttribute('data-id')), true);
+    }
+    if (a === 'cal-day') { view.calSel = act.getAttribute('data-d'); return refresh(); }
+    if (a === 'cal-cv') { view.calCv = act.getAttribute('data-v'); try { localStorage.setItem('lb.calcv', view.calCv); } catch (e) {} return refresh(); }
     if (a === 'cat-web') return catWeb();
     if (a === 'cat-pick') return catPick(Number(act.getAttribute('data-i')));
     if (a === 'streak-set') return streakSetDialog();

@@ -243,10 +243,11 @@ async function isbnOwner(isbn: string, exceptId?: number) {
 const yesNo = (v: boolean | null | undefined) => (v === true ? "Так" : v === false ? "Ні" : "");
 const tags = (a: unknown) => (Array.isArray(a) ? a.join(", ") : s(a));
 async function readAll() {
-  const [rows, series, kvRows, logRows] = await Promise.all([
+  const [rows, series, kvRows, logRows, journal] = await Promise.all([
     allRows("books"), allRows("series"),
     db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile", "streak"]),
     db.from("log").select("at,action,title,author,details").order("id", { ascending: false }).limit(30),
+    journalAll().catch(() => []),
   ]);
   const kv: Row = Object.fromEntries(((kvRows.data ?? []) as Row[]).map((r) => [r.key, r.value]));
   const ser = new Map<number, Row>(series.map((x) => [x.id, x]));
@@ -291,7 +292,7 @@ async function readAll() {
     news: kv.news || [], pubCanon: PUBLISHERS, db: true,
     books, wish,
     series: series.map((x) => ({ author: x.author, name: x.name, total: x.total, finished: yesNo(x.finished), translated: yesNo(x.full_ua), pub: x.publisher || "" })),
-    catalog: kv.series_catalog || [], sold, log: lg,
+    catalog: kv.series_catalog || [], sold, log: lg, journal,
   };
 }
 
@@ -360,8 +361,14 @@ async function saveOne(options: Row, ch: Row) {
     } catch { /* статус підтягнеться щогодини */ }
   }
   if (notes.length) await log("✏️ Змінено в додатку", upd.title ?? b.title, upd.author ?? b.author, notes.join("; "), b.id);
-  // закладка = день читання для серії
-  if (kind === "library" && upd.cur_page != null && upd.cur_page !== b.cur_page) await streakMark("read").catch(() => {});
+  // закладка = запис у журналі читання й день серії
+  if (kind === "library" && upd.cur_page != null && upd.cur_page !== b.cur_page) {
+    const td = today();
+    const from = b.cur_page ?? (b.started_on === td || upd.started_on === td ? 0 : null);
+    const e = chk(await db.from("reading_log").insert({ book_id: b.id, day: td, at: new Date().toISOString(), page_from: from, page_to: upd.cur_page, kind: "page" }).select(JR).single(), "reading_log") as Row;
+    const st = await syncStreakDays().catch(() => null);
+    return { row: b.id, values, journal: jrow(e), streak: st };
+  }
   return { row: b.id, values };
 }
 
@@ -571,7 +578,16 @@ async function streakMark(act: string, p: Row = {}) {
   const st: Row = { ...STREAK_DEFAULT, ...((await kvGet("streak", {})) || {}) }, td = today();
   if (!st.since) st.since = td;
   st.days = Array.isArray(st.days) ? st.days : []; st.skips = Array.isArray(st.skips) ? st.skips : [];
-  if (act === "read") { if (!st.days.includes(td)) st.days.push(td); st.skips = st.skips.filter((d: string) => d !== td); }
+  if (act === "read") {
+    if (!st.days.includes(td)) st.days.push(td);
+    st.skips = st.skips.filter((d: string) => d !== td);
+    // «Читала» — запис у журналі (з поточною книгою), якщо сьогодні ще нічого не відмічено
+    const has = chk(await db.from("reading_log").select("id").eq("day", td).limit(1), "reading_log") as Row[];
+    if (!has.length) {
+      const cur = chk(await db.from("books").select("id").eq("read_status", "читаю").in("stage", LIB_STAGES).order("started_on", { ascending: false, nullsFirst: false }).limit(1), "books") as Row[];
+      await db.from("reading_log").insert({ book_id: cur[0]?.id ?? null, day: td, at: new Date().toISOString(), kind: "read" });
+    }
+  }
   else if (act === "skip") {
     const rows = await allRows("books");
     const books = rows.filter((b) => LIB_STAGES.includes(b.stage)).map((b) => ({ started: b.started_on, readOn: b.finished_on, status: b.read_status }));
@@ -585,7 +601,85 @@ async function streakMark(act: string, p: Row = {}) {
   const cut = (a: string[]) => a.filter((d) => /^\d{4}-\d\d-\d\d$/.test(d)).sort().slice(-500);
   st.days = cut(st.days); st.skips = cut(st.skips);
   await kvSet("streak", st);
+  return act === "read" ? { ...st, journal: await journalAll() } : st;
+}
+/* ---------- журнал читання (16.11) ---------- */
+const JR = "id,book_id,day,at,page_from,page_to,kind";
+const jrow = (r: Row) => ({ id: r.id, row: r.book_id, day: r.day, at: r.at, from: r.page_from, to: r.page_to, kind: r.kind });
+async function journalAll() {
+  const r = chk(await db.from("reading_log").select(JR).order("day", { ascending: false }).order("at", { ascending: false, nullsFirst: false }).order("id", { ascending: false }).limit(3000), "reading_log") as Row[];
+  return r.map(jrow);
+}
+/** Дні серії = дні з записами в журналі (сам журнал — джерело правди). */
+async function syncStreakDays() {
+  const rows = chk(await db.from("reading_log").select("day").order("day", { ascending: false }).limit(5000), "reading_log") as Row[];
+  const st: Row = { ...STREAK_DEFAULT, ...((await kvGet("streak", {})) || {}) };
+  if (!st.since) st.since = today();
+  st.days = [...new Set(rows.map((r) => String(r.day)))].sort().slice(-500);
+  st.skips = (Array.isArray(st.skips) ? st.skips : []).filter((d: string) => !st.days.includes(d));
+  await kvSet("streak", st);
   return st;
+}
+/** Поточна сторінка книги «читаю» = «до сторінки» з останнього запису. */
+async function syncPage(bookId: number, removed?: Row) {
+  const b = chk(await db.from("books").select("id,title,author,cur_page,read_status").eq("id", bookId).maybeSingle(), "books") as Row | null;
+  if (!b || b.read_status !== "читаю") return null;
+  const last = (chk(await db.from("reading_log").select("page_to").eq("book_id", bookId).not("page_to", "is", null).order("day", { ascending: false }).order("at", { ascending: false, nullsFirst: false }).order("id", { ascending: false }).limit(1), "reading_log") as Row[])[0];
+  const page = last ? last.page_to : removed && removed.page_to === b.cur_page ? removed.page_from : b.cur_page;
+  if ((page ?? null) !== (b.cur_page ?? null)) {
+    chk(await db.from("books").update({ cur_page: page ?? null }).eq("id", bookId), "books");
+    await log("✏️ Змінено в додатку", b.title, b.author, `Поточна сторінка: ${b.cur_page ?? "—"} → ${page ?? "—"} (журнал читання)`, bookId);
+  }
+  return { row: bookId, page: page ?? null };
+}
+/** Дії журналу: add / edit / del. Відповідь: увесь журнал, серія й нові поточні сторінки. */
+async function apiJournal(p: Row) {
+  const act = s(p?.act), td = today();
+  const pg = (v: unknown) => { if (v === "" || v == null) return null; const n = Math.round(Number(v)); if (!(n >= 0 && n < 100000)) fail("Сторінка — це число."); return n; };
+  const fields = async () => {
+    const day = isoDate(p.day);
+    if (!day) fail("Вкажи дату.");
+    if (day! > td) fail("Дата ще не настала.");
+    const bookId = p.row ? Number(p.row) : null;
+    let pages = 0;
+    if (bookId) { const bk = await getBook(bookId, LIB_STAGES); pages = Number(bk.pages) || 0; }
+    const from = pg(p.from), to = pg(p.to);
+    if (from != null && to != null && to < from) fail("«До сторінки» менше, ніж «зі сторінки».");
+    if (pages && to != null && to > pages + 50) fail(`У книзі ${pages} стор.`);
+    let at: string | null = null;
+    if (p.at) { const d = new Date(String(p.at)); if (isNaN(+d)) fail("Невірний час."); at = d.toISOString(); }
+    return { book_id: bookId, day, at, page_from: from, page_to: to, kind: to != null ? "page" : "read" };
+  };
+  const touched = new Set<number>(); let removed: Row | undefined;
+  const bookName = async (id: number | null) => id ? (chk(await db.from("books").select("title,author").eq("id", id).maybeSingle(), "books") as Row | null) : null;
+  const say = (r: Row) => `${human(r.day)}${r.page_to != null ? `, стор. ${r.page_from ?? "—"} → ${r.page_to}` : ", «Читала»"}`;
+  if (act === "add") {
+    const f = await fields();
+    const e = chk(await db.from("reading_log").insert(f).select(JR).single(), "reading_log") as Row;
+    if (e.book_id) touched.add(e.book_id);
+    const bn = await bookName(e.book_id);
+    await log("📖 Журнал читання: додано", bn?.title, bn?.author, say(e), e.book_id);
+  } else if (act === "edit" || act === "del") {
+    const id = Number(p.id);
+    const old = chk(await db.from("reading_log").select(JR).eq("id", id).maybeSingle(), "reading_log") as Row | null;
+    if (!old) fail("Запис не знайдено. Оновіть сторінку.");
+    if (old!.book_id) touched.add(old!.book_id);
+    const bn = await bookName(old!.book_id);
+    if (act === "del") {
+      chk(await db.from("reading_log").delete().eq("id", id), "reading_log");
+      removed = old!;
+      await log("📖 Журнал читання: видалено", bn?.title, bn?.author, say(old!), old!.book_id);
+    } else {
+      const f = await fields();
+      const e = chk(await db.from("reading_log").update(f).eq("id", id).select(JR).single(), "reading_log") as Row;
+      if (e.book_id) touched.add(e.book_id);
+      await log("📖 Журнал читання: виправлено", bn?.title, bn?.author, `${say(old!)} → ${say(e)}`, old!.book_id);
+    }
+  } else fail("Невідома дія журналу.");
+  const pages: Row[] = [];
+  for (const b of touched) { const r = await syncPage(b, removed && removed.book_id === b ? removed : undefined); if (r) pages.push(r); }
+  const streak = await syncStreakDays();
+  return { journal: await journalAll(), streak, pages };
 }
 async function apiSetGoals(g: Row) {
   const out: Row = {};
@@ -673,6 +767,7 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiSetProfile: (p: Row) => apiSetProfile(p),
   lbApiCatalogSearch: (q: Row) => apiCatalogSearch(q),
   lbApiStreak: (p: Row) => streakMark(String(p?.act || ""), p || {}),
+  lbApiJournal: (p: Row) => apiJournal(p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),
 };
 
