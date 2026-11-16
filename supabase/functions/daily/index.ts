@@ -1,4 +1,4 @@
-// Розклад (pg_cron): нагадування в Телеграм о ~9:00 за Києвом, нічне «вийшли з друку → Є у продажу», новини серій щопонеділка.
+// Розклад (pg_cron): нагадування в Телеграм о ~10:00 за Києвом (9:00 у Роттердамі), нічне «вийшли з друку → Є у продажу», новини серій щопонеділка.
 // Тіло: {job:"remind"} | {job:"night"} | {job:"news"} | {job:"streak"} (щогодини: вечірнє нагадування про серію читання); {job:"remind", test:true} — надіслати зараз релізи на 14 днів і тиждень (перевірка).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { tgSend, tgApi, tgChat, esc } from "../_shared/tg.ts";
@@ -23,7 +23,7 @@ const kyivHour = () => Number(new Date().toLocaleString("en-GB", { timeZone: "Eu
 async function remind(test: boolean) {
   const today = todayKyiv();
   if (!test) {
-    if (kyivHour() < 9) return { skipped: "ще рано" };
+    if (kyivHour() < 10) return { skipped: "ще рано" };
     if (!(await switched())) return { skipped: "бот ще в Apps Script" };
     if ((await kvGet("last_remind", "")) === today) return { skipped: "сьогодні вже надсилали" };
   }
