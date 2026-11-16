@@ -1,6 +1,6 @@
 // «Моя бібліотека» як додаток на телефоні: спершу завжди мережа (оновлення сайту з'являються одразу),
 // а без інтернету — остання збережена копія сторінки. Дані з таблиці (Apps Script) не кешуються.
-var CACHE = 'lb-shell-v8';
+var CACHE = 'lb-shell-v9';
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
