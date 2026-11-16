@@ -95,6 +95,7 @@ table.kv td:first-child{color:var(--muted);width:42%;padding-right:10px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px 28px}
 .modal .sheet.wide{max-width:900px}
+.modal .sheet.tall{min-height:min(86vh,calc(100vh - 80px))}
 .modal:not(.top) .sheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--line);margin:-8px auto 10px}
 .modal.mid{align-items:flex-start;padding:9vh 16px 0}.modal.mid .sheet{border-radius:18px;max-width:420px}
 .modal.top{align-items:flex-start}.modal.top .sheet{border-radius:0 0 18px 18px;max-height:85vh;padding-top:12px}
@@ -149,6 +150,8 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .facing{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;padding:0 2px 0;min-height:60px;scrollbar-width:thin}
 .facing .fc{flex:none;width:72px;height:108px;border-radius:2px 4px 4px 2px;background:center/cover no-repeat;border:0;padding:0;cursor:pointer;box-shadow:inset 3px 0 0 rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.2);color:#2a2622;font:600 10px/1.15 inherit;font-family:inherit;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;position:relative;transition:transform .15s}
 .facing .fc:hover{transform:translateY(-4px)}
+.facing .fc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:699px){.facing{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}.facing .fc{width:100%;height:auto;aspect-ratio:2/3}}
 .facing .fc span{padding:5px;font-size:9.5px;overflow-wrap:anywhere;hyphens:auto;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .facing .fc.read::after{content:"✓";position:absolute;right:3px;bottom:3px;width:16px;height:16px;border-radius:50%;background:var(--ok);color:var(--card);font-size:10px;line-height:16px}
 .board-floor{height:10px;background:var(--wood-dark);margin:0 -8px;border-radius:1px}
@@ -448,9 +451,10 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .catr .thumb{width:32px;height:48px}.catr .g{flex:1;min-width:0;display:flex;flex-direction:column}.catr .g b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.catr .g small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plaques.five{grid-template-columns:repeat(2,minmax(0,1fr))}.plaques.five>:first-child{grid-column:1/-1}@media (min-width:700px){.plaques.five{grid-template-columns:repeat(5,minmax(0,1fr))}.plaques.five>:first-child{grid-column:auto}}
 .plq.stq{--pc:var(--plum);background:var(--plum-soft)}
+.plaques.one{grid-template-columns:minmax(0,1fr)}@media (min-width:700px){.plaques.one{grid-template-columns:minmax(0,320px)}}
 .stk .stkr{display:flex;align-items:center;gap:12px}.stfl{width:44px;height:44px;border-radius:12px;background:var(--plum-soft);color:var(--plum);display:grid;place-items:center;flex:none}
 .stbig{font-size:28px;font-weight:600;line-height:1.1}.stbig span{font-size:15px;font-weight:400}
-.stwk{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.stwk i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;background:var(--line);color:var(--muted)}
+.stwk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:6px;max-width:330px}.stwk i{width:100%;max-width:36px;height:auto;aspect-ratio:1;justify-self:center;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;background:var(--line);color:var(--muted)}
 .stwk i.on{background:var(--accent-fill);color:#fff}.stwk i.fr{background:var(--blue-soft);color:var(--blue)}.stwk i.td{background:transparent;outline:2px dashed var(--accent);outline-offset:-2px;color:var(--accent)}.stwk i.no{background:var(--bad-soft);color:var(--bad)}
 .stft{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px}
 .sfrz{display:inline-flex;gap:4px;align-items:center;font-size:13px;color:var(--muted)}.sfrz i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-size:12px}.sfrz i.u{background:var(--line);color:var(--muted);opacity:.6}
@@ -467,7 +471,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .pnm{font:600 20px/1.2 var(--head)}
 .pchs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pchs span{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--bg);border:1px solid var(--line)}
 .pyr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
-.pyr div{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0}.pyr b{display:block;font-size:20px}.pyr small{color:var(--muted);font-size:12px}
+.pyr>*{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0;border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;display:block;width:100%}.pyr small{display:block}.pyr b{display:block;font-size:20px}.pyr small{color:var(--muted);font-size:12px}
 .prow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;margin-top:14px;align-items:start}
 .phm{display:grid;grid-template-rows:repeat(7,var(--cs));grid-auto-flow:column;grid-auto-columns:var(--cs);gap:var(--gp)}
 .phseg{margin-bottom:10px}
@@ -655,7 +659,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var GROUPS = [
     { id: 'home', t: 'Головна', views: [['home', 'Головна']] },
     { id: 'wishg', t: 'Бажанки', views: [['wish', 'Бажанки'], ['delivery', 'Замовлені'], ['kyiv', 'У Києві']] },
-    { id: 'lib', t: 'Бібліотека', views: [['books', 'Книги'], ['reading', 'Що читати'], ['shelves', 'Полиці'], ['plan', 'План'], ['series', 'Серії']] },
+    // 16.11: «План» першим — саме він відкривається з нижньої кнопки «Бібліотека»
+    { id: 'lib', t: 'Бібліотека', views: [['plan', 'План'], ['reading', 'Що читати'], ['shelves', 'Полиці'], ['books', 'Книги'], ['series', 'Серії']] },
     // «Я» — меню-акаунт; сторінки відкриваються з нього, вгорі кнопка «‹ Я»
     { id: 'me', t: 'Я', views: [['me', 'Я'], ['money', 'Фінанси'], ['stats', 'Статистика'], ['ach', 'Досягнення']] }
   ];
@@ -834,10 +839,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 
   // Якщо посилання на обкладинку зламалося — замість «битої картинки» показуємо спокійну заглушку того ж розміру
   var COVER_FALLBACK = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60"><rect width="40" height="60" fill="#8a8178"/><path d="M13 22h14M13 28h14M13 34h9" stroke="#f4f3ef" stroke-width="2" stroke-linecap="round" opacity=".7"/></svg>');
-  document.addEventListener('error', function (e) {
-    var t = e.target;
-    if (t && t.tagName === 'IMG' && t.src !== COVER_FALLBACK && !t.closest('#tabs')) { t.src = COVER_FALLBACK; t.style.objectFit = 'cover'; }
-  }, true);
+  function coverBroken(t) {
+    if (t.closest('#tabs')) return;
+    if (t.closest('.fc')) { t.remove(); return; } // на полиці під картинкою вже є назва на кольорі жанру
+    if (t.src !== COVER_FALLBACK) { t.src = COVER_FALLBACK; t.style.objectFit = 'cover'; }
+  }
+  document.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG') coverBroken(t); }, true);
+  // деякі сайти замість обкладинки віддають прозору картинку 1×1 — теж вважаємо, що обкладинки немає
+  document.addEventListener('load', function (e) { var t = e.target; if (t && t.tagName === 'IMG' && t.naturalWidth > 0 && t.naturalWidth < 8 && t.src.indexOf('data:image/svg') !== 0) coverBroken(t); }, true);
 
   /* ---------- зв'язок із сервером ---------- */
   var KEY = '';
@@ -1046,7 +1055,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var cur = groupOf(view.tab);
     lastSub[cur.id] = view.tab;
     var btns = GROUPS.map(function (g) {
-      return '<button class="tab' + (g === cur ? ' on' : '') + '" data-tab="' + (g.id === 'me' ? 'me' : (lastSub[g.id] || g.views[0][0])) + '">' + IC[g.id] + '<span>' + g.t + '</span></button>';
+      return '<button class="tab' + (g === cur ? ' on' : '') + '" data-tab="' + (g.id === 'me' ? 'me' : g.id === 'lib' ? g.views[0][0] : (lastSub[g.id] || g.views[0][0])) + '">' + IC[g.id] + '<span>' + g.t + '</span></button>';
     });
     btns.splice(2, 0, '<button class="tab fab" data-action="plus" aria-label="Додати"><b>＋</b></button>');
     if (WIDE) {
@@ -1101,7 +1110,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       status: ['Статус: ' + arg, lib.filter(function (b) { return low(b.status) === arg; })],
       site: ['Сайт: ' + arg, null, D.wish.filter(function (w) { return site(w) === arg; })],
       year: ['Прочитано у ' + arg + ' році', D.books.filter(function (b) { return b.readOn && b.readOn.slice(0, 4) === arg; })],
-      month: ['Прочитано: ' + arg, lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === arg; })]
+      month: ['Прочитано: ' + arg, lib.filter(function (b) { return b.readOn && b.readOn.slice(0, 7) === arg; })],
+      boughty: ['Куплено у ' + arg + ' році', D.books.filter(function (b) { return b.bought && String(b.bought).slice(0, 4) === arg; })]
     };
     return defs[k] || ['', []];
   }
@@ -1652,8 +1662,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }
   function facing(b) {
     var rd = low(b.status) === 'прочитано';
-    var bg = b.cover ? 'background-image:url(&quot;' + esc(b.cover) + '&quot;);background-color:' + genreColor(b.genre) : spineBg(b);
-    return '<button class="fc' + (rd ? ' read' : '') + '" data-book="' + b.row + '" title="' + esc(b.title + ' — ' + b.author) + '" style="' + bg + '">' + (b.cover ? '' : '<span>' + esc(b.title) + '</span>') + '</button>';
+    // обкладинка картинкою (не фоном), щоб бита чи порожня показала назву на кольорі жанру
+    return '<button class="fc' + (rd ? ' read' : '') + '" data-book="' + b.row + '" title="' + esc(b.title + ' — ' + b.author) + '" style="' + spineBg(b) + '"><span>' + esc(b.title) + '</span>' + (b.cover ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(b.cover) + '" alt="">' : '') + '</button>';
   }
   VIEWS.shelves = function () {
     var home = {}, away = {};
@@ -3964,7 +3974,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   VIEWS.plan = function () {
     var ym = curYm();
     var readM = D.books.filter(function (b) { return b.readOn && String(b.readOn).slice(0, 7) === ym; });
-    var h = '<div class="plaques" style="grid-template-columns:minmax(0,320px)"><div class="plq read" style="cursor:default"><small>Прочитано в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + readM.length + ' ' + bookWord(readM.length) + (sumPages(readM) ? ' · ' + sumPages(readM).toLocaleString('uk-UA') + ' стор.' : '') + '</b></div></div>';
+    var h = '<div class="plaques one"><div class="plq read" style="cursor:default"><small>Прочитано в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + readM.length + ' ' + bookWord(readM.length) + (sumPages(readM) ? ' · ' + sumPages(readM).toLocaleString('uk-UA') + ' стор.' : '') + '</b></div></div>';
     h += '<div class="cols"><div>' + (stCfg().on ? streakBlock() : '') + deskHtml() + '<div style="margin:14px 0">' + monthShelfHtml(ym) + '</div></div><div>' + pileHtml(ym) + '</div></div>';
     h += '<div class="cols"><div>' + threadHtml(ym) + '</div><div>' + calendarCard() + '</div></div>';
     return h;
@@ -4131,7 +4141,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var waiting = gotCandidates().filter(arrived).length;
     var mic = voiceOk() ? '<button class="btn ib" data-action="plus-voice" title="Сказати голосом" aria-label="Сказати голосом">' + ic('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>') + '</button>' : '';
     var h = '<h2 style="margin:0 0 4px">Додати</h2><p class="muted small" style="margin:0 0 10px">Скриншот, посилання, текст' + (mic ? ' чи голос' : '') + ' — решту заповню сама й покажу картку перед збереженням.' + (WIDE ? ' Скрін можна просто вставити сюди: Ctrl+V.' : '') + '</p>' +
-      '<div class="plusin"><input id="plus-text" class="grow" placeholder="Встав посилання або текст анонсу" aria-label="Посилання або текст анонсу" enterkeyhint="go">' +
+      '<div class="plusin"><input id="plus-text" class="grow" placeholder="Посилання або текст" aria-label="Посилання або текст анонсу" enterkeyhint="go">' +
       '<button class="btn ib" data-action="plus-shot" title="Скриншот" aria-label="Вибрати скриншот">' + ic('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/>') + '</button>' + mic +
       '<button class="btn p" data-action="plus-go">Далі</button></div>' +
       '<button class="link plusman" data-action="wish-manual">або впиши бажанку вручну</button>' +
@@ -4178,7 +4188,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var h = '<div class="pcard"><div class="pfh">' + av + '<div class="grow" style="min-width:0"><div class="pnm">' + esc(name) + '</div>' +
       (first ? '<div class="muted small">книги в обліку з ' + MONTHS_FROM[mIdx(first.slice(0, 7))] + ' ' + first.slice(0, 4) + ' · ' + meAgo(first) + '</div>' : '') +
       '<div class="pchs"><span>' + S.inLib.length + ' у бібліотеці</span><span>' + D.wish.filter(function (w) { return w.status !== 'В бібліотеці'; }).length + ' бажанок</span>' + (WIDE ? '<span>' + ['Роттердам', 'Київ'].filter(function (k) { return place[k]; }).join(' · ') + '</span>' : '') + '</div></div><button class="lnk" data-action="me-name">Змінити</button></div>';
-    h += '<div class="pyr"><div><b>' + readY.length + '</b><small>прочитано за ' + y + '</small></div><div><b>' + readM.length + (goal ? ' / ' + goal : '') + '</b><small>у ' + MONTHS_IN[mIdx(ym)] + '</small></div><div><b>' + boughtY.length + '</b><small>куплено за рік</small></div><div><b>' + streak + ' ' + dayWord(streak) + '</b><small>читаєш поспіль</small></div></div>';
+    // 16.11: кожна плитка відкривається (списки прочитаного й купленого, серія читання)
+    h += '<div class="pyr"><button data-list="' + esc('year|' + y) + '"><b>' + readY.length + '</b><small>прочитано за ' + y + '</small></button><button data-list="' + esc('month|' + ym) + '"><b>' + readM.length + (goal ? ' / ' + goal : '') + '</b><small>у ' + MONTHS_IN[mIdx(ym)] + '</small></button><button data-list="' + esc('boughty|' + y) + '"><b>' + boughtY.length + '</b><small>куплено за рік</small></button><button data-action="streak-open"><b>' + streak + ' ' + dayWord(streak) + '</b><small>читаєш поспіль</small></button></div>';
     // дні читання: стовпчик = тиждень (пн–нд), темніше — день, коли дочитала книгу; перемикач періоду (lb.hmr)
     var HMR = { y: [53, 'Рік', 'за рік', 9, 2], h: [26, 'Пів року', 'за пів року', 11, 3], q: [13, '3 місяці', 'за 3 місяці', 16, 4], m: [5, 'Місяць', 'за місяць', 22, 4] };
     var hk = (function () { try { return localStorage.getItem('lb.hmr') || 'h'; } catch (e) { return 'h'; } })(); if (!HMR[hk]) hk = 'h';
@@ -5421,6 +5432,16 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var d = sheetDrag;
     if (!d || !d.top) return;
     var dy = ev.touches[0].clientY - d.y, dx = Math.abs(ev.touches[0].clientX - d.x);
+    // 16.11: свайп угору піднімає низьку картку (коли її нема куди прокручувати)
+    if (!d.on && !d.up && dy < -8 && -dy > dx && !d.sh.classList.contains('tall') && d.sh.scrollHeight <= d.sh.clientHeight + 2) {
+      d.up = true; d.h0 = d.sh.offsetHeight; d.sh.style.transition = 'none';
+    }
+    if (d.up) {
+      d.dy = Math.min(0, dy);
+      d.sh.style.minHeight = Math.min(window.innerHeight * .9, d.h0 - d.dy) + 'px';
+      if (ev.cancelable) ev.preventDefault();
+      return;
+    }
     if (!d.on) {
       if (dy < 8 || dx > dy) { if (dy < -4 || dx > 12) sheetDrag = null; return; }
       if (d.sh.scrollTop > 0) { sheetDrag = null; return; }
@@ -5432,7 +5453,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   }, { passive: false });
   document.addEventListener('touchend', function () {
     var d = sheetDrag; sheetDrag = null;
+    if (d && d.up) {
+      d.sh.style.transition = 'min-height .2s'; d.sh.style.minHeight = '';
+      if (d.dy < -40) d.sh.classList.add('tall');
+      if (d.dy < -8) suppressClick = Date.now();
+      return;
+    }
     if (!d || !d.on) return;
+    // піднята картка: короткий свайп униз лише опускає її назад
+    if (d.sh.classList.contains('tall') && d.dy > 30 && d.dy <= 160) { d.sh.style.transition = 'transform .2s, min-height .2s'; d.sh.style.transform = ''; d.sh.classList.remove('tall'); suppressClick = Date.now(); return; }
     if (d.dy > 110 && formDirty()) { d.sh.style.transition = 'transform .2s'; d.sh.style.transform = ''; suppressClick = Date.now(); softClose(); }
     else if (d.dy > 110) { d.sh.style.transition = 'transform .18s ease-in'; d.sh.style.transform = 'translateY(100%)'; suppressClick = Date.now(); setTimeout(closeModal, 170); }
     else { d.sh.style.transition = 'transform .2s'; d.sh.style.transform = ''; }
