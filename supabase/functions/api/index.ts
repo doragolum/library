@@ -545,6 +545,27 @@ async function apiSetProfile(p: Row) {
   await kvSet("profile", cur);
   return cur;
 }
+/** Спільний каталог (етап 2, 16.11): пошук за назвою, автором чи ISBN. Повертає лише дані про видання, без особистого (ціни, полиці, статуси). */
+async function apiCatalogSearch(req: Row) {
+  const q = s(req?.q).replace(/[%_,()"\\*]/g, " ").replace(/\s+/g, " ").trim();
+  if (q.length < 2) return { items: [] };
+  const digits = q.replace(/[^0-9Xx]/g, "");
+  let rows: Row[] = [];
+  if (digits.length >= 10 && digits.length === q.replace(/[\s-]/g, "").length) {
+    rows = (chk(await db.from("catalog").select("*").eq("isbn", digits.toUpperCase()).limit(1), "catalog") || []) as Row[];
+  } else {
+    const words = q.split(" ").filter((w) => w.length > 1).slice(0, 4);
+    let qq = db.from("catalog").select("*").not("title", "is", null);
+    for (const w of words) qq = qq.or(`title.ilike."%${w}%",author.ilike."%${w}%",series.ilike."%${w}%"`);
+    rows = (chk(await qq.limit(12), "catalog") || []) as Row[];
+  }
+  const isbns = rows.map((r) => r.isbn);
+  const mine = isbns.length ? ((chk(await db.from("books").select("isbn,stage").in("isbn", isbns), "books") || []) as Row[]) : [];
+  const own = new Map(mine.map((m) => [m.isbn, m.stage]));
+  return { items: rows.map((r) => ({ isbn: r.isbn, title: r.title, author: r.author, pub: r.publisher, pages: r.pages, cover: r.cover, seriesName: r.series, seriesNum: r.series_num,
+    total: r.series_total, genresRaw: r.genres || [], language: r.lang, year: r.year, orig: r.orig_title, description: r.description, sources: ["Каталог Shelfie"],
+    mine: own.has(r.isbn) ? (LIB_STAGES.includes(own.get(r.isbn)) ? "library" : "wish") : "" })) };
+}
 /** Серія читання (16.11): read — сьогодні читала; skip — використати пропуск на сьогодні; set — увімкнути/вимкнути, година нагадування. */
 async function streakMark(act: string, p: Row = {}) {
   const st: Row = { ...STREAK_DEFAULT, ...((await kvGet("streak", {})) || {}) }, td = today();
@@ -650,6 +671,7 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiShelfMark: (req: Row) => apiShelfMark(req),
   lbApiSetGoals: (g: Row) => apiSetGoals(g),
   lbApiSetProfile: (p: Row) => apiSetProfile(p),
+  lbApiCatalogSearch: (q: Row) => apiCatalogSearch(q),
   lbApiStreak: (p: Row) => streakMark(String(p?.act || ""), p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),
 };

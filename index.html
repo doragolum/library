@@ -443,6 +443,9 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .plusgrid button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
 .plusgrid button svg{width:22px;height:22px;color:var(--accent)}.plusgrid small{font-weight:400;color:var(--muted);font-size:12px}
 .mewrap{max-width:1100px}
+.catres{display:flex;flex-direction:column;gap:4px;margin-top:6px}.catres:empty{display:none}
+.catr{display:flex;align-items:center;gap:10px;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px;cursor:pointer;min-width:0}
+.catr .thumb{width:32px;height:48px}.catr .g{flex:1;min-width:0;display:flex;flex-direction:column}.catr .g b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.catr .g small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plaques.five{grid-template-columns:repeat(2,minmax(0,1fr))}.plaques.five>:first-child{grid-column:1/-1}@media (min-width:700px){.plaques.five{grid-template-columns:repeat(5,minmax(0,1fr))}.plaques.five>:first-child{grid-column:auto}}
 .plq.stq{--pc:var(--plum);background:var(--plum-soft)}
 .stk .stkr{display:flex;align-items:center;gap:12px}.stfl{width:44px;height:44px;border-radius:12px;background:var(--plum-soft);color:var(--plum);display:grid;place-items:center;flex:none}
@@ -2651,8 +2654,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var inp = function (id, label, val, extra, cls) { return '<label class="' + (cls || '') + '"><span>' + label + '</span><input id="' + id + '" value="' + esc(val == null ? '' : val) + '" ' + (extra || '') + '></label>'; };
     var h = '<button class="close" data-action="close" aria-label="Закрити">×</button><h2>📚 ' + (addState.wish ? 'Отримала → у бібліотеку' : 'Додати книгу') + '</h2>';
     if (addState.wish) h += '<p class="muted small">З бажанок: ' + esc(addState.wish.author) + ' — ' + esc(addState.wish.title) + '. Заповни, чого бракує, і вибери, де книга.</p>';
-    else h += '<p class="muted small">Почни з ISBN: решту підтягну сама. Обов\'язкові лише автор і назва.</p>';
+    else h += '<p class="muted small">Знайди книгу в каталозі Shelfie або почни з ISBN: решту підтягну сама. Обов\'язкові лише автор і назва.</p>';
     h += '<div class="form addf">';
+    if (!addState.wish) h += '<div class="full"><span class="flab">Каталог Shelfie</span><input id="f-cat" placeholder="Назва, автор, серія чи ISBN" autocomplete="off" aria-label="Пошук у каталозі" style="width:100%"><div id="f-catres" class="catres"></div></div>';
     h += '<div class="full"><span class="flab">ISBN</span><div class="row isbnrow"><input id="f-isbn" class="grow" inputmode="numeric" placeholder="978…" aria-label="ISBN" value="' + esc(b.isbn || '') + '"><button class="btn ib" data-action="paste" data-for="f-isbn" title="Вставити скопійований ISBN" aria-label="Вставити скопійований ISBN">📋</button><button class="btn ib" data-action="scan-add" title="Сфотографувати штрихкод" aria-label="Сфотографувати штрихкод">📷</button><button class="btn" data-action="lookup">🔍 Підтягнути</button></div><div class="muted small" style="margin-top:3px">Штрихкод на звороті книги: 📷 сфотографуй його або впиши цифри.</div><div id="f-look" class="small muted" style="margin-top:6px"></div></div>';
     h += '<div id="f-dupe" class="full" hidden></div>';
     h += inp('f-author', 'Автор *', b.author, 'list="dl-authors" autocomplete="off"', 'wide') + inp('f-title', 'Назва *', b.title, '', 'wide');
@@ -2723,6 +2727,34 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (fval('f-shelf')) return;
     var s = suggestShelf({ series: fval('f-series'), author: fval('f-author'), genre: fval('f-genre') });
     if (s) setAuto('f-shelf', s.shelf, s.why);
+  }
+  // спільний каталог (етап 2): пошук видань за назвою, автором, серією чи ISBN; вибір заповнює форму
+  var catTimer = null, catSeq = 0;
+  function catSearch() {
+    var q = fval('f-cat'), box = document.getElementById('f-catres');
+    if (!box) return;
+    if (q.length < 2) { box.innerHTML = ''; return; }
+    var my = ++catSeq;
+    box.innerHTML = '<p class="muted small">Шукаю в каталозі…</p>';
+    api('lbApiCatalogSearch', { q: q }).then(function (r) {
+      if (my !== catSeq || !document.getElementById('f-catres')) return;
+      var it = (r && r.items) || []; addState.cat = it;
+      box.innerHTML = it.length ? it.map(function (x, i) {
+        var sub = [x.author, x.seriesName ? x.seriesName + (x.seriesNum ? ' #' + numTxt(x.seriesNum) : '') : '', x.pub].filter(Boolean).map(esc).join(' · ');
+        return '<button class="catr" data-action="cat-pick" data-i="' + i + '">' + (x.cover ? '<img class="thumb" referrerpolicy="no-referrer" src="' + esc(x.cover) + '" alt="">' : '<span class="thumb"></span>') +
+          '<span class="g"><b>' + esc(x.title) + '</b><small>' + sub + '</small></span>' + (x.mine ? '<span class="pill2 ok">' + (x.mine === 'library' ? 'уже є' : 'у бажанках') + '</span>' : '') + '</button>';
+      }).join('') : '<p class="muted small">У каталозі такої книги ще немає. Впиши ISBN або заповни вручну, і вона з\'явиться в каталозі.</p>';
+    }).catch(function (e) { if (my === catSeq) box.innerHTML = '<p class="msg small">' + esc(e.message) + '</p>'; });
+  }
+  function catPick(i) {
+    var x = (addState.cat || [])[i]; if (!x) return;
+    applyLookup(x);
+    if (x.seriesName && !fval('f-series')) { setAuto('f-series', x.seriesName, 'Каталог Shelfie'); if (x.seriesNum) setAuto('f-num', numTxt(x.seriesNum), 'Каталог Shelfie'); if (x.total) setAuto('f-total', x.total, 'Каталог Shelfie'); applySeriesDefaults(); }
+    addState.cover = x.cover || addState.cover;
+    showLookPreview(x);
+    var box = document.getElementById('f-catres'); if (box) box.innerHTML = '';
+    addDupeCheck();
+    var pe = document.getElementById('f-price'); if (pe) pe.focus({ preventScroll: true });
   }
   function fval(id) { var e = document.getElementById(id); return e ? String(e.value).trim() : ''; }
   function setIfEmpty(id, v) { var e = document.getElementById(id); if (e && !String(e.value).trim() && v != null && v !== '') e.value = v; }
@@ -4920,6 +4952,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'me-photo-del') return meSave({ photo: '' }, 'Фото прибрано');
     if (a === 'me-log') return meLog();
     if (a === 'streak-open') return streakDialog();
+    if (a === 'cat-pick') return catPick(Number(act.getAttribute('data-i')));
     if (a === 'streak-set') return streakSetDialog();
     if (a === 'streak-read') { act.disabled = true; return streakApi({ act: 'read' }, 'Зараховано 🔥').then(function () { if (document.querySelector('#modal .stk')) streakDialog(); }); }
     if (a === 'streak-hour') { var hv = act.getAttribute('data-v'); return streakApi(hv === 'off' ? { act: 'set', on: false } : { act: 'set', on: true, hour: Number(hv) }, hv === 'off' ? 'Серію вимкнено' : 'Нагадаю о ' + hv + ':00').then(function () { if (document.getElementById('modal').innerHTML) streakSetDialog(); }); }
@@ -5322,6 +5355,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var timer = null, addDupeTimer = null;
   document.addEventListener('input', function (ev) {
     var t = ev.target, k = t.getAttribute('data-input');
+    if (t.id === 'f-cat') { clearTimeout(catTimer); catTimer = setTimeout(catSearch, 350); return; }
     if (t.id && t.id.indexOf('f-') === 0) {
       var nb = t.closest('.need,.lack,.err'); if (nb && String(t.value).trim()) { nb.classList.remove('need'); nb.classList.remove('lack'); nb.classList.remove('err'); }
       var sm = t.closest('label') && t.closest('label').querySelector('.src'); if (sm) sm.textContent = '';
