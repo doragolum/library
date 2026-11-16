@@ -1,9 +1,8 @@
 // Серія читання (16.11.2026, як у Дуолінго). Та сама логіка є в index.html (streakDays / streakInfo) — міняти разом.
 // Дні читання:
-//  · від початку до кінця кожної дочитаної книги (дати з календаря читання);
 //  · дата початку й дата прочитання будь-якої книги;
-//  · для книги «читаю» — дні від початку до запуску серії (kv streak.since), далі лише позначки;
 //  · позначки в kv streak.days: закладка (поточна сторінка), «Читала» в боті чи в додатку.
+// Книга «читаю» і дні між початком і кінцем книги серію самі не додають (16.11, на прохання: лише справжні позначки).
 // Пропуски: 2 безкоштовні на календарний місяць, лише від запуску серії (до нього прогалини просто обривають серію). Пропущений день списує пропуск сам; «Використати пропуск» (kv streak.skips) теж рахується.
 import { addDays } from "./texts.ts";
 
@@ -11,17 +10,13 @@ type Row = Record<string, any>;
 export const SKIPS_PER_MONTH = 2;
 export const STREAK_DEFAULT = { on: true, hour: 20 };
 
-const dBetween = (a: string, b: string) => Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 864e5);
 const low = (v: unknown) => String(v ?? "").trim().toLowerCase();
 
 export function streakDays(books: Row[], st: Row, today: string): Record<string, 1> {
-  const set: Record<string, 1> = {}, since = st?.since || today;
-  const range = (from: string, to: string) => { const n = Math.min(dBetween(from, to), 400); for (let i = 0; i <= n; i++) set[addDays(from, i)] = 1; };
+  const set: Record<string, 1> = {};
   for (const b of books || []) {
     if (b.started) set[b.started] = 1;
     if (b.readOn) set[b.readOn] = 1;
-    if (b.started && b.readOn && b.readOn >= b.started) range(b.started, b.readOn);
-    else if (b.started && !b.readOn && low(b.status) === "читаю") { const to = addDays(since, -1); if (to >= b.started) range(b.started, to < today ? to : today); }
   }
   for (const d of st?.days || []) set[d] = 1;
   for (const d of Object.keys(set)) if (d > today) delete set[d];
