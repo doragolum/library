@@ -66,7 +66,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appeara
 .item .pv{margin-left:auto;align-self:center;font-weight:600;white-space:nowrap;padding-left:6px}
 .item .t{font-weight:600}
 .thumb{width:40px;height:60px;border-radius:4px;object-fit:cover;flex:none;background:var(--line)}
-.ph{width:40px;height:60px;border-radius:4px;flex:none;color:#fff;font-size:8px;line-height:1.1;padding:4px 3px;overflow:hidden;text-align:center;display:flex;align-items:center;justify-content:center}
+.ph{width:40px;height:60px;border-radius:4px;flex:none;color:#2a2622;font-size:8px;line-height:1.1;padding:4px 3px;overflow:hidden;text-align:center;display:flex;align-items:center;justify-content:center}
 .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
 .chip{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--line);color:var(--ink);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box}
 .item .body{min-width:0}
@@ -139,16 +139,16 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 .plank{padding-top:14px}.case .plank{padding-top:0;border-bottom:1px solid var(--line)}.case .plank:last-child{border-bottom:0}.shrow{display:flex;gap:10px;align-items:center;padding:13px 4px;cursor:pointer;font-weight:600}.shrow .shcar{color:var(--accent);width:14px}.plank.op{padding-bottom:10px}
 .plank h4{margin:0 0 4px;font-size:13px;display:flex;gap:8px;align-items:baseline}
 .spines{display:flex;flex-wrap:wrap;align-items:flex-end;gap:2px;row-gap:6px;padding:0 2px;min-height:60px;scrollbar-width:thin}
-.spine{position:relative;flex:none;border-radius:2px 2px 0 0;color:#fbf6ec;font:600 12px/1.1 inherit;font-family:inherit;letter-spacing:.2px;padding:16px 2px 14px;overflow:hidden;cursor:pointer;border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 rgba(0,0,0,.25),1px 0 0 rgba(0,0,0,.18);transition:transform .15s}
-.spine::before,.spine::after{content:"";position:absolute;left:3px;right:3px;height:2px;background:rgba(255,226,170,.55);box-shadow:0 4px 0 rgba(255,226,170,.35)}
+.spine{position:relative;flex:none;border-radius:2px 2px 0 0;color:#2a2622;font:600 12px/1.1 inherit;font-family:inherit;letter-spacing:.2px;padding:16px 2px 14px;overflow:hidden;cursor:pointer;border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 rgba(0,0,0,.25),1px 0 0 rgba(0,0,0,.18);transition:transform .15s}
+.spine::before,.spine::after{content:"";position:absolute;left:3px;right:3px;height:2px;background:rgba(60,45,30,.18);box-shadow:0 4px 0 rgba(60,45,30,.1)}
 .spine::before{top:6px}.spine::after{bottom:9px;box-shadow:0 -4px 0 rgba(255,226,170,.35)}
-.spine span,.mspine span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.spine span,.mspine span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .spine:hover{transform:translateY(-5px)}
 .spine.read i{position:absolute;top:0;right:3px;width:6px;height:16px;background:#e9c46a;clip-path:polygon(0 0,100% 0,100% 100%,50% 75%,0 100%)}
 .facing{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;padding:0 2px 0;min-height:60px;scrollbar-width:thin}
-.facing .fc{flex:none;width:72px;height:108px;border-radius:2px 4px 4px 2px;background:center/cover no-repeat;border:0;padding:0;cursor:pointer;box-shadow:inset 3px 0 0 rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.2);color:#fbf6ec;font:600 10px/1.15 inherit;font-family:inherit;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;position:relative;transition:transform .15s}
+.facing .fc{flex:none;width:72px;height:108px;border-radius:2px 4px 4px 2px;background:center/cover no-repeat;border:0;padding:0;cursor:pointer;box-shadow:inset 3px 0 0 rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.2);color:#2a2622;font:600 10px/1.15 inherit;font-family:inherit;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;position:relative;transition:transform .15s}
 .facing .fc:hover{transform:translateY(-4px)}
-.facing .fc span{padding:5px;font-size:9.5px;overflow-wrap:anywhere;hyphens:auto;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.facing .fc span{padding:5px;font-size:9.5px;overflow-wrap:anywhere;hyphens:auto;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .facing .fc.read::after{content:"✓";position:absolute;right:3px;bottom:3px;width:16px;height:16px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:10px;line-height:16px}
 .board-floor{height:10px;background:var(--wood-dark);margin:0 -8px;border-radius:1px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;margin:6px 0 12px}
@@ -350,8 +350,8 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .mshelf{background:var(--shelf-bg);border-radius:16px;padding:12px 12px 0}
 .mshelf .t{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--shelf-ink);font-weight:600}.mshelf .t .lnk{color:var(--shelf-ink);font-size:13px}
 .mshelf .sp{display:flex;flex-wrap:wrap;align-items:flex-end;gap:3px;row-gap:6px;min-height:100px;margin-top:6px;padding:0 4px;scrollbar-width:none}
-.mspine{position:relative;flex:none;border:0;border-radius:2px 2px 0 0;color:#fbf6ec;font:600 9px/1.1 inherit;font-family:inherit;padding:9px 1px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:1px 0 0 rgba(0,0,0,.18)}
-.mspine:not(.e)::before,.mspine:not(.e)::after{content:"";position:absolute;left:2px;right:2px;height:1.5px;background:rgba(255,226,170,.55)}
+.mspine{position:relative;flex:none;border:0;border-radius:2px 2px 0 0;color:#2a2622;font:600 9px/1.1 inherit;font-family:inherit;padding:9px 1px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:1px 0 0 rgba(0,0,0,.18)}
+.mspine:not(.e)::before,.mspine:not(.e)::after{content:"";position:absolute;left:2px;right:2px;height:1.5px;background:rgba(60,45,30,.18)}
 .mspine::before{top:4px}.mspine::after{bottom:4px}
 .mspine.part{color:var(--ink)}.mspine.part span{text-shadow:0 0 3px rgba(255,255,255,.9)}
 .mspine.e{width:26px;background:transparent;border:1.5px dashed #c9ad8c;color:#b39776;box-shadow:none;font-size:15px;align-items:center}
@@ -360,7 +360,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 /* «Зараз читаю»: світла картка, як інші блоки (розбір ієрархії 15.11), щоб не перекрикувала посилки */
 .desk{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
 .desk .lbl{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:0}
-.desk .bk{width:56px;height:84px;border-radius:5px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;font-size:12px;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,.2);cursor:pointer;overflow:visible}
+.desk .bk{color:#2a2622;width:56px;height:84px;border-radius:5px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;font-size:12px;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,.2);cursor:pointer;overflow:visible}
 .desk .bk img{width:100%;height:100%;object-fit:cover;border-radius:5px}.desk .bk span{padding:4px}
 .desk .rib{position:absolute;right:12px;top:-4px;width:12px;background:#f2b01e;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 8px),0 100%);transition:height .4s}
 .desk h3{margin:0;font-size:16px;color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis}.desk .a{color:var(--muted);font-size:13px}
@@ -374,13 +374,13 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .pill{flex:none;border:0;background:var(--card);color:var(--ink);border-radius:12px;padding:8px 11px;font:inherit;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid var(--accent);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pill.ok{border-left-color:var(--ok)}.pill.warn{border-left-color:var(--warn)}.pill.bad{border-left-color:var(--bad)}
 .pile{display:flex;flex-direction:column;gap:3px;align-items:center;margin-top:10px}
-.ly{height:30px;border:0;border-radius:4px;color:#fff;font:inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);cursor:pointer;min-width:0}
+.ly{height:30px;border:0;border-radius:4px;color:#2a2622;font:inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);cursor:pointer;min-width:0}
 .ly span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ly small{opacity:.9;flex:none;white-space:nowrap}
 .ly em{font-style:normal;background:#fff;color:#c0392b;border-radius:6px;font-size:12px;padding:0 5px;margin-left:6px}
 .tip{background:var(--line);border-radius:12px;padding:9px 11px;font-size:13px;margin-top:10px}.tip.ok{background:var(--ok-soft)}
 .tl{position:relative;margin-top:10px}.tl .days{display:grid;font-size:12px;color:var(--muted);text-align:center;margin-bottom:4px}
 .tl .grid{position:absolute;top:16px;bottom:0;left:0;right:0;display:grid;pointer-events:none}.tl .grid div{border-left:1px dashed var(--line)}
-.tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#fff;font-size:12px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
+.tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#2a2622;font-size:12px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
 .tl .now{position:absolute;top:16px;bottom:0;width:2px;background:var(--accent)}
 .seg3{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .mtheme{cursor:default}.seg3.mini{margin:0;padding:3px;gap:2px;background:var(--bg);box-shadow:none;border-radius:12px}.seg3.mini button{padding:0 12px;min-height:40px;font-size:15px}
@@ -429,7 +429,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .rvc{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}
 .rvc .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
 .rvc img,.rvc .ph{width:110px;height:165px;object-fit:cover;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.18);margin-bottom:6px}
-.rvc .ph{display:flex;align-items:center;justify-content:center;text-align:center;color:#fbf6ec;font-weight:600;font-size:12px;padding:8px;box-sizing:border-box}
+.rvc .ph{display:flex;align-items:center;justify-content:center;text-align:center;color:#2a2622;font-weight:600;font-size:12px;padding:8px;box-sizing:border-box}
 .rvc .ph.wait{background:var(--line);color:var(--muted);box-shadow:none}
 .rvc .ob{align-self:flex-start;margin-top:4px}
 .rvown{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.rvown .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
@@ -502,8 +502,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   var WISH_ORDER = ['Хочу купити', 'Докупити серію', 'На майбутнє', 'Замовлено', 'Створено ТТН', 'Відправлено', 'Доставлено', 'В бібліотеці'];
   var ORDERED = ['Замовлено', 'Створено ТТН', 'Відправлено', 'В дорозі', 'Доставлено'];
   var GONE = ['подарована', 'продана'];
-  // кольори жанрів трохи темніші, щоб світлий напис на корінці читався (контраст від 4,5 : 1)
-  var PALETTE = ['#8857cf', '#bb486f', '#2a7c7c', '#a46123', '#3d70c0', '#4b7e2f', '#a8463a', '#7b6a4e', '#a84f9b', '#337d57', '#906b16', '#5161a8'];
+  // пастельні кольори жанрів («Туман»): свій колір для кожного жанру, текст на них темний; для нових жанрів — запасні
+  var GENRE_COL = { 'романтика': '#e3c3c9', 'ромком': '#ecc6aa', 'класика': '#d5d0c6', 'українська класика': '#e6dca8', 'нонфікшн': '#c9d1b2', 'фентезі': '#b5cfbd', 'драма': '#a9d3d6', 'детектив': '#b0c4dc', 'трилер': '#a9a8c4', 'горор': '#a5a3a8', 'дарк-роман': '#c9adbb', 'ромфентезі': '#dcc4e6' },
+    PALETTE = ['#d8c8b8', '#c3d6e0', '#d6cfe0', '#e0d3c3', '#c8d8cf', '#e2cfd6'];
   var WIDE = window.matchMedia('(min-width:1000px)').matches;
   var D = null, S = null;
   function setTheme(v) {
@@ -609,7 +610,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     return list ? '<button class="tile" data-list="' + list + '"><b>' + val + '</b><span class="muted">' + label + '</span></button>'
       : '<div class="tile"><b>' + val + '</b><span class="muted">' + label + '</span></div>';
   }
-  function genreColor(g) { return (S && S.gcol[g]) || '#766e67'; }
+  function genreColor(g) { return (S && S.gcol[g]) || '#c8c3bb'; }
   function cover(x, cls) {
     if (x.cover) return '<img class="' + (cls || 'thumb') + '" loading="lazy" referrerpolicy="no-referrer" src="' + esc(x.cover) + '" alt="">';
     return '<div class="ph' + (cls === 'cover' ? '' : '') + '" style="background:' + genreColor(x.genre) + '">' + esc(x.title).slice(0, 60) + '</div>';
@@ -812,7 +813,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     d.sold.forEach(function (x) { x._q = norm([x.title, x.author, x.series].join(' ')); });
     // кольори жанрів: найчастіші отримують свої кольори
     s.gcol = {};
-    topList(count(s.inLib, function (b) { return b.genre; }), PALETTE.length).forEach(function (r, i) { s.gcol[r[0]] = PALETTE[i]; });
+    var spare = 0;
+    topList(count(s.inLib, function (b) { return b.genre; }), 12).forEach(function (r) { s.gcol[r[0]] = GENRE_COL[low(r[0])] || PALETTE[spare++ % PALETTE.length]; });
 
     var priced = s.inLib.filter(function (b) { return b.price > 1; });
     s.avg = priced.length ? priced.reduce(function (a, b) { return a + b.price; }, 0) / priced.length : 0;
@@ -1475,7 +1477,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       h += '<div class="chips" style="margin:0 0 10px">' + (mv ? '' : '<button class="chip" data-action="move-open">⇄ Перестановка</button>') + (window.LB_DB ? '' : '<button class="chip" data-action="auto-fill">⚡ Автозвірка у фоні</button>') + (noTr && !NO_TROPES ? '<button class="chip" data-action="mt-open">🏷 Без тропів: ' + noTr + ' — підказати</button>' : '') + (noCov ? '<button class="chip" data-action="vf-start" data-kind="library">🔎 Без обкладинки: ' + noCov + ' — переглянути</button>' : '') + (D.cols.isbn && noIsbn ? '<button class="chip" data-action="vf-start" data-kind="library" data-mode="isbn">🔢 Без ISBN: ' + noIsbn + ' — переглянути</button>' : '') + (Object.keys(vfDone()).length ? '<button class="chip" data-action="vf-reset">↺ Показати пропущені знову</button>' : '') + '</div>';
     }
     h += '<p class="muted small">' + (fm ? 'Обкладинки книг на полицях, ✓ — прочитана.' : 'Колір корінця — жанр, товщина — кількість сторінок, золота закладка — прочитана.') + ' Натисни на книгу, щоб відкрити її.</p>';
-    if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#766e67"></i>інші</span></div>';
+    if (!fm) h += '<div class="legend">' + Object.keys(S.gcol).map(function (g) { return '<span><i style="background:' + S.gcol[g] + '"></i>' + esc(g) + '</span>'; }).join('') + '<span><i style="background:#c8c3bb"></i>інші</span></div>';
     var keys = Object.keys(home).sort(shelfOrder);
     var cases = { 'Відкрита шафа': keys.filter(function (k) { return !isClosed(k); }), 'Закрита шафа': keys.filter(function (k) { return isClosed(k); }) };
     Object.keys(cases).forEach(function (cname) {
@@ -3368,13 +3370,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   function shade(hex, k) {
     var m = String(hex).match(/^#?([0-9a-f]{6})$/i); if (!m) return hex;
     var n = parseInt(m[1], 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(function (v) {
-      v = k < 0 ? v * (1 + k) : v + (255 - v) * k; return Math.max(0, Math.min(255, Math.round(v * .92)));
+      v = k < 0 ? v * (1 + k) : v + (255 - v) * k; return Math.max(0, Math.min(255, Math.round(v * .97)));
     });
     return 'rgb(' + c.join(',') + ')';
   }
   function spineBg(b, part) {
     // корінець у кольорі жанру з відтінком для кожної книги, золоті смужки і читабельна назва
-    var col = shade(genreColor(b.genre), ((hashN(b.title + b.author) % 9) - 5) / 20);
+    var col = shade(genreColor(b.genre), ((hashN(b.title + b.author) % 9) - 4) / 40);
     var veil = part != null ? 'linear-gradient(to top,rgba(0,0,0,0) ' + part + '%,rgba(255,255,255,.72) ' + part + '%),' : '';
     return 'background:' + veil + 'linear-gradient(90deg,rgba(0,0,0,.28),rgba(255,255,255,.10) 22%,rgba(255,255,255,0) 45%,rgba(0,0,0,.06) 80%,rgba(0,0,0,.30)),' + col;
   }
