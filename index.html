@@ -4644,6 +4644,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (PUSH.synced || !pushCan()) return; PUSH.synced = true;
     pushReg().then(function (r) { return r.pushManager.getSubscription(); }).then(function (sub) {
       PUSH.sub = sub;
+      if (sub && view.tab === 'me') render(); // підпис «увімкнено» в «Я», бо перший показ був ще до перевірки
       if (sub && Notification.permission === 'granted') api('lbApiPush', { act: 'sub', sub: sub.toJSON(), agent: pushAgent() }).catch(function () {});
     }).catch(function () {});
   }
