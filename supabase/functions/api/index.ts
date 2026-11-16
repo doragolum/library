@@ -35,7 +35,7 @@ const db: any = {
   },
 };
 /** Особисті ключі kv: у власниці без суфікса (як було), у друзів — key@u<id>. */
-const PERSONAL_KV = new Set(["goals", "shelf_marks", "news", "news_state", "options", "profile", "streak", "series_catalog", "streak_sent", "streak_ask", "bot_pending", "onsale_today", "last_remind"]);
+const PERSONAL_KV = new Set(["places", "goals", "shelf_marks", "news", "news_state", "options", "profile", "streak", "series_catalog", "streak_sent", "streak_ask", "bot_pending", "onsale_today", "last_remind"]);
 const kk = (k: string) => (PERSONAL_KV.has(k) && uid() !== 1 ? `${k}@u${uid()}` : k);
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
@@ -263,6 +263,32 @@ async function authEmailFinish(p: Row) {
   }
   return newSession(user!.id, p?.agent);
 }
+/** Місця людини (етап 5): home — удома (полиці), away — друге місце з посилками або "". У власниці за замовчуванням Роттердам / Київ. */
+function placesOf(v: any) {
+  const def = uid() === 1 ? { home: "Роттердам", away: "Київ" } : { home: "Удома", away: "" };
+  return { home: s(v?.home) || def.home, away: v && "away" in v ? s(v.away) : def.away };
+}
+async function apiSetPlaces(p: Row) {
+  const old = placesOf(await kvGet("places", null));
+  const home = s(p?.home).slice(0, 40), away = s(p?.away).slice(0, 40);
+  if (!home) fail("Впиши, де ти вдома.");
+  if (away && away.toLowerCase() === home.toLowerCase()) fail("Друге місце має називатися інакше, ніж дім.");
+  const count = async (pl: string) => (chk(await db.from("books").select("id").eq("place", pl).in("stage", LIB_STAGES), "books") as Row[]).length;
+  if (old.away && !away && await count(old.away)) fail(`У «${old.away}» ще є книги. Спершу перенеси їх додому або перейменуй місце.`);
+  const moved: string[][] = [];
+  for (const [a, b] of [[old.home, home], [old.away, away]]) {
+    if (a && b && a !== b) {
+      const n = await count(a);
+      chk(await db.from("books").update({ place: b }).eq("place", a), "books");
+      moved.push([a, b]);
+      await log("📍 Місце перейменовано", "", "", `${a} → ${b}: ${n} кн.`, null);
+    }
+  }
+  const places = { home, away };
+  await kvSet("places", places);
+  if (!moved.length) await log("📍 Мої місця", "", "", `Удома: ${home}; друге місце: ${away || "немає"}`, null);
+  return { places, moved };
+}
 function ownerOnly() { if (me().role !== "owner") fail("Це може лише власниця Nookly."); }
 /** Запрошення (лише власниця): list / create {note} / revoke {code}. */
 async function apiInvites(p: Row) {
@@ -339,13 +365,14 @@ const tags = (a: unknown) => (Array.isArray(a) ? a.join(", ") : s(a));
 async function readAll() {
   const [rows, series, kvRows, logRows, journal] = await Promise.all([
     allRows("books"), allRows("series"),
-    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile", "streak"].map(kk)),
+    db.from("kv").select("key,value").in("key", ["goals", "shelf_marks", "news", "options", "series_catalog", "profile", "streak", "places"].map(kk)),
     db.from("log").select("at,action,title,author,details").order("id", { ascending: false }).limit(30),
     journalAll().catch(() => []),
   ]);
   const kv: Row = Object.fromEntries(((kvRows.data ?? []) as Row[]).map((r) => [String(r.key).replace(/@u\d+$/, ""), r.value]));
   // у нової людини ще немає своїх списків: беремо списки власниці без полиць (полиці в кожного свої)
   if (!kv.options && uid() !== 1) { const o = (await raw.from("kv").select("value").eq("key", "options").maybeSingle()).data?.value || {}; kv.options = JSON.parse(JSON.stringify(o)); if (kv.options.library) kv.options.library.shelf = []; }
+  { const pl = placesOf(kv.places); kv.options = { ...(kv.options || {}) }; kv.options.library = { ...(kv.options.library || {}), place: [pl.home, pl.away].filter(Boolean) }; }
   const ser = new Map<number, Row>(series.map((x) => [x.id, x]));
   const books: Row[] = [], wish: Row[] = [], sold: Row[] = [];
   let n = 0;
@@ -384,7 +411,7 @@ async function readAll() {
   for (const f of ["place", "isbn", "cover", "bought", "started", "readOn", "rating", "lentTo", "lentOn", "lentDue", "parcel", "plan", "page", "tropes", "moods", "orig", "src"]) cols[f] = true;
   Object.assign(cols, { wishCover: true, wishOrdered: true, wishIsbn: true, wishOrig: true, wishSrc: true });
   return {
-    me: { uid: uid(), role: me().role }, today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
+    me: { uid: uid(), role: me().role }, places: placesOf(kv.places), today: today(), hasBought: true, hasSale: true, cols, options: kv.options || {}, goals: kv.goals || {}, profile: kv.profile || {}, streak: { ...STREAK_DEFAULT, ...(kv.streak || {}) }, shelfMarks: kv.shelf_marks || {},
     news: kv.news || [], pubCanon: PUBLISHERS, db: true,
     books, wish,
     series: series.map((x) => ({ author: x.author, name: x.name, total: x.total, finished: yesNo(x.finished), translated: yesNo(x.full_ua), pub: x.publisher || "" })),
@@ -472,6 +499,8 @@ async function apiSave(changes: Row[]) {
   if (!changes?.length) fail("Немає що зберігати.");
   if (changes.length > 60) fail("Забагато книг за раз (до 60).");
   const options = await kvGet("options", {});
+  const pl = placesOf(await kvGet("places", null));
+  options.library = { ...(options.library || {}), place: [pl.home, pl.away].filter(Boolean) };
   const out = [];
   for (const ch of changes) out.push(await saveOne(options, ch));
   return out;
@@ -866,6 +895,7 @@ const API: Record<string, (...a: any[]) => Promise<unknown>> = {
   lbApiJournal: (p: Row) => apiJournal(p || {}),
   lbApiMe: async () => { const w = me(); const u = (await raw.from("app_users").select("id,name,role").eq("id", w.uid).maybeSingle()).data; return { uid: w.uid, role: w.role, name: u?.name || "", via: w.via }; },
   lbApiInvites: (p: Row) => apiInvites(p || {}),
+  lbApiSetPlaces: (p: Row) => apiSetPlaces(p || {}),
   lbApiAutoFill: async () => ({ started: false, note: "У новій базі дані про книги доповнюються самі, кнопка не потрібна." }),
 };
 
