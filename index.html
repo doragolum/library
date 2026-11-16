@@ -399,7 +399,7 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
 @media (min-width:1000px){.strip{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}.strip>.cov:nth-child(n+11){display:block}.strip>.cov:nth-child(n+17){display:none}}
 .strip .cov img,.strip .cov .ph{font-size:9px;padding:4px}
 .strip .cov .ct{font-size:12px}
-.cov{position:relative}
+.cov{position:relative}@media (max-width:999px){.wgh+.covers{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}}.qmb{display:none;position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:999px;background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.2);font:inherit;font-size:16px;cursor:pointer}@media (min-width:1000px) and (hover:hover){.cov:hover .qmb{display:block}}
 .cov .badge{position:absolute;top:4px;right:4px;border-radius:99px;min-width:18px;height:18px;padding:0 4px;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--card);background:var(--ok)}
 .cov .nb{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:0 5px;font-size:12px}
 .cov.gap .ph{background:transparent!important;border:2px dashed var(--warn);color:var(--warn);box-shadow:none;font-size:13px;font-weight:600}
@@ -471,7 +471,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .plq{justify-content:space-between;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:9px 11px;text-align:left;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
 .plq small{font-size:12px;color:var(--muted);line-height:1.25;min-height:2.5em}.plq b{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .plq.hot{border-color:var(--ok);background:var(--ok-soft)}.plq.hot b{color:var(--ok)}
-.hseg{max-width:420px}
+.hseg{max-width:420px}@media (min-width:1000px){.hhead{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;align-items:stretch;margin:2px 0 14px}.hhead .plaques{margin:0}.hhead .hseg{flex-direction:column;margin:0;max-width:none;align-self:stretch;justify-content:stretch}.hhead .hseg button{flex:1;padding:4px 10px}}
 .hgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .hcol{display:flex;flex-direction:column;gap:12px;min-width:0}
 .hbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -507,7 +507,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .sbdg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.sbd{text-align:center;font-size:12px;color:var(--muted)}.sbd b{display:block;color:var(--ink);font-size:13px;font-weight:600}
 .sbd .c{width:52px;height:52px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;background:var(--line);color:var(--muted);border:2px dashed transparent;box-sizing:border-box}
 .sbd.got .c{background:var(--accent-fill);color:#fff}.sbd.next .c{background:transparent;border-color:var(--accent);color:var(--accent)}
-.stcols{display:grid;gap:10px;margin:10px 0}.stcols .card{margin:0}@media (min-width:900px){.stcols{grid-template-columns:1fr 1fr;gap:16px}}
+.stcols{display:grid;gap:10px;margin:10px 0}@media (min-width:1000px){.cols.stmas{display:block;column-count:2;column-gap:12px}.cols.stmas>.card{break-inside:avoid;margin:0 0 12px}}.stcols .card{margin:0}@media (min-width:900px){.stcols{grid-template-columns:1fr 1fr;gap:16px}}
 @media (max-width:420px){.sbd .c{width:44px;height:44px;font-size:13px}.sbdg{gap:4px}}
 .pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:6px}
 .pfh{display:flex;gap:14px;align-items:center}
@@ -550,6 +550,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .mspine.e{width:26px;background:transparent;border:1.5px dashed #c9ad8c;color:#b39776;box-shadow:none;font-size:15px;align-items:center}
 .mshelf .board{height:10px;background:linear-gradient(var(--wood),var(--wood-dark));border-radius:0 0 6px 6px;margin:0 -12px}
 .desks{display:flex;flex-direction:column;gap:10px}
+.nowr{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin:0 0 12px;cursor:pointer}.nowr .thumb,.nowr .ph{width:40px;height:60px;flex:none}.nowr .g{flex:1;min-width:0;display:flex;flex-direction:column}.nowr .g small{color:var(--muted);font-size:12px}.nowr .g b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nowr .g span{color:var(--muted);font-size:13px}.nowr .nbar{display:block;height:4px;border-radius:2px;background:var(--line);margin-top:6px;overflow:hidden}.nowr .nbar i{display:block;height:100%;background:var(--accent-fill)}.nowr .btn{flex:none}
 /* «Зараз читаю»: світла картка, як інші блоки (розбір ієрархії 15.11), щоб не перекрикувала посилки */
 .desk{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
 .desk .lbl{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:0}
@@ -586,7 +587,7 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .tl .ln{position:relative;height:36px;margin:4px 0;cursor:pointer}.tl .ln .lt{position:relative;z-index:1;font-size:12px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);display:inline-block;max-width:100%;padding-right:4px}.tl .ln .lt span{color:var(--muted)}.tl .ln i{position:absolute;top:18px;height:14px;border-radius:7px;color:#2a2622;font-size:12px;font-style:normal;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:18px}
 .tl .now{position:absolute;top:16px;bottom:0;width:2px;background:var(--accent)}
 .seg3{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.mtheme{cursor:default}.mtheme .aic{border-radius:5px;flex:none}.mic{flex-wrap:wrap}.mic .seg3 button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.mic .mhint{flex-basis:100%;color:var(--muted);font-size:13px}.seg3.mini{margin:0;padding:3px;gap:2px;background:var(--bg);box-shadow:none;border-radius:12px}.seg3.mini button{padding:0 12px;min-height:40px;font-size:15px}
+.mtheme{cursor:default}.mtheme .aic{border-radius:5px;flex:none}.mic{flex-wrap:wrap}.mic>.g{flex:1 0 auto}.mic .seg3 button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.mic .mhint{flex-basis:100%;color:var(--muted);font-size:13px}.seg3.mini{margin:0;padding:3px;gap:2px;background:var(--bg);box-shadow:none;border-radius:12px}.seg3.mini button{padding:0 12px;min-height:40px;font-size:15px}
 .pals{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%;margin-top:8px}.pals button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;padding:5px 10px 5px 5px;border-radius:99px;cursor:pointer}.pals button i{width:20px;height:20px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}.pals button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
 .seg3 button{flex:1;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}.seg3 button.on{background:var(--accent-fill);color:#fff}
 .pick.scroll button{flex:none}
@@ -744,7 +745,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (m) m.href = v === 'classic' ? 'manifest-classic.webmanifest' : 'manifest.webmanifest';
   }
   try { var th0 = localStorage.getItem('lb.theme'); if (th0) document.documentElement.setAttribute('data-theme', th0); } catch (e) {}
-  var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? (function () { try { return localStorage.getItem('lb.wmode') || 'board'; } catch (e) { return 'board'; } })() : 'list', seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '', calCv: (function () { try { return localStorage.getItem('lb.calcv') || 'pages'; } catch (e) { return 'pages'; } })() };
+  var view = { tab: 'home', q: '', f: {}, sort: 'author', limit: 60, wishStatus: '', wishMode: WIDE ? (function () { try { return localStorage.getItem('lb.wmode') || 'board'; } catch (e) { return 'board'; } })() : (function () { try { return localStorage.getItem('lb.wmode') === 'covers' ? 'covers' : 'list'; } catch (e) { return 'list'; } })(), seriesMode: 'open', wq: '', bookMode: WIDE ? 'covers' : 'list', calM: '', calCv: (function () { try { return localStorage.getItem('lb.calcv') || 'pages'; } catch (e) { return 'pages'; } })() };
   var modalStack = null; // що зараз відкрито у вікні, щоб перемалювати після збереження
   var nav = [];           // історія карток у вікні: книга → серія → автор …, для кнопки «‹ Назад»
   var ABOUT = {};         // описи книг, уже завантажені з інтернету
@@ -1303,7 +1304,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     return h;
   }
   function coverItem(b) {
-    return '<div class="cov" data-book="' + b.row + '">' + cover(b, 'x') + '<div class="ct">' + esc(b.title) + '</div><div class="ca">' + esc(b.author) + '</div>' +
+    return '<div class="cov" data-book="' + b.row + '">' + cover(b, 'x') + '<button class="qmb" data-qm="' + b.row + '" aria-label="Швидкі дії">⋯</button>' + '<div class="ct">' + esc(b.title) + '</div><div class="ca">' + esc(b.author) + '</div>' +
       (b.rating ? '<div class="small">' + stars(b.rating) + '</div>' : '') + '</div>';
   }
   function whereText(b) {
@@ -2073,7 +2074,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var counts = count(mine, function (w) { return w.status; });
     var statuses = WISH_ORDER.filter(function (s) { return counts[s]; });
     Object.keys(counts).forEach(function (s) { if (statuses.indexOf(s) === -1) statuses.push(s); });
-    if (!WIDE && view.wishMode !== 'list') view.wishMode = 'list';
+    if (!WIDE && view.wishMode !== 'list' && view.wishMode !== 'covers') view.wishMode = 'list';
     if (WIDE && view.wishMode === 'list') view.wishMode = 'table';
     var list = wishFiltered();
     if (view.wishFx === '_soon') list.sort(function (a, b) { return a.release < b.release ? -1 : 1; });
@@ -2092,6 +2093,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       h = '<div class="row" style="flex-wrap:nowrap">' + sbox('<input type="search" data-input="wq" placeholder="Пошук у бажанках" value="' + esc(view.wq) + '">', 'grow') +
         '<button class="tbtn' + (view.wishFxOpen || view.wishFx ? ' on' : '') + '" data-action="wfx-toggle" aria-label="Фільтри" title="Фільтри"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>' + (view.wishFx ? '<span class="dot"></span>' : '') + '</button>' +
         '<button class="tbtn" data-action="wmore-toggle" aria-label="Ще">⋯</button></div>' + more;
+      h += '<div class="wseg" role="group" aria-label="Вигляд" style="margin-top:8px"><button data-wmode="list" class="' + (view.wishMode === 'list' ? 'on' : '') + '">Список</button><button data-wmode="covers" class="' + (view.wishMode === 'covers' ? 'on' : '') + '">Обкладинки</button></div>';
       if (view.wishFxOpen) h += '<div class="pick" style="margin:8px 0 0"><span class="muted small" style="align-self:center">Показати лише:</span>' + fx + '</div>';
     }
     h += newsHtml();
@@ -4067,6 +4069,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var b = now[0];
     return '<button class="card" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer" data-tab="plan">' + (b ? cover(b) : '') + '<div class="grow"><div class="muted small">' + (b ? 'Зараз читаю' : 'Стос на ' + MONTHS_ON[mIdx(curYm())]) + '</div><b>' + esc(b ? b.title : pile.length + ' ' + bookWord(pile.length)) + '</b>' + (b && b.page && b.pages ? '<div class="muted small">' + b.page + ' / ' + b.pages + ' стор.</div>' : '') + '</div><span class="muted">План ›</span></button>';
   }
+  // телефон (16.11): книга, яку читаєш, — одним рядком під плашками, з «Закладкою»
+  function nowRowHtml() {
+    return readingNow().map(function (b) {
+      var pct = b.pages && b.page ? Math.min(100, Math.round(b.page / b.pages * 100)) : 0;
+      var sub = b.page ? 'с. ' + b.page + (b.pages ? ' з ' + b.pages : '') : b.pages ? b.pages + ' стор.' : esc(b.author);
+      return '<div class="nowr" data-book="' + b.row + '">' + cover(b) + '<div class="g"><small>Зараз читаю</small><b>' + esc(b.title) + '</b><span>' + sub + '</span>' + (pct ? '<i class="nbar"><i style="width:' + pct + '%"></i></i>' : '') + '</div>' +
+        '<button class="btn sm" data-action="page-dlg" data-row="' + b.row + '">📑 Закладка</button></div>';
+    }).join('');
+  }
   function deskHtml() {
     var now = readingNow();
     if (!now.length) {
@@ -4203,7 +4214,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var parcel = S.inLib.filter(function (b) { return b.parcel === 'в дорозі'; });
     if (parcel.length) out.push(hbox('Посилка з Києва', '<a class="link small" data-tab="kyiv">' + parcel.length + ' кн. ›</a>', '<p class="muted small" style="margin:0">' + parcel.slice(0, 4).map(function (b) { return esc(b.title); }).join(', ') + (parcel.length > 4 ? '…' : '') + '</p>'));
     var split = out.length; // до цього — усе про посилки, далі — читання
-    out.push(deskHtml());
+    if (WIDE || !readingNow().length) out.push(deskHtml());
     var lent = S.inLib.filter(function (b) { return low(b.avail) === 'позичена'; }).sort(function (a, b) { return String(a.lentDue || '9').localeCompare(String(b.lentDue || '9')); });
     if (lent.length) out.push(hbox('Позичені', '<a class="link small" data-list="lent">' + lent.length + ' ›</a>', lent.slice(0, 4).map(function (b) {
       var late = b.lentDue && b.lentDue < D.today;
@@ -4258,14 +4269,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     // плашки: витрати за місяць (натиснути — список покупок), в дорозі, релізи; «Прочитано» — на вкладці «План»
     // коли є посилки у відділенні — першою зелена плашка «Можна забирати», натиснути = «Отримала» для всіх; коли нуль — її немає
     var ready = del.filter(arrived), SI = streakInfo(), sOn = SI.on, nPl = 3 + (ready.length ? 1 : 0) + (sOn ? 1 : 0);
-    var h = '<div class="plaques' + (nPl === 4 ? ' four' : nPl === 5 ? ' five' : '') + '">' +
+    var h = (WIDE ? '<div class="hhead">' : '') + '<div class="plaques' + (nPl === 4 ? ' four' : nPl === 5 ? ' five' : '') + '">' +
       (sOn ? '<button class="plq stq" data-action="streak-open"><small>Серія читання</small><b>🔥 ' + SI.n + ' ' + dayWord(SI.n) + (SI.readToday ? ' ✓' : '') + '</b></button>' : '') +
       (ready.length ? '<button class="plq hot" data-action="got-order" data-rows="' + ready.map(function (w) { return w.row; }).join(',') + '"><small>Можна забирати</small><b>' + ready.length + ' ' + bookWord(ready.length) + '</b></button>' : '') +
       '<button class="plq money" data-list="orders|m"><small>Витрачено в ' + MONTHS_IN[mIdx(ym)] + '</small><b>' + money(sumPrice(spentIn(ym))) + '</b></button>' +
       '<button class="plq way" data-tab="delivery"><small>Замовлено, в дорозі</small><b>' + way.length + ' ' + bookWord(way.length) + '</b></button>' +
       '<button class="plq rel" data-action="hseg" data-v="30"><small>Релізи за тиждень</small><b>' + rel7 + ' ' + bookWord(rel7) + '</b></button></div>';
+    if (!WIDE) h += nowRowHtml();
     var seg = view.hseg || 'today';
-    h += '<div class="subtabs hseg">' + [['today', 'Сьогодні'], ['30', '30 днів'], ['new', 'Нове']].map(function (x) { return '<button class="' + (seg === x[0] ? 'on' : '') + '" data-action="hseg" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
+    h += '<div class="subtabs hseg">' + [['today', 'Сьогодні'], ['30', '30 днів'], ['new', 'Нове']].map(function (x) { return '<button class="' + (seg === x[0] ? 'on' : '') + '" data-action="hseg" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' + (WIDE ? '</div>' : '');
     h += seg === '30' ? home30() : seg === 'new' ? homeNew() : homeToday();
     return h;
   };
@@ -4383,7 +4395,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (first ? '<div class="muted small">книги в обліку з ' + MONTHS_FROM[mIdx(first.slice(0, 7))] + ' ' + first.slice(0, 4) + ' · ' + meAgo(first) + '</div>' : '') +
       '<div class="pchs"><span>' + S.inLib.length + ' у бібліотеці</span><span>' + D.wish.filter(function (w) { return w.status !== 'В бібліотеці'; }).length + ' бажанок</span>' + (WIDE ? '<span>' + ['Роттердам', 'Київ'].filter(function (k) { return place[k]; }).join(' · ') + '</span>' : '') + '</div></div><button class="lnk" data-action="me-name">Змінити</button></div>';
     // 16.11: кожна плитка відкривається (списки прочитаного й купленого, серія читання)
-    h += '<div class="pyr"><button data-list="' + esc('year|' + y) + '"><b>' + readY.length + '</b><small>прочитано за ' + y + '</small></button><button data-list="' + esc('month|' + ym) + '"><b>' + readM.length + (goal ? ' / ' + goal : '') + '</b><small>у ' + MONTHS_IN[mIdx(ym)] + '</small></button><button data-list="' + esc('boughty|' + y) + '"><b>' + boughtY.length + '</b><small>куплено за рік</small></button><button data-action="streak-open"><b>' + streak + ' ' + dayWord(streak) + '</b><small>читаєш поспіль</small></button></div>';
+    h += '<div class="pyr"><button data-list="' + esc('year|' + y) + '"><b>' + readY.length + '</b><small>прочитано за ' + y + '</small></button><button data-list="' + esc('month|' + ym) + '"><b>' + readM.length + (goal ? ' / ' + goal : '') + '</b><small>у ' + MONTHS_IN[mIdx(ym)] + '</small></button><button data-list="' + esc('boughty|' + y) + '"><b>' + boughtY.length + '</b><small>куплено за рік · ' + money(sumPrice(boughtY)) + '</small></button><button data-action="streak-open"><b>' + streak + ' ' + dayWord(streak) + '</b><small>читаєш поспіль</small></button></div>';
     // дні читання: стовпчик = тиждень (пн–нд), темніше — день, коли дочитала книгу; перемикач періоду (lb.hmr)
     var HMR = { y: [53, 'Рік', 'за рік', 9, 2], h: [26, 'Пів року', 'за пів року', 11, 3], q: [13, '3 місяці', 'за 3 місяці', 16, 4], m: [5, 'Місяць', 'за місяць', 22, 4] };
     var hk = (function () { try { return localStorage.getItem('lb.hmr') || 'h'; } catch (e) { return 'h'; } })(); if (!HMR[hk]) hk = 'h';
@@ -4923,7 +4935,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       [durs.length ? Math.round(durs.reduce(function (a, b) { return a + b; }, 0) / durs.length) + ' дн.' : '—', 'в середньому на книгу', '', '⏱️'],
       [ar ? ar.toFixed(1).replace('.', ',') + '★' : '—', 'середня оцінка', '', '⭐'], [streakNow(), 'днів поспіль зараз · рекорд ' + bestStreak(), '', '🔥']]
       .map(function (k) { return '<div class="k" ' + k[2] + '><span class="e">' + k[3] + '</span><b>' + k[0] + '</b><span>' + esc(k[1]) + '</span></div>'; }).join('') + '</div>';
-    h += '<div class="cols">';
+    h += '<div class="cols stmas">';
     if (p === 'y' || p === 'all') {
       var rows = [];
       if (p === 'y') for (var i = 0; i < 12; i++) { var key = r.from.slice(0, 4) + '-' + ('0' + (i + 1)).slice(-2); rows.push([MONTHS_FULL[i].slice(0, 3), rb.filter(function (b) { return b.readOn.slice(0, 7) === key; }).length, key]); }
@@ -5093,6 +5105,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     var spp = t.closest('[data-sp]'); if (spp) { view.sp = spp.getAttribute('data-sp'); return render(); }
     var fc = t.closest('[data-fc]');
     if (fc) { var fp = fc.getAttribute('data-fc').split('|'), fk = fp[0], fv = fp.slice(1).join('|'); view.f[fk] = view.f[fk] === fv ? '' : fv; view.limit = 60; saveView(); return render(); }
+    var qmb = t.closest('[data-qm]'); if (qmb) { quickMenu(bookByRow(qmb.getAttribute('data-qm'))); return; }
     var bk = t.closest('[data-book]'); if (bk && !t.closest('select,input,button.btn,button.chip')) return showBook(Number(bk.getAttribute('data-book')));
     var wi = t.closest('[data-wish]'); if (wi && !t.closest('select,input,button.btn,button[data-action]')) return showWish(Number(wi.getAttribute('data-wish')));
     var sm = t.closest('[data-smode]'); if (sm) { view.seriesMode = sm.getAttribute('data-smode'); return render(); }
