@@ -240,8 +240,39 @@ async function text(m: Row) {
   return tgSend(findText(q, data));
 }
 
+/** Вхід на сайт через бота (етап 4): /start login_<код>. Працює для всіх; нова людина — лише із запрошенням. */
+async function loginConfirm(m: Row, nonce: string) {
+  const say = (text: string, extra: Row = {}) => tgApi("sendMessage", { chat_id: m.chat.id, parse_mode: "HTML", text, ...extra });
+  const r = (await db.from("login_requests").select("*").eq("nonce", nonce).maybeSingle()).data;
+  if (!r || r.confirmed_at || Date.now() - new Date(r.created_at).getTime() > 15 * 60e3) return say("Це посилання для входу вже не діє. Натисни «Увійти через Телеграм» на сайті ще раз.");
+  const tgId = Number(m.from?.id) || 0, name = [m.from?.first_name, m.from?.last_name].filter(Boolean).join(" ").slice(0, 60) || "Читачка";
+  let user: Row | null = null, fresh = false;
+  if (String(tgId) === String(Deno.env.get("LB_TG_USER_ID") || "")) {
+    user = (await db.from("app_users").select("id,name").eq("id", 1).maybeSingle()).data;
+    await db.from("app_users").update({ tg_id: tgId }).eq("id", 1).is("tg_id", null);
+  } else user = (await db.from("app_users").select("id,name").eq("tg_id", tgId).maybeSingle()).data;
+  if (!user) {
+    const inv = r.invite ? (await db.from("invites").select("*").eq("code", r.invite).maybeSingle()).data : null;
+    if (!inv || inv.revoked || inv.used_by) return say("Shelfie поки працює за запрошенням, а це запрошення вже використане або скасоване. Попроси нове посилання.");
+    const made = await db.from("app_users").insert({ name, role: "user", tg_id: tgId, invited_by: inv.created_by }).select("id,name").single();
+    if (made.error) return say("Не вийшло створити акаунт. Спробуй ще раз.");
+    user = made.data; fresh = true;
+    await db.from("invites").update({ used_by: user!.id, used_at: new Date().toISOString() }).eq("code", inv.code);
+    await db.from("log").insert({ action: "👥 Нова людина в Shelfie", title: name, details: "Увійшла через Телеграм за запрошенням" + (inv.note ? " (" + inv.note + ")" : ""), owner_id: 1 });
+    await tgSend("👥 У Shelfie нова людина: <b>" + esc(name) + "</b>" + (inv.note ? " (запрошення «" + esc(inv.note) + "»)" : "") + ".");
+  }
+  await db.from("login_requests").update({ confirmed_at: new Date().toISOString(), user_id: user!.id, tg_name: name }).eq("nonce", nonce);
+  return say((fresh ? "Вітаю в Shelfie, " + esc(name) + "! 📚\n" : "Готово, " + esc(user!.name || name) + "!\n") + "Вхід підтверджено. Повертайся на сайт, він відкриється сам.");
+}
+
 async function handle(u: Row) {
   const chat = tgChat();
+  const lm = u.message?.text && String(u.message.text).match(/^\/start\s+login_([A-Za-z0-9_-]{8,64})/);
+  if (lm) { try { await loginConfirm(u.message, lm[1]); } catch (e) { console.error(e); } return; }
+  if (u.message?.text === "/start" && String(u.message.chat?.id) !== chat) {
+    await tgApi("sendMessage", { chat_id: u.message.chat.id, text: "Привіт! Це бот Shelfie. Увійти можна на сайті кнопкою «Увійти через Телеграм» (поки за запрошенням)." });
+    return;
+  }
   const q = u.callback_query;
   if (q?.message && String(q.message.chat.id) === chat) {
     try { await button(q); } catch (e) { await tgApi("answerCallbackQuery", { callback_query_id: q.id, text: "Не вийшло: " + String((e as Error).message || e).slice(0, 150) }); }

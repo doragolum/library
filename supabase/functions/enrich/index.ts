@@ -140,7 +140,7 @@ async function enrichOne(c: Row) {
   chk(await db.from("catalog").update(upd).eq("isbn", c.isbn), "catalog");
   // у книги — лише порожні поля
   let filled = 0;
-  const books = chk(await db.from("books").select("id,cover,pages,orig_title,title,author").eq("isbn", c.isbn), "books") as Row[];
+  const books = chk(await db.from("books").select("id,cover,pages,orig_title,title,author,owner_id").eq("isbn", c.isbn), "books") as Row[];
   for (const b of books) {
     const set: Row = {};
     if (!b.cover && upd.cover) set.cover = upd.cover;
@@ -148,7 +148,7 @@ async function enrichOne(c: Row) {
     if (!b.orig_title && upd.orig_title) set.orig_title = upd.orig_title;
     if (Object.keys(set).length) {
       chk(await db.from("books").update(set).eq("id", b.id), "books");
-      await db.from("log").insert({ action: "🔎 Доповнено з інтернету", book_id: b.id, title: b.title, author: b.author, details: Object.keys(set).map((k) => k === "cover" ? "обкладинка" : k === "pages" ? `сторінок: ${set[k]}` : `оригінальна назва: ${set[k]}`).join("; ") + ` (${found.map((r) => r.source).join(", ")})` });
+      await db.from("log").insert({ action: "🔎 Доповнено з інтернету", book_id: b.id, owner_id: b.owner_id ?? 1, title: b.title, author: b.author, details: Object.keys(set).map((k) => k === "cover" ? "обкладинка" : k === "pages" ? `сторінок: ${set[k]}` : `оригінальна назва: ${set[k]}`).join("; ") + ` (${found.map((r) => r.source).join(", ")})` });
       filled++;
     }
   }

@@ -57,7 +57,7 @@ async function fillOne(w: Row, series: string | null, used: Set<string>) {
   if (Object.keys(set).length) {
     chk(await db.from("books").update(set).eq("id", w.id), "books");
     if (set.isbn) used.add(set.isbn);
-    await db.from("log").insert({ action: "🔎 Бажанку доповнено з інтернету", book_id: w.id, title: w.title, author: w.author, details: notes.join("; ") + ` (${f.source})` });
+    await db.from("log").insert({ action: "🔎 Бажанку доповнено з інтернету", book_id: w.id, owner_id: w.owner_id ?? 1, title: w.title, author: w.author, details: notes.join("; ") + ` (${f.source})` });
   }
   return { id: w.id, title: w.title, status: "auto", filled: notes };
 }
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const n = Math.min(Number(body.n) || 5, 12);
     const [wishes, found, series, isb] = await Promise.all([
-      db.from("books").select("id,stage,author,title,series_id,series_num,publisher,isbn,cover,pages,orig_title,release,price,sale_status,source_url").in("stage", WISH_STAGES).is("isbn", null),
+      db.from("books").select("id,stage,author,title,series_id,series_num,publisher,isbn,cover,pages,orig_title,release,price,sale_status,source_url,owner_id").in("stage", WISH_STAGES).is("isbn", null),
       db.from("wish_found").select("key,status,tried_at"),
       db.from("series").select("id,name"),
       db.from("books").select("isbn").not("isbn", "is", null).not("stage", "in", "(sold,gifted)"),
