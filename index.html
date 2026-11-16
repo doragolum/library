@@ -199,8 +199,13 @@ details summary{cursor:pointer;font-weight:600;padding:4px 0}
   .top .iconbtn{width:40px;height:40px}
   main .selbar{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 }
+.srch .sl,.srch .sk{display:none}
 /* широкий екран */
 @media (min-width:1000px){
+  .top .srch{width:100%;height:auto;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--muted);justify-content:flex-start;gap:8px;padding:8px 10px 8px 12px;font:inherit;font-size:13px;text-align:left}
+  .top .srch:hover{border-color:var(--accent);color:var(--ink)}
+  .srch .sl{display:block;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .srch .sk{display:inline-block;font:500 12px/1.4 inherit;font-family:inherit;border:1px solid var(--line);border-radius:6px;padding:0 5px;background:var(--bg)}
   html,body{max-width:100%}
   body{display:grid;grid-template-columns:230px minmax(0,1fr);width:100%;box-sizing:border-box}
   header{height:100vh;border-bottom:0;border-right:1px solid var(--line);display:flex;flex-direction:column}
@@ -462,7 +467,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 </head>
 <body>
 <header>
-  <div class="top"><h1>📚 Моя бібліотека</h1><span id="sync" class="muted small"></span><button class="iconbtn" data-action="search" title="Пошук" aria-label="Пошук"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="addbtn" data-action="plus" aria-label="Додати">＋<span class="lbl"> Додати</span></button></div>
+  <div class="top"><h1>📚 Моя бібліотека</h1><span id="sync" class="muted small"></span><button class="iconbtn srch" data-action="search" title="Пошук" aria-label="Пошук"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="sl">Знайти книгу</span><kbd class="sk">⌘K</kbd></button><button class="addbtn" data-action="plus" aria-label="Додати">＋<span class="lbl"> Додати</span></button></div>
   <nav class="tabs" id="tabs"></nav>
 </header>
 <main id="app"><div class="loading">Завантажую бібліотеку…</div></main>
@@ -5038,6 +5043,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;background:#fff;color:#000;font:12px/1.4 monospace;padding:8px;border:2px solid #c00;max-width:90vw;max-height:60vh;overflow:auto;white-space:pre-wrap';
     box.textContent = 'вікно ' + innerWidth + ' · html ' + document.documentElement.scrollWidth + ' · body ' + Math.round(b.getBoundingClientRect().width) + ' · main ' + (m ? Math.round(m.getBoundingClientRect().width) : '-') + ' · dpr ' + devicePixelRatio + ' · колонки ' + getComputedStyle(b).gridTemplateColumns + '\nзум ' + Math.round(outerWidth / innerWidth * 100) + '% · ' + navigator.userAgent.replace(/.*(Chrome\/[0-9]+).*/, '$1') + '\n' + (out.length ? out.slice(0, 12).map(function (x) { return x[0] + '  ' + x[1]; }).join('\n') : 'нічого не вилазить');
   }
+  // ⌘K / Ctrl+K — пошук з клавіатури (на Windows підказка «Ctrl K»)
+  if (!/Mac|iPhone|iPad/.test(navigator.platform || '')) document.querySelectorAll('.srch .sk').forEach(function (k) { k.textContent = 'Ctrl K'; });
+  addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л')) { e.preventDefault(); var b = document.querySelector('.srch'); if (b) b.click(); }
+  });
   // на комп'ютері: жест «розвести пальці» на тачпаді не збільшує сторінку (вона від цього їхала вбік); Cmd + / Cmd − працюють як завжди
   if (window.matchMedia('(min-width:1000px) and (pointer:fine)').matches) {
     addEventListener('wheel', function (e) { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
