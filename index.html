@@ -3670,8 +3670,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
   /* ---------- дні читання ---------- */
   var DAYS_CACHE = null;
   // Серія читання (16.11, як у Дуолінго). Та сама логіка — supabase/functions/_shared/streak.ts, міняти разом.
-  // Дні читання: від початку до кінця дочитаних книг, дати початку й прочитання, «читаю» — до запуску серії (D.streak.since),
-  // далі лише позначки D.streak.days (закладка, «Читала» в боті чи в додатку). Пропуски: 2 на місяць, від запуску серії.
+  // Серія рахує лише дні з позначкою: день початку й день прочитання книги, закладка, «Читала» в боті чи в додатку (D.streak.days).
+  // Книга «читаю» сама дні не додає (16.11, на прохання). Пропуски: 2 на місяць, від запуску серії.
+  // Теплова карта, «Читала N днів» і статистика (readingDays) — ширше: ще й дні від початку до кінця дочитаних книг.
   var SKIPS = 2;
   function stCfg() { var st = D.streak || {}; return { on: st.on !== false, hour: st.hour || 20, since: st.since || D.today, days: st.days || [], skips: st.skips || [] }; }
   function readingDays() {
@@ -3682,15 +3683,24 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       if (b.started) set[b.started] = 1;
       if (b.readOn) set[b.readOn] = 1;
       if (b.started && b.readOn && b.readOn >= b.started) range(b.started, b.readOn);
-      else if (b.started && !b.readOn && low(b.status) === 'читаю') { var to = addDays(st.since, -1); if (to >= b.started) range(b.started, to < D.today ? to : D.today); }
     });
     st.days.forEach(function (d) { set[d] = 1; });
     Object.keys(set).forEach(function (d) { if (d > D.today) delete set[d]; });
     DAYS_CACHE = { d: D, v: S, st: D.streak, set: set };
     return set;
   }
+  function markedDays() {
+    if (MARK_CACHE && MARK_CACHE.d === D && MARK_CACHE.st === D.streak) return MARK_CACHE.set;
+    var set = {};
+    D.books.forEach(function (b) { if (b.started) set[b.started] = 1; if (b.readOn) set[b.readOn] = 1; });
+    stCfg().days.forEach(function (d) { set[d] = 1; });
+    Object.keys(set).forEach(function (d) { if (d > D.today) delete set[d]; });
+    MARK_CACHE = { d: D, st: D.streak, set: set };
+    return set;
+  }
+  var MARK_CACHE = null;
   function streakInfo() {
-    var set = readingDays(), st = stCfg(), manual = {}, used = {}, td = D.today, ym = td.slice(0, 7);
+    var set = markedDays(), st = stCfg(), manual = {}, used = {}, td = D.today, ym = td.slice(0, 7);
     st.skips.forEach(function (d) { manual[d] = 1; used[d.slice(0, 7)] = (used[d.slice(0, 7)] || 0) + 1; });
     var all = Object.keys(set).sort(), first = all[0] || td, skipped = {}, n = 0;
     var d = set[td] || manual[td] ? td : addDays(td, -1);
@@ -3749,7 +3759,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       }).join('') + '</div><p class="muted small" style="margin:10px 0 0">Коли вимкнено, серії немає ні в боті, ні в додатку.</p>', false, 'mid');
   }
   function streakApi(p, msg) {
-    return api('lbApiStreak', p).then(function (r) { D.streak = r; DAYS_CACHE = null; if (msg) toast(msg); render(); return r; }).catch(function (e) { toast(e.message, true); });
+    return api('lbApiStreak', p).then(function (r) { D.streak = r; DAYS_CACHE = null; MARK_CACHE = null; if (msg) toast(msg); render(); return r; }).catch(function (e) { toast(e.message, true); });
   }
 
   /* ---------- корінці з обкладинок ---------- */
