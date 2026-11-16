@@ -453,15 +453,17 @@ details.morein{margin-top:10px}details.morein summary{font-weight:500;color:var(
 .pyr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
 .pyr div{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0}.pyr b{display:block;font-size:20px}.pyr small{color:var(--muted);font-size:12px}
 .prow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;margin-top:14px;align-items:start}
-.phm{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:3px}
-.phm i{border-radius:2px;background:var(--line)}.phm i.a{background:color-mix(in srgb,var(--accent-fill) 45%,transparent)}.phm i.b{background:var(--accent-fill)}.phm i.f{background:transparent}
+.phm{display:grid;grid-template-rows:repeat(7,var(--cs));grid-auto-flow:column;grid-auto-columns:var(--cs);gap:var(--gp)}
+.phseg{margin-bottom:10px}
+.phl{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px}.phl i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--line)}.phl i.a{background:color-mix(in srgb,var(--accent) 45%,var(--card))}.phl i.b{background:var(--accent)}
+.phm i{border-radius:2px;background:var(--line)}.phm i.a{background:color-mix(in srgb,var(--accent) 45%,var(--card))}.phm i.b{background:var(--accent)}.phm i.f{background:transparent}
 .pfacts div{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:6px 0;border-top:1px solid var(--line)}.pfacts div:first-child{border-top:0}.pfacts b{text-align:right}
 .mgl{font-size:12px;font-weight:600;color:var(--muted);margin:16px 4px 6px}
 .mrow .mv{color:var(--muted);font-size:13px;white-space:nowrap}.mrow .g small{display:block;color:var(--muted);font-size:12px;font-weight:400}
 .mrow .mi svg{display:block}.mi.g5{color:var(--accent)}
 .mlog div{display:flex;flex-direction:column;gap:1px;padding:8px 0;border-top:1px solid var(--line)}.mlog div:first-child{border-top:0}
 @media (min-width:900px){.mecols{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;align-items:start}}
-@media (max-width:899px){.pyr{grid-template-columns:repeat(2,minmax(0,1fr))}.prow{grid-template-columns:1fr;gap:12px}.phm{grid-template-rows:repeat(7,1fr);grid-auto-columns:1fr;gap:2px}.phm i{aspect-ratio:1}}
+@media (max-width:899px){.pyr{grid-template-columns:repeat(2,minmax(0,1fr))}.prow{grid-template-columns:1fr;gap:12px}.phm{grid-template-rows:none;grid-template-columns:repeat(var(--c),1fr);grid-template-rows:repeat(7,auto);gap:2px;max-width:calc(var(--c) * 28px)}.phm i{aspect-ratio:1}}
 .mlist{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:12px}
 .mrow{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:13px 14px;cursor:pointer}.mrow:last-child{border-bottom:0}
 .mrow .g{flex:1;min-width:0;display:flex;flex-direction:column}.mrow small{color:var(--muted);font-size:13px}.mrow .chev{color:var(--muted);font-size:16px}
@@ -4046,17 +4048,22 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       (first ? '<div class="muted small">книги в обліку з ' + MONTHS_FROM[mIdx(first.slice(0, 7))] + ' ' + first.slice(0, 4) + ' · ' + meAgo(first) + '</div>' : '') +
       '<div class="pchs"><span>' + S.inLib.length + ' у бібліотеці</span><span>' + D.wish.filter(function (w) { return w.status !== 'В бібліотеці'; }).length + ' бажанок</span>' + (WIDE ? '<span>' + ['Роттердам', 'Київ'].filter(function (k) { return place[k]; }).join(' · ') + '</span>' : '') + '</div></div><button class="lnk" data-action="me-name">Змінити</button></div>';
     h += '<div class="pyr"><div><b>' + readY.length + '</b><small>прочитано за ' + y + '</small></div><div><b>' + readM.length + (goal ? ' / ' + goal : '') + '</b><small>у ' + MONTHS_IN[mIdx(ym)] + '</small></div><div><b>' + boughtY.length + '</b><small>куплено за рік</small></div><div><b>' + streak + ' ' + dayWord(streak) + '</b><small>читаєш поспіль</small></div></div>';
-    // дні читання за 26 тижнів: стовпчик = тиждень (пн–нд), темніше — день, коли дочитала книгу
+    // дні читання: стовпчик = тиждень (пн–нд), темніше — день, коли дочитала книгу; перемикач періоду (lb.hmr)
+    var HMR = { y: [53, 'Рік', 'за рік', 9, 2], h: [26, 'Пів року', 'за пів року', 11, 3], q: [13, '3 місяці', 'за 3 місяці', 16, 4], m: [5, 'Місяць', 'за місяць', 22, 4] };
+    var hk = (function () { try { return localStorage.getItem('lb.hmr') || 'h'; } catch (e) { return 'h'; } })(); if (!HMR[hk]) hk = 'h';
+    var W = HMR[hk][0], cs = HMR[hk][3], gp = HMR[hk][4];
     var set = readingDays(), fin = {}; D.books.forEach(function (b) { if (b.readOn) fin[b.readOn] = 1; });
-    var dow = (new Date(D.today + 'T12:00:00Z').getUTCDay() + 6) % 7, start = addDays(D.today, -(25 * 7 + dow)), cells = '', n = 0, tot = 0;
-    for (var i = 0; i < 26 * 7; i++) {
+    var dow = (new Date(D.today + 'T12:00:00Z').getUTCDay() + 6) % 7, start = addDays(D.today, -((W - 1) * 7 + dow)), cells = '', n = 0, tot = 0;
+    for (var i = 0; i < W * 7; i++) {
       var d = addDays(start, i), fut = d > D.today;
       if (!fut) { tot++; if (set[d]) n++; }
       cells += '<i class="' + (fut ? 'f' : fin[d] ? 'b' : set[d] ? 'a' : '') + '" title="' + dmy(d) + '"></i>';
     }
     var fg = mostCommon(readY.length >= 5 ? readY : D.books.filter(function (b) { return b.readOn; }), function (b) { return b.genre; }) || '—';
     var fa = mostCommon(S.inLib, function (b) { return b.author; }) || '—';
-    h += '<div class="prow"><div><div class="phm">' + cells + '</div><div class="muted small" style="margin-top:6px">дні читання за пів року · ' + n + ' з ' + tot + '</div></div>' +
+    h += '<div class="prow"><div><div class="wseg phseg" role="group" aria-label="Період">' + Object.keys(HMR).map(function (k) { return '<button data-action="hmr" data-v="' + k + '" class="' + (k === hk ? 'on' : '') + '">' + HMR[k][1] + '</button>'; }).join('') + '</div>' +
+      '<div class="phm" style="--c:' + W + ';--cs:' + cs + 'px;--gp:' + gp + 'px">' + cells + '</div><div class="muted small" style="margin-top:6px">дні читання ' + HMR[hk][2] + ': ' + n + ' з ' + tot + '</div>' +
+      '<div class="phl muted small"><span><i></i>не читала</span><span><i class="a"></i>читала</span><span><i class="b"></i>дочитала книгу</span></div></div>' +
       '<div class="pfacts"><div><span class="muted">Улюблений жанр</span><b>' + esc(fg) + '</b></div><div><span class="muted">Найчастіший автор</span><b>' + esc(fa) + '</b></div><div><span class="muted">Найдовша серія днів</span><b>' + bestStreak() + '</b></div></div></div></div>';
     return h;
   }
@@ -4837,6 +4844,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     if (a === 'me-photo') return document.getElementById('mephoto').click();
     if (a === 'me-photo-del') return meSave({ photo: '' }, 'Фото прибрано');
     if (a === 'me-log') return meLog();
+    if (a === 'hmr') { try { localStorage.setItem('lb.hmr', act.getAttribute('data-v')); } catch (e) {} return render(); }
     if (a === 'me-csv') return meCsv();
     if (a === 'theme') { setTheme(act.getAttribute('data-v')); return render(); }
     if (a === 'appicon') { setAppIcon(act.getAttribute('data-v')); return render(); }
