@@ -6,6 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { tgApi, tgSend, tgChat, tgToken, esc, hookSecret } from "../_shared/tg.ts";
 import { looksPrivate, redact, parseRelease, todayKyiv } from "../_shared/ai.ts";
 import { findText, weekText, monthText, kyivText, rotterdamText, helpText, human } from "../_shared/texts.ts";
+import { streakMessage, streakInfo, currentBook, dayWord, STREAK_DEFAULT } from "../_shared/streak.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const BASE = Deno.env.get("SUPABASE_URL")!;
@@ -111,8 +112,57 @@ async function answerAsk(m: Row): Promise<boolean> {
   await next(id);
   return true;
 }
+/* ---------- серія читання (16.11): кнопки вечірнього нагадування ---------- */
+async function streakNow(data?: Row) {
+  data = data || await api("lbApiData", null);
+  return streakInfo(data.books || [], { ...STREAK_DEFAULT, ...(data.streak || {}) }, todayKyiv());
+}
+async function streakButton(q: Row, what: string) {
+  const chat = q.message.chat.id, mid = q.message.message_id;
+  const ack = (text: string) => tgApi("answerCallbackQuery", { callback_query_id: q.id, text: text.slice(0, 190) });
+  const clear = () => tgApi("editMessageReplyMarkup", { chat_id: chat, message_id: mid, reply_markup: { inline_keyboard: [] } });
+  if (what === "read") {
+    await api("lbApiStreak", { act: "read" });
+    const i = await streakNow();
+    await ack("Зараховано!"); await clear();
+    return tgSend("✅ День зараховано. Серія: <b>" + i.n + " " + dayWord(i.n) + "</b> 🔥");
+  }
+  if (what === "skip") {
+    await api("lbApiStreak", { act: "skip" });
+    const i = await streakNow();
+    await ack("Пропуск використано"); await clear();
+    return tgSend("❄ Сьогодні пропуск. Серія тримається: <b>" + i.n + " " + dayWord(i.n) + "</b>. Пропусків лишилось: " + i.left + ".");
+  }
+  if (what === "later") {
+    const st: Row = await kvGet("streak", {}) || {};
+    st.snooze = { date: todayKyiv(), hour: 22 };
+    await kvSet("streak", st);
+    await ack("Нагадаю о 22:00"); return clear();
+  }
+  if (what === "page") {
+    const data = await api("lbApiData", null), b = currentBook(data.books || []);
+    await ack("");
+    if (!b) return tgSend("Зараз у тебе немає книги зі статусом «читаю». Натисни «Читала» або постав статус у додатку.");
+    const r = await tgApi("sendMessage", { chat_id: chat, parse_mode: "HTML", text: "📑 На якій ти сторінці «" + esc(b.title) + "»?" + (b.page ? " Було: " + b.page + "." : "") + "\n<i>Напиши число у відповідь на це повідомлення.</i>", reply_markup: { force_reply: true, input_field_placeholder: "Сторінка" } });
+    await kvSet("streak_ask", { q: r?.result?.message_id || 0, row: b.row, title: b.title, author: b.author, pages: b.pages || 0 });
+    return;
+  }
+}
+async function answerPage(m: Row): Promise<boolean> {
+  const a: Row = await kvGet("streak_ask", {}) || {};
+  if (!a.q || a.q !== m.reply_to_message.message_id) return false;
+  const n = String(m.text).match(/\d+/);
+  if (!n) { await tgSend("Напиши сторінку числом, наприклад <b>352</b>."); return true; }
+  const page = Number(n[0]);
+  await api("lbApiUpdate", { kind: "library", row: a.row, title: a.title, author: a.author, field: "page", value: page });
+  await kvSet("streak_ask", {});
+  const i = await streakNow();
+  await tgSend("📑 «" + esc(a.title) + "», стор. " + page + (a.pages ? " з " + a.pages : "") + ". День зараховано, серія: <b>" + i.n + " " + dayWord(i.n) + "</b> 🔥");
+  return true;
+}
 async function button(q: Row) {
   const [act, id, what] = String(q.data || "").split(":");
+  if (act === "s") return streakButton(q, id);
   const pend = await pendGet(), p = pend[id];
   if (act === "a") {
     await tgApi("editMessageReplyMarkup", { chat_id: q.message.chat.id, message_id: q.message.message_id, reply_markup: { inline_keyboard: [] } });
@@ -179,6 +229,12 @@ async function text(m: Row) {
   if (/^\/(month|місяць)\b/.test(cmd)) return tgSend(monthText(data, td, true));
   if (/^\/(kyiv|київ)\b/.test(cmd)) return tgSend(kyivText(data));
   if (/^\/(rotterdam|роттердам)(?![\p{L}])/u.test(cmd)) return tgSend(rotterdamText(data));
+  if (/^\/(streak|серія)(?![\p{L}])/u.test(cmd)) {
+    const i = await streakNow(data);
+    if (i.readToday) return tgSend("🔥 Серія: <b>" + i.n + " " + dayWord(i.n) + "</b>. Сьогодні вже зараховано. Пропусків лишилось: " + i.left + ".");
+    const sm = streakMessage(data, td, esc);
+    return tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: sm.text, reply_markup: { inline_keyboard: sm.kb } });
+  }
   const q = t.replace(/^\/(є|e|find|пошук)\s*/i, "").trim();
   if (q.length < 2) return tgSend("Напишіть назву, автора або серію, наприклад: <b>Четверте крило</b>");
   return tgSend(findText(q, data));
@@ -197,7 +253,7 @@ async function handle(u: Row) {
     if (m.photo || (m.document && /^image\//.test(m.document.mime_type || ""))) return await photo(m);
     if (m.voice || m.audio) return await voice(m);
     if (!m.text) return;
-    if (m.reply_to_message && await answerAsk(m)) return;
+    if (m.reply_to_message && (await answerPage(m) || await answerAsk(m))) return;
     const url = String(m.text).match(/https?:\/\/[^\s<>"]+/);
     if (url && !/^\//.test(m.text)) return await link(m, url[0]);
     await text(m);
@@ -212,7 +268,7 @@ async function setup() {
   const hook = await tgApi("setWebhook", { url: BASE + "/functions/v1/bot", secret_token: await hookSecret(), allowed_updates: ["message", "callback_query"], drop_pending_updates: false });
   const chat = tgChat();
   const menu = chat ? await tgApi("setChatMenuButton", { chat_id: Number(chat), menu_button: { type: "web_app", text: "Бібліотека", web_app: { url: PAGE + "?tg=1&db=1" } } }) : { ok: false };
-  await tgApi("setMyCommands", { commands: [{ command: "week", description: "Підсумок тижня" }, { command: "month", description: "Підсумок місяця" }, { command: "kyiv", description: "Що чекає в Києві" }, { command: "rotterdam", description: "Книги в Роттердамі" }, { command: "help", description: "Що я вмію" }] });
+  await tgApi("setMyCommands", { commands: [{ command: "week", description: "Підсумок тижня" }, { command: "month", description: "Підсумок місяця" }, { command: "kyiv", description: "Що чекає в Києві" }, { command: "rotterdam", description: "Книги в Роттердамі" }, { command: "streak", description: "Серія читання" }, { command: "help", description: "Що я вмію" }] });
   return { ok: !!hook.ok, bot: "@" + me.result.username, webhook: hook.description || hook.ok, menu: menu.ok };
 }
 

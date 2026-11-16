@@ -1,7 +1,8 @@
 // Розклад (pg_cron): нагадування в Телеграм о ~9:00 за Києвом, нічне «вийшли з друку → Є у продажу», новини серій щопонеділка.
-// Тіло: {job:"remind"} | {job:"night"} | {job:"news"}; {job:"remind", test:true} — надіслати зараз релізи на 14 днів і тиждень (перевірка).
+// Тіло: {job:"remind"} | {job:"night"} | {job:"news"} | {job:"streak"} (щогодини: вечірнє нагадування про серію читання); {job:"remind", test:true} — надіслати зараз релізи на 14 днів і тиждень (перевірка).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { tgSend, tgApi } from "../_shared/tg.ts";
+import { tgSend, tgApi, tgChat, esc } from "../_shared/tg.ts";
+import { streakMessage, STREAK_DEFAULT } from "../_shared/streak.ts";
 import { todayKyiv } from "../_shared/ai.ts";
 import { dailyText, weekText, monthText, weekday, addDays, reminderLine } from "../_shared/texts.ts";
 
@@ -44,6 +45,26 @@ async function remind(test: boolean) {
   return { sent: msgs.length };
 }
 
+/** Серія читання: увечері (година з «Я», за часом Роттердама), лише якщо сьогодні ще не читала; «Нагадати о 22:00» — ще раз. */
+const localHour = () => Number(new Date().toLocaleString("en-GB", { timeZone: "Europe/Amsterdam", hour: "2-digit", hour12: false }));
+async function streak(test: boolean) {
+  const today = todayKyiv(), h = localHour();
+  const st: Row = { ...STREAK_DEFAULT, ...((await kvGet("streak", {})) || {}) };
+  const sent: Row = (await kvGet("streak_sent", {})) || {};
+  if (!test) {
+    if (!st.on) return { skipped: "вимкнено" };
+    if (!(await switched())) return { skipped: "бот ще в Apps Script" };
+  }
+  const late = !test && st.snooze?.date === today && h >= Number(st.snooze.hour || 22) && sent.late !== today;
+  if (!test && !late && (h < Number(st.hour) || sent.date === today)) return { skipped: "не час або вже надсилали" };
+  const data = await api("lbApiData", null);
+  const m = streakMessage(data, today, esc, late);
+  if (!test && (m.info.readToday || m.info.skipToday)) return { skipped: "сьогодні вже читала" };
+  await tgApi("sendMessage", { chat_id: Number(tgChat()), parse_mode: "HTML", text: m.text, reply_markup: { inline_keyboard: m.kb } });
+  if (!test) await kvSet("streak_sent", late ? { ...sent, late: today } : { ...sent, date: today });
+  return { sent: 1, late };
+}
+
 /** Бажанки «Передзамовлення»/«Анонс», у яких настала дата релізу (точний день), → «Є у продажу». */
 async function night() {
   const today = todayKyiv();
@@ -61,6 +82,7 @@ Deno.serve(async (req) => {
     if (req.headers.get("x-import-token") !== String(await kvGet("import_token", ""))) return json({ ok: false }, 403);
     const b = await req.json().catch(() => ({}));
     if (b.job === "remind") return json({ ok: true, ...(await remind(!!b.test)) });
+    if (b.job === "streak") return json({ ok: true, ...(await streak(!!b.test)) });
     if (b.job === "night") return json({ ok: true, ...(await night()) });
     if (b.job === "news") return json(await switched() ? { ok: true, ...(await api("lbApiNews", { action: "cron" })) } : { ok: true, skipped: "бот ще в Apps Script" });
     return json({ ok: false, error: "невідома робота" });
