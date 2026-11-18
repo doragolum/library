@@ -6,8 +6,7 @@ import { fromMegogo, megogoVolume } from "../_shared/megogo.ts";
 import { fromYakaboo } from "../_shared/yakaboo.ts";
 import { fromGoodreads } from "../_shared/goodreads.ts";
 import { pubCanon } from "../_shared/pub.ts";
-import { gemini, aiBooks, enrichItems, bookFromUrl, AiError, isbnKey, todayKyiv, mgItem } from "../_shared/ai.ts";
-import { authorOk, mgSearch } from "../_shared/megogo.ts";
+import { gemini, aiBooks, enrichItems, bookFromUrl, AiError, isbnKey, todayKyiv } from "../_shared/ai.ts";
 import { tgSend, esc } from "../_shared/tg.ts";
 import { pushTo } from "../_shared/push.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -17,8 +16,8 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 // хто питає (етап 4): друзі бачать лише свої книги й мають ліміт Gemini
 const ctx = new AsyncLocalStorage<Who>();
 const uid = () => ctx.getStore()?.uid || 1;
-const FRIEND_OK = ["lbApiAi", "lbApiAiParts", "lbApiGenre", "lbApiTropes", "lbApiFromLink", "lbApiOfficial", "lbApiCoverUpload", "lbApiSimilar", "lbApiFind"];
-const GEMINI_FNS = ["lbApiAi", "lbApiAiParts", "lbApiGenre", "lbApiTropes", "lbApiFromLink", "lbApiSimilar"];
+const FRIEND_OK = ["lbApiAi", "lbApiAiParts", "lbApiGenre", "lbApiTropes", "lbApiFromLink", "lbApiOfficial", "lbApiCoverUpload"];
+const GEMINI_FNS = ["lbApiAi", "lbApiAiParts", "lbApiGenre", "lbApiTropes", "lbApiFromLink"];
 const FRIEND_DAY_LIMIT = 3; // скриншоти / голос / текст / посилання на день для друзів (безкоштовний тариф Gemini спільний)
 async function aiQuota() {
   const d = todayKyiv(), u = uid();
@@ -216,51 +215,6 @@ async function apiNews(req: Row) {
   return items;
 }
 
-/* ---------- схожі книги (17.11): Gemini пропонує, кожну книгу перевіряємо на MEGOGO → Yakaboo ---------- */
-async function apiSimilar(req: Row) {
-  req = req || {};
-  const title = s(req.title), author = s(req.author);
-  if (!title) fail("Немає назви книги.");
-  const t0 = Date.now();
-  const [desc, ctxd] = await Promise.all([bookDesc(req), aiCtx()]);
-  const skip = (Array.isArray(req.skip) ? req.skip : []).map((x: unknown) => s(x).slice(0, 80)).filter(Boolean).slice(0, 40);
-  const prompt = "Ти книжковий консультант. Читачка з України любить книгу «" + title + "»" + (author ? " (" + author + ")" : "") + (req.series ? ", серія «" + s(req.series) + "»" : "") + (req.genre ? ", жанр: " + s(req.genre) : "") + ". " +
-    (desc ? "Опис: " + desc.slice(0, 1500) + "\n" : "") +
-    "Порадь 14 інших книг, схожих за атмосферою, темами й настроєм. Правила: лише реальні книги, які точно існують; переважно ті, що видані українською (тоді пиши українську назву видання й автора українською); " +
-    "не більше 2 книг того самого автора; не книги з тієї самої серії; для серій — лише першу книгу серії. " +
-    (skip.length ? "Не пропонуй: " + JSON.stringify(skip) + ". " : "") +
-    'Поверни JSON {"themes":["3-4 головні теми цієї книги, 1-3 слова, українською, з малої літери"],"items":[{"title":"назва","author":"автор","why":"чому схожа: 2-4 слова через кому, з малої літери"}]}.';
-  const r = await aiCall(() => gemini([], prompt));
-  if (!r) return { nokey: true, items: [] };
-  const seen = new Set<string>();
-  const cands: Row[] = (Array.isArray(r.items) ? r.items : []).filter((x: Row) => x && s(x.title) && s(x.author)).filter((x: Row) => {
-    const k = s(x.title).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true;
-  }).slice(0, 14);
-  const check = async (x: Row): Promise<Row | null> => {
-    if (Date.now() - t0 > 40000) return null;
-    let y: Row | null = await fromMegogo("", s(x.title), s(x.author), "").catch(() => null);
-    if (y && y.lang && !/укр/i.test(y.lang)) y = null;
-    if (!y && Date.now() - t0 < 42000) y = await fromYakaboo(s(x.title), s(x.author), "").catch(() => null);
-    if (!y || !authorOk(s(x.author), y.author)) return null;
-    const it: Row = y.source === "Yakaboo"
-      ? { title: y.title, author: y.author, pub: y.publisher ? pubCanon(y.publisher) : "", price: y.price ?? null, release: y.release || "", avail: y.avail || "", isbn: y.isbn || "", src: y.url, cover: y.cover || "", series: "", part: "" }
-      : mgItem(y);
-    it.from = y.source === "Yakaboo" ? "Yakaboo" : "MEGOGO";
-    it.why = s(x.why).slice(0, 80);
-    return it;
-  };
-  const found: Row[] = [];
-  for (let i = 0; i < cands.length; i += 5) {
-    if (Date.now() - t0 > 38000) break;
-    (await Promise.all(cands.slice(i, i + 5).map(check))).forEach((it) => { if (it) found.push(it); });
-  }
-  try { await enrichItems(found, ctxd, 0); } catch { /* */ }
-  const same = (a: Row, b: Row) => s(a.title).toLowerCase() === s(b.title).toLowerCase();
-  const items = found.filter((it, i) => found.findIndex((o) => same(o, it)) === i)
-    .filter((it) => !(it.dup && it.dup.kind === "library")); // що вже є в бібліотеці — у «Схожі у тебе»
-  return { themes: (Array.isArray(r.themes) ? r.themes : []).map((x: unknown) => s(x).slice(0, 30)).filter(Boolean).slice(0, 4), items, asked: cands.length };
-}
-
 const API: Record<string, (req: Row) => Promise<unknown>> = {
   lbApiAi: apiAi,
   lbApiAiParts: async (req: Row) => aiCall(async () => aiBooks(((req && req.parts) || []).slice(0, 4), await aiCtx())),
@@ -271,9 +225,6 @@ const API: Record<string, (req: Row) => Promise<unknown>> = {
   lbApiOfficial: apiOfficial,
   lbApiCoverUpload: apiCoverUpload,
   lbApiNews: apiNews,
-  lbApiSimilar: apiSimilar,
-  // підказки під час набору («Як ця книга»): лише пошук MEGOGO, без Gemini
-  lbApiFind: async (req: Row) => ({ items: (await mgSearch(s(req?.q).slice(0, 80)).catch(() => [] as Row[])).slice(0, 8).map((x) => ({ title: x.name, author: x.author })) }),
 };
 
 Deno.serve(async (req) => {
