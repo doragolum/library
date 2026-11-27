@@ -98,7 +98,7 @@ export async function enrichItems(items: Row[], ctx: { books: Row[]; wish: Row[]
     x.isbn = String(x.isbn || "").replace(/\D/g, "");
     x.part = x.part == null ? "" : String(x.part).trim(); x.total = x.total == null ? "" : String(x.total).trim();
     if (x.pub) x.pub = pubCanon(x.pub);
-    if (/^\d{4}-\d{2}$/.test(x.release)) x.release += "-01";
+    if (/^\d{4}-\d{2}$/.test(x.release)) { x.release += "-01"; x.relMonth = true; } // день не відомий
     if (x.release && !/^\d{4}-\d{2}-\d{2}$/.test(x.release)) x.release = "";
     // 1. MEGOGO — якщо бракує даних
     if (x.title && !/MEGOGO/.test(x.from || "") && (!x.author || !x.isbn || !x.release || (x.series && !x.part) || !x.series) && items.length <= 6 && Date.now() - t0 < budgetMs) {
