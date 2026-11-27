@@ -3324,6 +3324,19 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
     orderState = { mode: mode === 'wish' ? 'wish' : 'order', text: '', where: '', site: '', num: '', date: D.today, pub: '', items: [], done: false, busy: '' };
     orderDialog();
   }
+  /* Дата виходу в картці бажанки: «YYYY-MM» — відомий лише місяць, «YYYY-MM-DD» — і день. */
+  function relDayOpts(rel) {
+    var d = /^\d{4}-\d{2}-\d{2}$/.test(String(rel || '')) ? Number(String(rel).slice(8, 10)) : 0;
+    var h = '<option value=""' + (d ? '' : ' selected') + '>— не відомо</option>';
+    for (var k = 1; k <= 31; k++) h += '<option value="' + k + '"' + (k === d ? ' selected' : '') + '>' + k + '</option>';
+    return h;
+  }
+  function relJoin(month, day) {
+    if (!/^\d{4}-\d{2}$/.test(String(month || ''))) return '';
+    var d = Number(day) || 0; if (!d) return month;
+    var last = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
+    return month + '-' + String(Math.min(d, last)).padStart(2, '0');
+  }
   function ordSync() {
     if (!orderState) return;
     var v = function (id) { var e = document.getElementById(id); return e ? e.value : null; };
@@ -3334,7 +3347,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       ['title', 'author', 'price', 'rel', 'avail', 'part'].forEach(function (f) {
         var e = v('oi-' + f + '-' + i); if (e == null) return;
         if (f === 'price') x.price = e === '' ? null : Number(e.replace(',', '.'));
-        else if (f === 'rel') { if (!x.release || x.release.slice(0, 7) !== e) x.release = e; }
+        else if (f === 'rel') x.release = relJoin(e, v('oi-day-' + i));
         else x[f] = e.trim();
       });
     });
@@ -3373,8 +3386,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
           '<div class="form"><label><span>Назва</span><input id="oi-title-' + i + '" value="' + esc(x.title) + '"></label>' +
           '<label' + (!x.author ? ' class="need"' : '') + '><span>Автор' + (!x.author ? ' — впиши' : '') + '</span><input id="oi-author-' + i + '" list="ord-al" value="' + esc(x.author) + '"></label>' +
           '<label><span>Ціна, грн' + (x.qty > 1 ? ' (×' + x.qty + ')' : '') + '</span><input id="oi-price-' + i + '" inputmode="decimal" value="' + (x.price == null ? '' : esc(x.price)) + '"></label>' +
-          '<label' + (isW && !x.release ? ' class="need"' : '') + '><span>Вихід (місяць)' + (isW && !x.release ? ' — не знайшла' : '') + '</span><input type="month" id="oi-rel-' + i + '" value="' + esc(String(x.release || '').slice(0, 7)) + '"></label>' +
           '<label><span>Наявність</span><select id="oi-avail-' + i + '">' + ['', 'Передзамовлення', 'Є у продажу', 'Анонс'].map(function (a) { return '<option' + ((x.avail || '') === a ? ' selected' : '') + '>' + esc(a) + '</option>'; }).join('') + '</select></label>' +
+          '<label' + (isW && !x.release ? ' class="need"' : '') + '><span>Вихід: місяць' + (isW && !x.release ? ' — не знайшла' : '') + '</span><input type="month" id="oi-rel-' + i + '" value="' + esc(String(x.release || '').slice(0, 7)) + '"></label>' +
+          '<label><span>День виходу</span><select id="oi-day-' + i + '">' + relDayOpts(x.release) + '</select></label>' +
           (x.series ? '<label' + (!x.part ? ' class="need"' : '') + '><span>№ у серії «' + esc(x.series) + '»' + (x.serWas ? ' (як у твоїй бібліотеці)' : '') + (!x.part ? ' — який том?' : '') + '</span><input id="oi-part-' + i + '" inputmode="decimal" value="' + esc(x.part || '') + '"></label>' : '') +
           (x.link || x.orig ? '<p class="muted small">' + (x.orig ? 'Оригінал: ' + esc(x.orig) + ' ' : '') + (x.link ? srcLink(x.link) : '') + '</p>' : '') + '</div></div>';
       }).join('');
@@ -3462,9 +3476,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
       var t = String(x.title || '').trim(); if (!t) return;
       if (o.items.some(function (y) { return norm(y.title) === norm(t); })) return;
       var w = D.wish.filter(function (y) { return norm(y.title) === norm(t) && (!x.author || !y.author || norm(y.author) === norm(x.author)); })[0];
-      var rel = String(x.release || ''); if (/^\d{4}-\d{2}$/.test(rel)) rel += '-01';
+      var rel = String(x.release || ''); if (x.relMonth && /^\d{4}-\d{2}-01$/.test(rel)) rel = rel.slice(0, 7);
       var it = { title: t, author: String(x.author || '').trim(), series: String(x.series || '').trim(), part: x.part || '', total: x.total || '', pub: String(x.pub || '').trim(),
-        price: x.price === '' || x.price == null || isNaN(Number(x.price)) ? null : Number(x.price), qty: 1, release: /^\d{4}-\d{2}-\d{2}$/.test(rel) ? rel : '', avail: x.avail || '', isbn: String(x.isbn || '').replace(/\D/g, ''),
+        price: x.price === '' || x.price == null || isNaN(Number(x.price)) ? null : Number(x.price), qty: 1, release: /^\d{4}-\d{2}(-\d{2})?$/.test(rel) ? rel : '', avail: x.avail || '', isbn: String(x.isbn || '').replace(/\D/g, ''),
         isNew: !w, row: w ? w.row : null, wishStatus: w ? w.status : '', ordered: w && ORDERED.indexOf(w.status) !== -1 ? w.status : '', src: x.from || 'Gemini', looked: true,
         orig: String(x.orig || ''), link: /^https:\/\//.test(String(x.src || '')) ? String(x.src) : '', dup: x.dup && x.dup.kind === 'library' ? x.dup : null, serWas: x.serWas || '' };
       if (it.row && !it.isbn && w.isbn) it.isbn = w.isbn;
